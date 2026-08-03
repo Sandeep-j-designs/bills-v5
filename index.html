@@ -953,7 +953,7 @@ function freshState(){
     vendor:'', vendorCostCentre:'', billingAddress:'', gstTreatment:'', gstin:'',
     sourceState:'', destState:'',
     purchaseLedger:'', reverseCharge:false, narration:'',
-    items:[blankItem()], ledgers:[blankLedger()],
+    items:[blankItem()], ledgers:[blankLedger()], stashedItems:null,
     taxLines:[], adjustments:[],
     validated:false, document:null, allocated:false
   };
@@ -1048,8 +1048,12 @@ function suggestTdsLines(){
   });
 
   // --- goods: 194Q on the value crossing the 50 lakh FY threshold ----------
-  if(state.mode==='item'){
-    const goodsValue = r2(state.items.reduce((s,r)=>s+lineOf(r).taxable,0));
+  {
+    // in accounting mode the goods sit on purchase-ledger lines instead of items
+    const goodsValue = state.mode==='item'
+      ? r2(state.items.reduce((s,r)=>s+lineOf(r).taxable,0))
+      : r2(state.ledgers.filter(r=>byId(MASTERS.purchaseLedgers,r.ledger))
+                        .reduce((s,r)=>s+num(r.amount),0));
     if(goodsValue>0){
       const sec = byId(MASTERS.tdsSections,'194Q');
       const prior = v.fyGoods;
@@ -1130,6 +1134,77 @@ function checkbox(checked,mixed){
   return `<button type="button" class="checkbox" role="checkbox" aria-checked="${st}">
     <span class="checkbox__box"><svg width="10" height="10"><use href="#i-${mixed?'dash':'tick'}"/></svg></span></button>`;
 }
+/* A ledger line can sit against a purchase ledger (accounting mode) or an
+   expense ledger (charges on top of an item invoice). */
+const ledgerNameOf = id =>
+  byId(MASTERS.purchaseLedgers,id)?.name || byId(MASTERS.expenseLedgers,id)?.name || '';
+function ledgerSelect(row){
+  const opt = (o)=>`<option value="${o.id}"${o.id===row.ledger?' selected':''}>${esc(o.name)}</option>`;
+  return `<select class="cell__select t-cell" data-f="ledger">
+    <option value=""${row.ledger?'':' selected'} disabled>Select Ledger</option>
+    <optgroup label="Purchase">${MASTERS.purchaseLedgers.map(opt).join('')}</optgroup>
+    <optgroup label="Expenses & charges">${MASTERS.expenseLedgers.map(opt).join('')}</optgroup>
+  </select>`;
+}
+
+/* ---------------------------------------------------------------------------
+   Item Mode <-> Accounting Mode.
+   The two modes are two presentations of one voucher, so switching converts
+   rather than discards: item lines fold into purchase-ledger lines (grouped by
+   GST slab so the tax working is unchanged) and unfold back again.
+   ------------------------------------------------------------------------ */
+function foldItemsIntoLedgers(){
+  state.stashedItems = state.items;
+  const groups = new Map();
+  state.items.forEach(r=>{
+    const l = lineOf(r);
+    if(l.taxable<=0) return;
+    const g = groups.get(r.tax||'') || {amount:0,n:0,cc:new Set()};
+    g.amount = r2(g.amount+l.taxable); g.n++;
+    if(r.costCentre) g.cc.add(r.costCentre);
+    groups.set(r.tax||'', g);
+  });
+  const led = byId(MASTERS.purchaseLedgers,state.purchaseLedger);
+  const folded = [...groups.entries()].map(([tax,g])=>({
+    ...blankLedger(), fromItems:true,
+    ledger: state.purchaseLedger,
+    description: `${led?led.name:'Purchase'} — ${g.n} item${g.n>1?'s':''}` +
+                 (tax?` @ ${byId(MASTERS.taxes,tax).name}`:''),
+    tax, amount:g.amount,
+    costCentre: g.cc.size===1 ? [...g.cc][0] : ''
+  }));
+  const kept = state.ledgers.filter(r=>r.ledger||r.description||num(r.amount));
+  state.items = [];
+  state.ledgers = [...folded, ...kept];
+  if(!state.ledgers.length) state.ledgers = [blankLedger()];
+}
+
+function unfoldItemsFromLedgers(){
+  const folded = state.ledgers.filter(r=>r.fromItems);
+  const stash = state.stashedItems || [];
+  if(folded.length && stash.length){
+    const now  = r2(folded.reduce((s,r)=>s+num(r.amount),0));
+    const was  = r2(stash.reduce((s,r)=>s+lineOf(r).taxable,0));
+    if(Math.abs(now-was)>0.005 &&
+       !confirm(`The purchase lines were edited in Accounting Mode (${money(now)} vs ${money(was)}).\n\n` +
+                'Switching back restores the original item detail and discards those edits. Continue?'))
+      return false;
+  }
+  state.ledgers = state.ledgers.filter(r=>!r.fromItems);
+  state.items = stash.length ? stash : [blankItem()];
+  state.stashedItems = null;
+  if(!state.ledgers.length) state.ledgers = [blankLedger()];
+  return true;
+}
+
+function setMode(next){
+  if(next===state.mode) return;
+  if(next==='accounting') foldItemsIntoLedgers();
+  else if(!unfoldItemsFromLedgers()) return;
+  state.mode = next;
+  render();
+}
+
 const ccLocked = ()=>state.ccMode==='class';
 function ccPlaceholder(){
   if(!ccLocked()) return 'Select Cost Centre';
@@ -1230,7 +1305,7 @@ function renderLedgers(){
         <label class="cell"><input class="cell__input t-cell" data-f="description" value="${esc(row.description)}" placeholder="Enter Description"></label>
       </div>
       <div class="tcell col-med">
-        <label class="cell"><select class="cell__select t-cell" data-f="ledger">${options(MASTERS.expenseLedgers,'Select Ledger',row.ledger)}</select>${caret}</label>
+        <label class="cell">${ledgerSelect(row)}${caret}</label>
       </div>
       <div class="tcell col-med">
         <label class="cell${ccLocked()?' is-disabled':''}">
@@ -1577,11 +1652,10 @@ document.addEventListener('change', e=>{
   row[f] = e.target.value;
   if(kind==='taxLines') row.touched = true;
   if(f==='ledger'){
-    const led = byId(MASTERS.expenseLedgers,e.target.value);
-    if(led){
-      if(!row.tax) row.tax = led.tax;
-      if(!row.description) row.description = led.name;
-    }
+    const exp = byId(MASTERS.expenseLedgers,e.target.value);   // carries a default GST rate
+    if(exp && !row.tax) row.tax = exp.tax;
+    if(!row.description) row.description = ledgerNameOf(e.target.value);
+    row.fromItems = false;                                     // re-pointed by hand
   }
   render();
 });
@@ -1691,7 +1765,7 @@ $$('.control__date').forEach(inp=>inp.addEventListener('click',()=>inp.showPicke
 $$('[data-display]').forEach(el=>{ el.dataset.placeholder = el.textContent; });
 
 $('#cc-toggle').addEventListener('click',()=>{ state.ccMode = state.ccMode==='class'?'centre':'class'; render(); });
-$$('.segmented button').forEach(b=>b.addEventListener('click',()=>{ state.mode = b.dataset.mode; render(); }));
+$$('.segmented button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 $('#btn-add-item').addEventListener('click',()=>{ state.items.push(blankItem()); render(); });
 $('#btn-add-ledger').addEventListener('click',()=>{ state.ledgers.push(blankLedger()); render(); });
 $('#btn-add-tax').addEventListener('click',()=>{
@@ -1750,8 +1824,10 @@ function applyExtraction(file){
   state.sourceState       = v.state;
   state.destState         = b.state;
 
+  state.mode    = 'item';                       // the sample bill carries stock items
   state.items   = SAMPLE.items.map(r=>({...blankItem(),...r}));
   state.ledgers = SAMPLE.ledgers.map(r=>({...blankLedger(),...r}));
+  state.stashedItems = null;
   state.taxLines = []; state.adjustments = [];
 
   state.document = {name:file?file.name:SAMPLE.fileName};
@@ -1865,7 +1941,7 @@ function journalEntries(calc){
 
   state.ledgers.forEach(r=>{
     const amt = num(r.amount); if(!amt) return;
-    lines.push({account:byId(MASTERS.expenseLedgers,r.ledger)?.name||'Unallocated expense',dr:amt,cr:0});
+    lines.push({account:ledgerNameOf(r.ledger)||'Unallocated expense',dr:amt,cr:0});
   });
 
   if(!state.reverseCharge){
