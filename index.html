@@ -354,30 +354,46 @@ input[readonly]{cursor:default}
 .pill--info{background:var(--bg-secondary);color:var(--brand-deep)}
 .pill--warn{background:#fff3d9;color:var(--warning)}
 
-/* --------------------------------------------------------------- summary */
-.summary{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
-.narration{flex:1 1 280px;display:flex;flex-direction:column;gap:16px}
+/* ------------------------------------------------------------- narration */
+.narration{display:flex;flex-direction:column;gap:16px}
 .narration textarea{
-  height:200px;padding:8px 15px;resize:vertical;border:1px solid var(--brand-soft);border-radius:var(--radius);
+  height:120px;padding:8px 15px;resize:vertical;border:1px solid var(--brand-soft);border-radius:var(--radius);
   background:var(--surface);font-family:var(--font);font-size:12px;line-height:18px;color:var(--text-muted);outline:none;
 }
 .narration textarea:focus{border-color:var(--brand-deep)}
 
-.breakdown{flex:0 0 344px;min-width:0;display:flex;flex-direction:column;padding:18px 20px;border-radius:var(--radius);background:var(--bg-primary)}
-.bd-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 0;font-size:14px;color:var(--text-muted)}
-.bd-row span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
-.bd-rule{height:1px;background:var(--stroke);margin:7px 0}
-.bd-adj{display:flex;align-items:center;gap:8px;padding:4px 0;min-width:0}
-.bd-adj input{height:34px;border:1px solid var(--brand-soft);border-radius:var(--radius);background:var(--surface);padding:6px 12px;font-size:13px;color:var(--text-muted);outline:none;min-width:0;width:0}
-.bd-adj input:focus{border-color:var(--brand-deep)}
-.bd-adj__label{flex:1 1 60px}
-.bd-adj__amt{flex:0 0 76px;text-align:right}
-.bd-adj__out{flex:0 0 74px;text-align:right;font-size:13px;color:var(--text-muted);font-variant-numeric:tabular-nums}
-.bd-adj__del{background:none;border:none;padding:0;color:var(--danger);font-size:16px;line-height:1}
-.bd-grand{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-top:10px;font-size:20px;line-height:26px;font-weight:600}
-.bd-grand span:first-child{color:var(--text-muted)}
-.bd-grand span:last-child{color:var(--brand-deep);font-variant-numeric:tabular-nums}
+/* ------------------------------------------------------------- breakdown
+   Full width, and the place where the GST and TDS ledgers are chosen. Every
+   row shares one grid so the money column lines up from Sub Total to Grand
+   Total, whatever sits in the label column. */
+.breakdown{
+  display:flex;flex-direction:column;
+  padding:20px 24px;border-radius:var(--radius);background:var(--bg-primary);
+}
+.bd-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:12px}
+.bd-head select{
+  appearance:none;border:none;background:none;outline:none;padding:0 18px 0 0;cursor:pointer;
+  color:var(--brand-deep);font-size:12px;line-height:20px;
+  background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
+}
+.bd-row,.bd-line,.bd-grand{
+  display:grid;grid-template-columns:minmax(0,1fr) 104px 168px 30px;gap:12px;align-items:center;
+}
+.bd-row{padding:7px 0;font-size:14px;color:var(--text-muted)}
+.bd-row > :nth-child(3){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bd-line{padding:6px 0}
+.bd-line__lead{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:440px}
+.bd-line > .cell:first-child{max-width:440px}
+.bd-line__lead .chip{align-self:flex-start}
+.bd-del{background:none;border:none;padding:0;color:var(--danger);font-size:18px;line-height:1;justify-self:center}
+.bd-del:hover{opacity:.7}
+.bd-group{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);padding:10px 0 2px}
+.bd-rule{height:1px;background:var(--stroke);margin:8px 0}
+.bd-grand{align-items:baseline;padding-top:12px;font-size:20px;line-height:26px;font-weight:600}
+.bd-grand > :first-child{color:var(--text-muted)}
+.bd-grand > :nth-child(3){text-align:right;color:var(--brand-deep);font-variant-numeric:tabular-nums}
 .bd-note{font-size:11px;line-height:15px;color:var(--warning);padding-top:8px}
+.bd-empty{font-size:12px;color:var(--text-muted);padding:6px 0}
 
 /* ---------------------------------------------------------------- dialog */
 dialog{border:none;border-radius:10px;padding:0;max-width:min(680px,92vw);width:100%;box-shadow:0 20px 60px rgba(20,20,40,.28)}
@@ -414,9 +430,10 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
    ---------------------------------------------------------------------- */
 @container form (max-width:600px){
   .card{grid-template-columns:minmax(0,1fr);gap:20px}
-  .summary{flex-direction:column;align-items:stretch}
-  .breakdown{flex:1 1 auto}
   .picker-row{gap:8px}
+  .breakdown{padding:16px}
+  .bd-row,.bd-line,.bd-grand{grid-template-columns:minmax(0,1fr) 74px 116px 26px;gap:8px}
+  .bd-grand{font-size:18px}
 }
 
 @media (max-width:1119px){
@@ -763,32 +780,16 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
       </button>
     </section>
 
-    <!-- Taxes -->
+    <!-- Narration -->
     <section class="block">
-      <h2 class="t-section">Taxes</h2>
-      <div class="picker">
-        <p class="picker__label">Reverse Charges</p>
-        <select data-bind="reverseCharge" aria-label="Reverse charge applicability">
-          <option value="no">Not Applicable</option>
-          <option value="yes">Applicable</option>
-        </select>
-      </div>
-      <p class="hint" id="tax-note"></p>
-      <div class="tscroll"><div class="table-scroll"><div class="table table--meta" id="taxes-table"></div></div></div>
-      <button type="button" class="btn btn--quiet" id="btn-add-tax">
-        <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
-        Add Ledger
-      </button>
-    </section>
-
-    <!-- Narration & breakdown -->
-    <div class="summary form__narrow">
+      <h2 class="t-section">Narration</h2>
       <div class="narration">
-        <p class="t-label">Narration (Optional)</p>
         <textarea data-bind="narration" placeholder="Enter Narration"></textarea>
       </div>
-      <div class="breakdown" id="breakdown"></div>
-    </div>
+    </section>
+
+    <!-- Breakdown: sub total, the GST and TDS ledgers, adjustments, total -->
+    <section class="breakdown" id="breakdown"></section>
 
   </section>
 </main>
@@ -1127,7 +1128,7 @@ function freshState(){
     sourceState:'', destState:'',
     purchaseLedger:'', reverseCharge:false, narration:'',
     items:[blankItem()], ledgers:[blankLedger()], stashedItems:null,
-    taxLines:[], adjustments:[],
+    taxLines:[], dismissedLines:[], adjustments:[],
     validated:false, document:null, allocated:false
   };
 }
@@ -1253,6 +1254,7 @@ function syncLines(listName, suggestions){
   const list = state[listName];
   const seen = new Set();
   suggestions.forEach(s=>{
+    if(state.dismissedLines.includes(s.key)) return;   // user removed this line
     seen.add(s.key);
     const found = list.find(l=>l.key===s.key);
     if(!found){ list.push({id:uid(),auto:true,touched:false,itc:'eligible',...s}); }
@@ -1523,77 +1525,67 @@ function taxLedgerSelect(row){
   </select>`;
 }
 
-function renderTaxes(){
-  const head = `<div class="trow trow--head">
-    <div class="tcell col-wide tcell--grow">Ledger Name</div>
-    <div class="tcell col-tax tcell--end">Tax Rate</div>
-    <div class="tcell col-num tcell--end"><span class="req">*</span>&nbsp;Amount</div>
-    <div class="tcell col-menu tcell--last"></div>
-  </div>`;
-
+function renderBreakdown(calc){
+  const rule = '<div class="bd-rule"></div>';
   const v = byId(MASTERS.vendors,state.vendor);
-  $('#tax-note').textContent = v
-    ? `GST is charged on the taxable value; TDS is deducted from it (GST excluded, CBDT circ. 23/2017). PAN ${v.pan||'not on file'} · deductee type: ${v.deductee}.`
-    : '';
 
-  if(!state.taxLines.length){
-    const why = !gstApplies() ? 'This GST treatment does not attract GST on the purchase.'
-      : isIntraState()===null ? 'Set Source and Destination of Supply — GST splits into CGST/SGST or IGST from those states.'
-      : 'Set a tax rate on a line item or ledger to compute GST.';
-    $('#taxes-table').innerHTML = head + `<div class="trow trow--empty">${why}</div>`;
-    return;
-  }
-
-  const ordered = [...gstLines(), ...tdsLines()];
-  $('#taxes-table').innerHTML = head + ordered.map(row=>{
+  /* one editable ledger line: pick the ledger, the rate, the amount */
+  const taxLine = row=>{
     const tds = row.type==='tds';
-    // TDS rows are just a ledger; the threshold working stays in the tooltip
+    const tip = tds ? ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"` : '';
     const meta = tds ? '' :
       `<button type="button" class="chip${row.itc==='ineligible'?' chip--no':''}" data-f="itc"
                title="Toggle input tax credit eligibility">
          ${row.itc==='ineligible'?'Not eligible for ITC':'Eligible for ITC'} ${pencil}</button>`;
-    const tip = tds ? ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"` : '';
-
-    return `<div class="trow" data-kind="taxLines" data-id="${row.id}">
-      <div class="tcell col-wide tcell--grow">
+    return `<div class="bd-line" data-kind="taxLines" data-id="${row.id}">
+      <div class="bd-line__lead">
         <label class="cell"${tip}>${taxLedgerSelect(row)}</label>
         ${meta}
       </div>
-      <div class="tcell col-tax">
-        <label class="cell cell-num"><input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate}">%</label>
-      </div>
-      <div class="tcell col-num">
-        <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
-      </div>
-      <div class="tcell col-menu tcell--last">
-        <button type="button" class="row-menu" data-act="menu" aria-label="Row options">${dots}</button>
-      </div>
+      <label class="cell cell-num"><input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate}">%</label>
+      <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
+      <button type="button" class="bd-del" data-act="del-line" aria-label="Remove line">&times;</button>
     </div>`;
-  }).join('');
-}
+  };
 
-function renderBreakdown(calc){
-  const rule = '<div class="bd-rule"></div>';
-  let html = `<div class="bd-row"><span>Sub Total</span><span>${money(calc.subTotal)}</span></div>` + rule;
+  let html = `<div class="bd-head">
+      <p class="t-label">Reverse Charges</p>
+      <select data-bind="reverseCharge" aria-label="Reverse charge applicability">
+        <option value="no"${state.reverseCharge?'':' selected'}>Not Applicable</option>
+        <option value="yes"${state.reverseCharge?' selected':''}>Applicable</option>
+      </select>
+      ${v?`<p class="hint">GST is charged on the taxable value; TDS is deducted from it (GST excluded).
+            PAN ${esc(v.pan||'not on file')} · deductee type: ${esc(v.deductee)}.</p>`:''}
+    </div>`;
 
-  const headEntries = Object.entries(calc.heads);
-  if(headEntries.length){
-    html += headEntries.map(([k,v])=>`<div class="bd-row"><span>${esc(k)}</span><span>${money(v)}</span></div>`).join('') + rule;
-  }
-  html += `<div class="bd-row"><span>TDS</span><span>${calc.tdsTotal?'− ':''}${money(calc.tdsTotal)}</span></div>` + rule;
+  html += `<div class="bd-row"><span>Sub Total</span><span></span><span id="bd-sub">${money(calc.subTotal)}</span><span></span></div>`;
 
-  html += `<div class="bd-row" style="padding-bottom:2px"><span>Adjustment</span><span></span></div>`;
+  const gst = gstLines(), tds = tdsLines();
+  html += rule + `<div class="bd-group">GST</div>`;
+  html += gst.length ? gst.map(taxLine).join('')
+    : `<p class="bd-empty">${!gstApplies() ? 'This GST treatment does not attract GST on the purchase.'
+        : isIntraState()===null ? 'Set Source and Destination of Supply to compute GST.'
+        : 'Set a tax rate on a line item or ledger to compute GST.'}</p>`;
+
+  html += rule + `<div class="bd-group">TDS</div>`;
+  html += tds.length ? tds.map(taxLine).join('')
+    : `<p class="bd-empty">No TDS applicable — pick a vendor and an expense ledger with a nature of payment.</p>`;
+
+  html += `<button type="button" class="btn btn--quiet" data-act="add-tax" style="height:30px">
+             <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>Add GST or TDS ledger</button>`;
+
+  html += rule + `<div class="bd-group">Adjustments</div>`;
   html += state.adjustments.map(a=>`
-    <div class="bd-adj" data-adj="${a.id}">
-      <input class="bd-adj__label" data-af="label" value="${esc(a.label)}" placeholder="Adjustments">
-      <input class="bd-adj__amt" data-af="amount" inputmode="decimal" value="${a.amount||0}">
-      <span class="bd-adj__out">${money(num(a.amount))}</span>
-      <button type="button" class="bd-adj__del" data-af="del" aria-label="Remove adjustment">&times;</button>
+    <div class="bd-line" data-adj="${a.id}">
+      <label class="cell"><input class="cell__input t-cell" data-af="label" value="${esc(a.label)}" placeholder="Adjustment description"></label>
+      <span></span>
+      <label class="cell cell-num"><input class="cell__input t-cell" data-af="amount" inputmode="decimal" value="${a.amount||0}"></label>
+      <button type="button" class="bd-del" data-af="del" aria-label="Remove adjustment">&times;</button>
     </div>`).join('');
-  html += `<button type="button" class="btn btn--quiet" id="btn-add-adj" style="height:28px">
+  html += `<button type="button" class="btn btn--quiet" data-act="add-adj" style="height:30px">
              <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>Add Adjustment</button>`;
 
-  html += rule + `<div class="bd-grand"><span>Grand Total</span><span>${money(calc.grand)}</span></div>`;
+  html += rule + `<div class="bd-grand"><span>Grand Total</span><span></span><span id="bd-grand">${money(calc.grand)}</span><span></span></div>`;
 
   if(state.reverseCharge && calc.gstTotal)
     html += `<p class="bd-note">Reverse charge — ${money(calc.gstTotal)} GST is payable by you, not to the vendor, and is excluded above.</p>`;
@@ -1601,6 +1593,14 @@ function renderBreakdown(calc){
     html += `<p class="bd-note">${money(calc.gstIneligible)} GST marked ineligible for ITC is charged to expense, not to the input credit ledger.</p>`;
 
   $('#breakdown').innerHTML = html;
+}
+
+/* patch just the two totals, for edits made inside the breakdown itself
+   (a full re-render there would tear the focused field out from under you) */
+function patchTotals(calc){
+  const sub = $('#bd-sub'), grand = $('#bd-grand');
+  if(sub)   sub.textContent   = money(calc.subTotal);
+  if(grand) grand.textContent = money(calc.grand);
 }
 
 function renderSupplyNote(){
@@ -1651,7 +1651,6 @@ function render(){
   renderHeader();
   renderItems();
   renderLedgers();
-  renderTaxes();
   renderBreakdown(calc);
   renderSupplyNote();
   checkDuplicate();
@@ -1768,7 +1767,7 @@ function syncLedgerToSupply(){
 
 /* --- table rows ---------------------------------------------------------- */
 function rowOf(el){
-  const tr = el.closest('.trow[data-id]');
+  const tr = el.closest('[data-kind][data-id]');
   if(!tr) return null;
   const list = state[tr.dataset.kind];
   return {tr, list, row:list?.find(r=>r.id===tr.dataset.id)};
@@ -1808,7 +1807,8 @@ document.addEventListener('input', e=>{
     if(kind==='items' && f!=='amountOverride'){
       setSibling('[data-f="amountOverride"]', inr.format(lineOf(row).taxable));
     }
-    renderBreakdown(compute());
+    const calc = compute();
+    if(e.target.closest('#breakdown')) patchTotals(calc); else renderBreakdown(calc);
     $('#btn-allocate').disabled = validate(false).length>0;
     return;
   }
@@ -1857,11 +1857,7 @@ document.addEventListener('input', e=>{
   const adj = state.adjustments.find(a=>a.id===wrap.dataset.adj);
   if(!adj) return;
   adj[af] = af==='amount' ? num(e.target.value) : e.target.value;
-  if(af==='amount'){
-    wrap.querySelector('.bd-adj__out').textContent = money(adj.amount);
-    const calc = compute();
-    $('.bd-grand span:last-child').textContent = money(calc.grand);
-  }
+  if(af==='amount') patchTotals(compute());
 });
 
 /* --- clicks -------------------------------------------------------------- */
@@ -1873,8 +1869,22 @@ document.addEventListener('click', e=>{
     state.adjustments = state.adjustments.filter(a=>a.id!==id);
     render(); return;
   }
-  if(btn.id==='btn-add-adj'){
+  if(btn.dataset.act==='add-adj'){
     state.adjustments.push({id:uid(),label:'',amount:0});
+    render(); return;
+  }
+  if(btn.dataset.act==='add-tax'){
+    state.taxLines.push({id:uid(),key:uid(),type:'gst',auto:false,touched:true,
+                         name:'Input Cess',rate:0,base:0,amount:0,itc:'eligible'});
+    render(); return;
+  }
+  if(btn.dataset.act==='del-line'){
+    const c = rowOf(btn);
+    if(c?.row){
+      // remember it, or the engine simply suggests it again on the next pass
+      if(c.row.auto && c.row.key) state.dismissedLines.push(c.row.key);
+      c.list.splice(c.list.indexOf(c.row),1);
+    }
     render(); return;
   }
 
@@ -1969,10 +1979,6 @@ $('#cc-toggle').addEventListener('click',()=>{ state.ccMode = state.ccMode==='cl
 $$('.segmented button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 $('#btn-add-item').addEventListener('click',()=>{ state.items.push(blankItem()); render(); });
 $('#btn-add-ledger').addEventListener('click',()=>{ state.ledgers.push(blankLedger()); render(); });
-$('#btn-add-tax').addEventListener('click',()=>{
-  state.taxLines.push({id:uid(),key:uid(),type:'gst',auto:false,touched:true,name:'Input Cess',rate:0,base:0,amount:0,itc:'eligible'});
-  render();
-});
 
 /* ============================================================================
    8. UPLOAD → EXTRACTION (simulated pipeline over the bundled sample bill)
@@ -2029,7 +2035,7 @@ function applyExtraction(file){
   state.items   = SAMPLE.items.map(r=>({...blankItem(),...r}));
   state.ledgers = SAMPLE.ledgers.map(r=>({...blankLedger(),...r}));
   state.stashedItems = null;
-  state.taxLines = []; state.adjustments = [];
+  state.taxLines = []; state.dismissedLines = []; state.adjustments = [];
 
   state.document = {name:file?file.name:SAMPLE.fileName};
   const calc = render();
