@@ -32,7 +32,8 @@
   --topbar-h:51px;
   --gutter:20px;
   --doc-w:50%;                                        /* dragged by the splitter */
-  --pane-h:clamp(420px,calc(100vh - var(--topbar-h) - var(--gutter) * 2),806px);
+  --pane-h:clamp(420px,calc(100vh  - var(--topbar-h) - var(--gutter) * 2),806px);
+  --pane-h:clamp(420px,calc(100dvh - var(--topbar-h) - var(--gutter) * 2),806px);
 
   --chevron:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 7.5 4.5' fill='none'%3E%3Cpath d='M0.75 0.75L3.75 3.75L6.75 0.75' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --field-shadow:drop-shadow(0 1px 1px rgba(0,0,0,.07));
@@ -106,7 +107,8 @@ input,select,textarea{font:inherit}
 /* --------------------------------------------------------- document pane */
 .doc-pane{
   position:sticky;top:calc(var(--topbar-h) + var(--gutter));
-  flex:0 0 var(--doc-w);min-width:0;
+  flex:0 0 var(--doc-w);
+  min-width:380px;max-width:calc(100% - 690px);   /* 642 form + 6 splitter + 2x16 gap + slack */
   display:flex;align-items:center;justify-content:center;
   height:var(--pane-h);padding:20px 16px;
   background:var(--bg-primary);border:1px solid var(--stroke);border-radius:var(--radius);
@@ -167,7 +169,8 @@ input,select,textarea{font:inherit}
 .splitter:focus-visible{outline:none}
 
 /* -------------------------------------------------------- form container */
-.form{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:32px}
+.form{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:32px;
+      container:form / inline-size}
 .form__narrow{width:100%;max-width:642px}
 
 /* ---------------------------------------------------------------- banner */
@@ -185,7 +188,8 @@ input,select,textarea{font:inherit}
 .segmented button[aria-pressed="true"]{background:var(--bg-secondary);color:var(--brand-deep)}
 
 /* ------------------------------------------------------------- form card */
-.card{padding:20px;border-radius:var(--radius);background:var(--bg-primary);display:grid;grid-template-columns:1fr 1fr;gap:24px 30px}
+.card{padding:20px;border-radius:var(--radius);background:var(--bg-primary);
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 30px}
 .card__full{grid-column:1/-1}
 .card__group{display:flex;flex-direction:column;gap:16px}
 .field{display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-width:0}
@@ -236,6 +240,14 @@ input[readonly]{cursor:default}
 .hint{font-size:11px;line-height:16px;color:var(--text-muted)}
 
 /* ---------------------------------------------------------------- tables */
+.tscroll{position:relative}
+/* fades in only while there is more table off to the right */
+.tscroll::after{
+  content:"";position:absolute;top:0;right:0;bottom:8px;width:32px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--surface));
+  opacity:0;transition:opacity .15s ease;
+}
+.tscroll.is-clipped::after{opacity:1}
 .table-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--brand-soft) transparent}
 .table-scroll::-webkit-scrollbar{height:8px}
 .table-scroll::-webkit-scrollbar-thumb{background:var(--brand-soft);border-radius:99px}
@@ -391,21 +403,60 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 .toast--ok{background:#0f6b43}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}}
 
-/* ----------------------------------------------------------- responsive */
-@media (max-width:1080px){
+/* ------------------------------------------------------------ responsive
+   Panes are a viewport decision; everything inside the form is a container
+   decision, because the form's width is set by the splitter position.
+
+     >= 1120px   two panes side by side, document pane drag-resizable
+     <  1120px   panes stack, document above the form
+     <  640px    compact chrome
+     coarse ptr  44px minimum control height
+   ---------------------------------------------------------------------- */
+@container form (max-width:600px){
+  .card{grid-template-columns:minmax(0,1fr);gap:20px}
+  .summary{flex-direction:column;align-items:stretch}
+  .breakdown{flex:1 1 auto}
+  .picker-row{gap:8px}
+}
+
+@media (max-width:1119px){
   /* stretch, not flex-start — in column direction flex-start would shrink-wrap
      the form to the widest table and blow out the page */
   .workspace{flex-direction:column;align-items:stretch;gap:20px}
-  .doc-pane{position:static;flex:none;width:100%;height:auto;min-height:380px;padding:32px 16px}
-  .doc-pane.is-loaded{height:70vh}
+  .doc-pane{
+    position:static;flex:none;width:100%;max-width:none;min-width:0;
+    height:auto;min-height:340px;padding:28px 16px;
+  }
+  .doc-pane.is-loaded{height:min(70dvh,620px)}
   .splitter{display:none}
 }
+
 @media (max-width:640px){
   :root{--gutter:12px}
-  .card{grid-template-columns:1fr;gap:20px;padding:16px}
   .t-title{font-size:20px;line-height:26px}
-  .topbar{flex-wrap:wrap}
-  .breakdown{flex:1 1 100%}
+  .topbar{flex-wrap:wrap;gap:10px}
+  .topbar__actions{flex:1;justify-content:flex-end}
+  .card{padding:16px}
+  .doc-pane{min-height:260px;padding:20px 12px}
+  .doc-pane.is-loaded{height:min(62dvh,520px)}
+  .form{gap:24px}
+}
+
+/* touch: the designed 34px controls are below a comfortable tap target */
+@media (pointer:coarse){
+  .control,.cell,.btn{min-height:44px;height:auto}
+  .split,.split__value,.split__addon{min-height:44px;height:auto}
+  .tcell{grid-template-rows:44px}
+  .table--meta .tcell{grid-template-rows:44px 28px;min-height:104px}
+  .col-check{width:46px}
+  .col-menu{width:52px}
+  .checkbox,.row-menu{width:100%;min-height:44px}
+  .narration textarea{min-height:120px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  html{scroll-behavior:auto}
 }
 </style>
 </head>
@@ -690,7 +741,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <button type="button" class="btn btn--danger" data-bulk="items">Delete selected</button>
       </div>
 
-      <div class="table-scroll"><div class="table table--meta" id="items-table"></div></div>
+      <div class="tscroll"><div class="table-scroll"><div class="table table--meta" id="items-table"></div></div></div>
 
       <button type="button" class="btn btn--quiet" id="btn-add-item">
         <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
@@ -705,7 +756,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <span id="ledgers-bulk-text"></span>
         <button type="button" class="btn btn--danger" data-bulk="ledgers">Delete selected</button>
       </div>
-      <div class="table-scroll"><div class="table" id="ledgers-table"></div></div>
+      <div class="tscroll"><div class="table-scroll"><div class="table" id="ledgers-table"></div></div></div>
       <button type="button" class="btn btn--quiet" id="btn-add-ledger">
         <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
         Add Ledger
@@ -723,7 +774,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         </select>
       </div>
       <p class="hint" id="tax-note"></p>
-      <div class="table-scroll"><div class="table table--meta" id="taxes-table"></div></div>
+      <div class="tscroll"><div class="table-scroll"><div class="table table--meta" id="taxes-table"></div></div></div>
       <button type="button" class="btn btn--quiet" id="btn-add-tax">
         <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
         Add Ledger
@@ -1583,6 +1634,18 @@ function renderHeader(){
   $$('.segmented button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===state.mode));
 }
 
+/* flag each table that still has content scrolled off to the right */
+function markClipped(){
+  $$('.table-scroll').forEach(sc=>{
+    const more = sc.scrollWidth - sc.clientWidth - sc.scrollLeft > 2;
+    sc.parentElement.classList.toggle('is-clipped', more);
+  });
+}
+addEventListener('resize', markClipped);
+document.addEventListener('scroll', e=>{
+  if(e.target.classList?.contains('table-scroll')) markClipped();
+}, true);
+
 function render(){
   const calc = compute();
   renderHeader();
@@ -1592,6 +1655,7 @@ function render(){
   renderBreakdown(calc);
   renderSupplyNote();
   checkDuplicate();
+  markClipped();
   $('#btn-allocate').disabled = validate(false).length>0;
   if(state.validated) validate(true);
   return calc;
