@@ -1237,12 +1237,12 @@ function compute(){
     heads[head] = r2((heads[head]||0)+num(t.amount));
   });
 
-  const beforeRound = r2(subTotal + (state.reverseCharge?0:gstTotal) - tdsTotal + adjTotal);
-  const grand = Math.round(beforeRound);
-  const roundOff = r2(grand-beforeRound);
+  // no automatic rounding — a round off is just an adjustment, so it is entered
+  // as one rather than being derived behind the user's back
+  const grand = r2(subTotal + (state.reverseCharge?0:gstTotal) - tdsTotal + adjTotal);
 
   return {intra:isIntraState(),rows,ledgerRows,itemsTaxable,ledgerTaxable,subTotal,
-          gstTotal,gstIneligible,tdsTotal,adjTotal,heads,beforeRound,grand,roundOff};
+          gstTotal,gstIneligible,tdsTotal,adjTotal,heads,grand};
 }
 
 /* ============================================================================
@@ -1542,7 +1542,6 @@ function renderBreakdown(calc){
   html += `<button type="button" class="btn btn--quiet" id="btn-add-adj" style="height:28px">
              <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>Add Adjustment</button>`;
 
-  if(calc.roundOff) html += rule + `<div class="bd-row"><span>Round Off</span><span>${money(calc.roundOff)}</span></div>`;
   html += rule + `<div class="bd-grand"><span>Grand Total</span><span>${money(calc.grand)}</span></div>`;
 
   if(state.reverseCharge && calc.gstTotal)
@@ -2085,8 +2084,6 @@ function journalEntries(calc){
     const amt = num(a.amount); if(!amt) return;
     lines.push({account:a.label||'Adjustment',dr:amt>0?amt:0,cr:amt<0?-amt:0});
   });
-  if(calc.roundOff>0) lines.push({account:'Round Off',dr:calc.roundOff,cr:0});
-  if(calc.roundOff<0) lines.push({account:'Round Off',dr:0,cr:-calc.roundOff});
 
   tdsLines().forEach(t=>num(t.amount) &&
     lines.push({account:`TDS Payable — ${t.section||t.name}`,dr:0,cr:num(t.amount)}));
