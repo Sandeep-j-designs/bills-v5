@@ -34,6 +34,7 @@
   --doc-w:50%;                                        /* dragged by the splitter */
   --pane-h:clamp(420px,calc(100vh - var(--topbar-h) - var(--gutter) * 2),806px);
 
+  --chevron:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 7.5 4.5' fill='none'%3E%3Cpath d='M0.75 0.75L3.75 3.75L6.75 0.75' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --field-shadow:drop-shadow(0 1px 1px rgba(0,0,0,.07));
   --knob-shadow:0 2px 4px rgba(39,39,39,.1);
 }
@@ -201,11 +202,18 @@ input,select,textarea{font:inherit}
 .control:focus-within{border-color:var(--brand-deep)}
 .control > .t-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .control__input,.control__select{flex:1;min-width:0;appearance:none;border:none;background:none;outline:none;padding:0;color:var(--text-muted);text-overflow:ellipsis}
+/* the select spans the whole box and paints its own chevron, so a click on the
+   chevron opens the list instead of landing on a decorative sibling */
+.control__select,.cell__select{
+  cursor:pointer;padding-right:18px;
+  background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
+}
 .control__input::placeholder{color:var(--text-muted);opacity:1}
 .control.is-disabled{opacity:.6;pointer-events:none}
 .control__date{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;padding:0;cursor:pointer}
 .control.is-extracted,.cell.is-extracted{background:#eef1ff;border-color:var(--brand-soft)}
-.pencil{background:none;border:none;padding:0;display:inline-flex;color:var(--brand-deep)}
+.pencil{background:none;border:none;padding:0;display:inline-flex;color:var(--brand-deep);flex:none}
+input[readonly]{cursor:default}
 
 /* ---------------------------------------------------------------- switch */
 .switch{position:relative;width:36px;height:20px;flex:none;padding:0;border:none;border-radius:100px;background:var(--interactive)}
@@ -537,7 +545,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <p class="t-label"><span class="req">*</span> GST Registration (My Branch)</p>
         <label class="control">
           <select class="control__select t-value" data-bind="branch"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
         <p class="field__error">Select the branch raising this bill</p>
       </div>
@@ -546,7 +553,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <p class="t-label"><span class="req">*</span> Voucher Type</p>
         <label class="control">
           <select class="control__select t-value" data-bind="voucherType"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
         <p class="field__error">Select a voucher type</p>
       </div>
@@ -554,8 +560,8 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
       <div class="field">
         <p class="t-label"><span class="req">*</span> Voucher No</p>
         <label class="control">
-          <input class="control__input t-value" type="text" data-bind="voucherNo" id="voucher-no" placeholder="Auto Generated">
-          <span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>
+          <input class="control__input t-value" type="text" data-bind="voucherNo" id="voucher-no" placeholder="Auto Generated" readonly>
+          <button type="button" class="pencil" data-act="unlock" aria-label="Edit voucher number"><span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span></button>
         </label>
       </div>
 
@@ -606,7 +612,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         </div>
         <label class="control" id="cc-class-control">
           <select class="control__select t-value" data-bind="costCentreClass"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
       </div>
 
@@ -616,7 +621,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <p class="t-label"><span class="req">*</span> Vendor Name</p>
         <label class="control">
           <select class="control__select t-value" data-bind="vendor"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
         <p class="field__error">Select the vendor</p>
       </div>
@@ -625,15 +629,14 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <p class="t-label">Cost Centre</p>
         <label class="control">
           <select class="control__select t-value" data-bind="vendorCostCentre"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
       </div>
 
       <div class="field card__full">
         <p class="t-label">Billing Address</p>
         <label class="control">
-          <input class="control__input t-value" type="text" data-bind="billingAddress" placeholder="Enter billing address">
-          <span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>
+          <input class="control__input t-value" type="text" data-bind="billingAddress" placeholder="Enter billing address" readonly>
+          <button type="button" class="pencil" data-act="unlock" aria-label="Edit billing address"><span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span></button>
         </label>
       </div>
 
@@ -641,7 +644,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <p class="t-label"><span class="req">*</span> GST Treatment</p>
         <label class="control">
           <select class="control__select t-value" data-bind="gstTreatment"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
         <p class="field__error">Select the vendor's GST treatment</p>
       </div>
@@ -649,8 +651,8 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
       <div class="field" data-field="gstin">
         <p class="t-label"><span class="req">*</span> GSTIN</p>
         <label class="control">
-          <input class="control__input t-value" type="text" data-bind="gstin" placeholder="Enter GSTIN">
-          <span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>
+          <input class="control__input t-value" type="text" data-bind="gstin" placeholder="Enter GSTIN" readonly>
+          <button type="button" class="pencil" data-act="unlock" aria-label="Edit GSTIN"><span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span></button>
         </label>
         <p class="field__error">A registered vendor needs a 15-character GSTIN</p>
       </div>
@@ -659,7 +661,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <p class="t-label"><span class="req">*</span> Source of Supply</p>
         <label class="control">
           <select class="control__select t-value" data-bind="sourceState"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
         <p class="field__error">Select the source state</p>
       </div>
@@ -668,7 +669,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <p class="t-label"><span class="req">*</span> Destination of Supply</p>
         <label class="control">
           <select class="control__select t-value" data-bind="destState"></select>
-          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
         </label>
         <p class="field__error">Select the destination state</p>
       </div>
@@ -1367,18 +1367,18 @@ function renderItems(){
           <button type="button" class="kindtoggle" data-f="kind" data-kind="${row.kind}"
                   title="Switch between goods and service">${row.kind==='service'?'Service':'Goods'}</button>
           <span class="hsn">HSN/SAC:
-            <input class="hsn__input" data-f="hsn" value="${esc(row.hsn)}" placeholder="—" aria-label="HSN or SAC code">
-            ${pencil}
+            <input class="hsn__input" data-f="hsn" value="${esc(row.hsn)}" placeholder="—" aria-label="HSN or SAC code" readonly>
+            <button type="button" class="pencil" data-act="unlock" aria-label="Edit HSN or SAC code">${pencil}</button>
           </span>
         </div>
       </div>
       <div class="tcell col-med">
         <label class="cell${ccLocked()?' is-disabled':''}">
-          <select class="cell__select t-cell" data-f="costCentre">${options2(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select>${caret}</label>
+          <select class="cell__select t-cell" data-f="costCentre">${options2(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select></label>
       </div>
       <div class="tcell col-godown">
         <label class="cell${row.kind==='service'?' is-disabled':''}">
-          <select class="cell__select t-cell" data-f="godown">${options2(MASTERS.godowns,row.kind==='service'?'Not applicable':'Select Godown/Location',row.godown)}</select>${caret}</label>
+          <select class="cell__select t-cell" data-f="godown">${options2(MASTERS.godowns,row.kind==='service'?'Not applicable':'Select Godown/Location',row.godown)}</select></label>
       </div>
       <div class="tcell col-qty">
         <div class="split"><input class="split__value t-cell" data-f="qty" inputmode="decimal" value="${row.qty||0}">
@@ -1393,7 +1393,7 @@ function renderItems(){
           ${row.discountType==='pct'?`<span class="ico ico-14 ico--muted"><svg width="14" height="14"><use href="#i-percent"/></svg></span>`:'₹'}${caret}</button></div>
       </div>
       <div class="tcell col-tax">
-        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select>${caret}</label>
+        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select></label>
       </div>
       <div class="tcell col-num${invalid?' is-invalid':''}">
         <label class="cell cell-num"><input class="cell__input t-cell" data-f="amountOverride" inputmode="decimal" value="${inr.format(l.taxable)}"></label>
@@ -1429,14 +1429,14 @@ function renderLedgers(){
         <label class="cell"><input class="cell__input t-cell" data-f="description" value="${esc(row.description)}" placeholder="Enter Description"></label>
       </div>
       <div class="tcell col-med">
-        <label class="cell">${ledgerSelect(row)}${caret}</label>
+        <label class="cell">${ledgerSelect(row)}</label>
       </div>
       <div class="tcell col-med">
         <label class="cell${ccLocked()?' is-disabled':''}">
-          <select class="cell__select t-cell" data-f="costCentre">${options(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select>${caret}</label>
+          <select class="cell__select t-cell" data-f="costCentre">${options(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select></label>
       </div>
       <div class="tcell col-tax">
-        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select>${caret}</label>
+        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select></label>
       </div>
       <div class="tcell col-num">
         <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${row.amount||0}"></label>
@@ -1505,7 +1505,7 @@ function renderTaxes(){
 
     return `<div class="trow" data-kind="taxLines" data-id="${row.id}">
       <div class="tcell col-wide tcell--grow">
-        <label class="cell"${tip}>${taxLedgerSelect(row)}${caret}</label>
+        <label class="cell"${tip}>${taxLedgerSelect(row)}</label>
         ${meta}
       </div>
       <div class="tcell col-tax">
@@ -1832,6 +1832,13 @@ document.addEventListener('click', e=>{
   if(btn.dataset.f==='clearOverride' && ctx?.row){
     ctx.row.amountOverride = null;
     render(); return;
+  }
+  if(btn.dataset.act==='unlock'){
+    const inp = btn.closest('.control,.hsn').querySelector('input');
+    inp.readOnly = false;
+    inp.focus(); inp.select();
+    inp.addEventListener('blur',()=>{ inp.readOnly = true; },{once:true});
+    return;
   }
   if(btn.dataset.act==='pickitem'){
     const inp = btn.closest('.cell').querySelector('input');
