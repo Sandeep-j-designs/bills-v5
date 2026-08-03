@@ -314,6 +314,7 @@ input,select,textarea{font:inherit}
 .split__addon{display:flex;align-items:center;justify-content:center;gap:3px;height:34px;min-width:28px;padding:0 6px;background:var(--surface);font-size:11px;color:var(--text-muted);border:1px solid var(--brand-soft);border-radius:0 var(--radius) var(--radius) 0}
 .split__addon--btn:hover{background:var(--bg-secondary)}
 
+.cellcaret{background:none;border:none;padding:0;display:inline-flex;flex:none}
 .row-menu{display:flex;align-items:center;justify-content:center;width:16px;height:16px;padding:0;background:none;border:none;transform:rotate(-90deg)}
 .checkbox{display:grid;place-items:center;width:20px;height:20px;padding:0;background:none;border:none}
 .checkbox__box{width:16px;height:16px;border-radius:3px;border:1px solid var(--brand-soft);background:var(--surface);display:grid;place-items:center;color:var(--surface)}
@@ -761,111 +762,216 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
    1. MASTERS
    ==========================================================================*/
 const STATES = [
-  ['AP','Andhra Pradesh','37'],['AS','Assam','18'],['BR','Bihar','10'],['CG','Chhattisgarh','22'],
+  ['AN','Andaman & Nicobar','35'],['AP','Andhra Pradesh','37'],['AR','Arunachal Pradesh','12'],
+  ['AS','Assam','18'],['BR','Bihar','10'],['CH','Chandigarh','04'],['CG','Chhattisgarh','22'],
   ['DL','Delhi','07'],['GA','Goa','30'],['GJ','Gujarat','24'],['HR','Haryana','06'],
   ['HP','Himachal Pradesh','02'],['JK','Jammu & Kashmir','01'],['JH','Jharkhand','20'],
-  ['KA','Karnataka','29'],['KL','Kerala','32'],['MP','Madhya Pradesh','23'],['MH','Maharashtra','27'],
-  ['OD','Odisha','21'],['PB','Punjab','03'],['RJ','Rajasthan','08'],['TN','Tamil Nadu','33'],
-  ['TG','Telangana','36'],['UP','Uttar Pradesh','09'],['UK','Uttarakhand','05'],['WB','West Bengal','19']
+  ['KA','Karnataka','29'],['KL','Kerala','32'],['LA','Ladakh','38'],['MP','Madhya Pradesh','23'],
+  ['MH','Maharashtra','27'],['MN','Manipur','14'],['ML','Meghalaya','17'],['MZ','Mizoram','15'],
+  ['NL','Nagaland','13'],['OD','Odisha','21'],['PY','Puducherry','34'],['PB','Punjab','03'],
+  ['RJ','Rajasthan','08'],['SK','Sikkim','11'],['TN','Tamil Nadu','33'],['TG','Telangana','36'],
+  ['TR','Tripura','16'],['UP','Uttar Pradesh','09'],['UK','Uttarakhand','05'],['WB','West Bengal','19'],
+  ['OT','Other Territory / Overseas','97']
 ].map(([code,name,gst])=>({id:code,name:`(${code}) ${name}`,plain:name,gst}));
 
 const MASTERS = {
   states:STATES,
+
   branches:[
-    {id:'br-ka',name:'Karbon Business — Karnataka (29)',gstin:'29AAFCK1234M1Z5',state:'KA'},
-    {id:'br-mh',name:'Karbon Business — Maharashtra (27)',gstin:'27AAFCK1234M1Z1',state:'MH'},
-    {id:'br-tn',name:'Karbon Business — Tamil Nadu (33)',gstin:'33AAFCK1234M1ZB',state:'TN'}
+    {id:'br-ka',name:'Karbon Business — Karnataka (29)',   gstin:'29AAFCK1234M1Z5',state:'KA'},
+    {id:'br-mh',name:'Karbon Business — Maharashtra (27)', gstin:'27AAFCK1234M1Z1',state:'MH'},
+    {id:'br-tn',name:'Karbon Business — Tamil Nadu (33)',  gstin:'33AAFCK1234M1ZB',state:'TN'},
+    {id:'br-dl',name:'Karbon Business — Delhi (07)',       gstin:'07AAFCK1234M1ZH',state:'DL'},
+    {id:'br-gj',name:'Karbon Business — Gujarat (24)',     gstin:'24AAFCK1234M1ZO',state:'GJ'},
+    {id:'br-tg',name:'Karbon Business — Telangana (36)',   gstin:'36AAFCK1234M1Z4',state:'TG'}
   ],
+
   voucherTypes:[
-    {id:'purchase',name:'Purchase',prefix:'PUR'},
-    {id:'purchase-imp',name:'Purchase — Import',prefix:'PIMP'},
-    {id:'debit-note',name:'Debit Note',prefix:'DN'}
+    {id:'purchase',    name:'Purchase',                prefix:'PUR'},
+    {id:'purchase-imp',name:'Purchase — Import',       prefix:'PIMP'},
+    {id:'purchase-sez',name:'Purchase — SEZ',          prefix:'PSEZ'},
+    {id:'purchase-rcm',name:'Purchase — Reverse Charge',prefix:'PRCM'},
+    {id:'purchase-ret',name:'Purchase Return',         prefix:'PRET'},
+    {id:'debit-note',  name:'Debit Note',              prefix:'DN'}
   ],
+
   gstTreatments:[
-    {id:'registered',name:'Registered Business'},
+    {id:'registered',  name:'Registered Business'},
     {id:'unregistered',name:'Unregistered Business'},
-    {id:'composition',name:'Composition Dealer'},
-    {id:'sez',name:'SEZ Unit'},
-    {id:'overseas',name:'Overseas / Import'}
+    {id:'composition', name:'Composition Dealer'},
+    {id:'sez',         name:'SEZ Unit'},
+    {id:'overseas',    name:'Overseas / Import'}
   ],
-  /* deductee type decides the 194C rate; PAN absence forces 20% u/s 206AA */
+
+  /* deductee type sets the 194C rate; a missing PAN forces 20% u/s 206AA.
+     fyGoods / fyServices are what is already booked against the vendor this
+     financial year — they drive the TDS threshold tests. */
   vendors:[
-    {id:'v-technova',name:'Technova Systems LLP',gstin:'29AAGFT1122R1Z8',pan:'AAGFT1122R',state:'KA',
-     credit:15,ledger:'led-purchase-local',treatment:'registered',deductee:'company',
-     address:'#7, 4th Cross, Koramangala Industrial Layout, Bengaluru — 560034',
-     fyGoods:4920000, fyServices:0},
-    {id:'v-sunrise',name:'Sunrise Stationers Pvt Ltd',gstin:'29AACCS8899P1ZQ',pan:'AACCS8899P',state:'KA',
-     credit:30,ledger:'led-purchase-local',treatment:'registered',deductee:'company',
-     address:'14, Nandidurga Road, Benson Town, Bengaluru — 560046',
-     fyGoods:860000, fyServices:0},
-    {id:'v-anand',name:'Anand Paper Mills Ltd',gstin:'27AAECA5566L1ZK',pan:'AAECA5566L',state:'MH',
-     credit:45,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',
-     address:'Plot 22, MIDC Andheri East, Mumbai — 400093',
-     fyGoods:5400000, fyServices:0},
-    {id:'v-kiran',name:'Kiran Associates (Consultants)',gstin:'',pan:'AFZPK7190K',state:'KA',
-     credit:15,ledger:'led-purchase-exempt',treatment:'unregistered',deductee:'individual',
-     address:'202, Shanti Nilaya, Jayanagar 4th Block, Bengaluru — 560011',
-     fyGoods:0, fyServices:210000},
-    {id:'v-globe',name:'Globe Logistics & Freight',gstin:'29AABCG3344H1ZP',pan:'AABCG3344H',state:'KA',
-     credit:7,ledger:'led-purchase-local',treatment:'registered',deductee:'company',
-     address:'Gate 3, Air Cargo Complex, Devanahalli, Bengaluru — 562110',
-     fyGoods:0, fyServices:640000}
+    {id:'v-technova',name:'Technova Systems LLP',        group:'Karnataka',  gstin:'29AAGFT1122R1Z8',pan:'AAGFT1122R',state:'KA',credit:15,ledger:'led-purchase-local',treatment:'registered',deductee:'company',   address:'#7, 4th Cross, Koramangala Industrial Layout, Bengaluru — 560034',fyGoods:4920000,fyServices:0},
+    {id:'v-sunrise', name:'Sunrise Stationers Pvt Ltd',  group:'Karnataka',  gstin:'29AACCS8899P1ZQ',pan:'AACCS8899P',state:'KA',credit:30,ledger:'led-purchase-local',treatment:'registered',deductee:'company',   address:'14, Nandidurga Road, Benson Town, Bengaluru — 560046',fyGoods:860000,fyServices:0},
+    {id:'v-globe',   name:'Globe Logistics & Freight',   group:'Karnataka',  gstin:'29AABCG3344H1ZP',pan:'AABCG3344H',state:'KA',credit:7, ledger:'led-purchase-local',treatment:'registered',deductee:'company',   address:'Gate 3, Air Cargo Complex, Devanahalli, Bengaluru — 562110',fyGoods:0,fyServices:640000},
+    {id:'v-meridian',name:'Meridian Facility Services',  group:'Karnataka',  gstin:'29AAECM7712J1ZD',pan:'AAECM7712J',state:'KA',credit:30,ledger:'led-purchase-local',treatment:'registered',deductee:'company',   address:'Unit 4, Jakkasandra Extension, Bengaluru — 560034',fyGoods:0,fyServices:1450000},
+    {id:'v-infinite',name:'Infinite Cloud Services',     group:'Karnataka',  gstin:'29AAFCI5590K1ZM',pan:'AAFCI5590K',state:'KA',credit:30,ledger:'led-purchase-local',treatment:'registered',deductee:'company',   address:'Level 9, Prestige Tech Park, Marathahalli, Bengaluru — 560103',fyGoods:0,fyServices:2400000},
+    {id:'v-samhita', name:'Samhita Realty Holdings',     group:'Karnataka',  gstin:'29AAJCS2201F1ZT',pan:'AAJCS2201F',state:'KA',credit:5, ledger:'led-purchase-local',treatment:'registered',deductee:'company',   address:'Samhita House, Residency Road, Bengaluru — 560025',fyGoods:0,fyServices:1800000},
+    {id:'v-lakshmi', name:'Lakshmi Catering Co',         group:'Karnataka',  gstin:'29AAFFL9087C1ZB',pan:'AAFFL9087C',state:'KA',credit:7, ledger:'led-purchase-local',treatment:'registered',deductee:'firm',      address:'22, 8th Main, Jayanagar 3rd Block, Bengaluru — 560011',fyGoods:0,fyServices:340000},
+    {id:'v-nirmala', name:'Nirmala Enterprises',         group:'Karnataka',  gstin:'29AKPPN4471L1ZS',pan:'AKPPN4471L',state:'KA',credit:15,ledger:'led-purchase-local',treatment:'registered',deductee:'individual',address:'56/2, Magadi Main Road, Bengaluru — 560079',fyGoods:180000,fyServices:120000},
+    {id:'v-ecoclean',name:'EcoClean Services',           group:'Karnataka',  gstin:'29AAGFE1180N1ZX',pan:'AAGFE1180N',state:'KA',credit:15,ledger:'led-purchase-local',treatment:'registered',deductee:'firm',      address:'9, Sarjapur Road, Bengaluru — 560035',fyGoods:0,fyServices:62000},
+    {id:'v-prakash', name:'Prakash Transport Co',        group:'Karnataka',  gstin:'29AAHFP6620E1ZG',pan:'',          state:'KA',credit:10,ledger:'led-purchase-local',treatment:'registered',deductee:'firm',      address:'Yard 12, Peenya Industrial Area, Bengaluru — 560058',fyGoods:0,fyServices:410000},
+    {id:'v-bluepeak',name:'BluePeak Interiors',          group:'Karnataka',  gstin:'29AAOFB3345M1ZK',pan:'AAOFB3345M',state:'KA',credit:20,ledger:'led-purchase-exempt',treatment:'composition',deductee:'firm',    address:'18, Church Street, Bengaluru — 560001',fyGoods:240000,fyServices:0},
+    {id:'v-kiran',   name:'Kiran Associates (Consultants)',group:'Karnataka',gstin:'',               pan:'AFZPK7190K',state:'KA',credit:15,ledger:'led-purchase-rcm',  treatment:'unregistered',deductee:'individual',address:'202, Shanti Nilaya, Jayanagar 4th Block, Bengaluru — 560011',fyGoods:0,fyServices:210000},
+    {id:'v-anand',   name:'Anand Paper Mills Ltd',       group:'Maharashtra',gstin:'27AAECA5566L1ZK',pan:'AAECA5566L',state:'MH',credit:45,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',   address:'Plot 22, MIDC Andheri East, Mumbai — 400093',fyGoods:5400000,fyServices:0},
+    {id:'v-cygnus',  name:'Cygnus Print Solutions',      group:'Maharashtra',gstin:'27AADCC9931B1ZL',pan:'AADCC9931B',state:'MH',credit:30,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',   address:'B-14, Lower Parel Industrial Estate, Mumbai — 400013',fyGoods:1120000,fyServices:0},
+    {id:'v-orient',  name:'Orient Hardware Traders',     group:'Tamil Nadu', gstin:'33AAFFO7788K1ZR',pan:'AAFFO7788K',state:'TN',credit:21,ledger:'led-purchase-inter',treatment:'registered',deductee:'firm',      address:'56, NSC Bose Road, Parrys, Chennai — 600001',fyGoods:760000,fyServices:0},
+    {id:'v-arka',    name:'Arka Renewables Pvt Ltd',     group:'Tamil Nadu', gstin:'33AAGCA4412P1ZC',pan:'AAGCA4412P',state:'TN',credit:60,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',   address:'SIPCOT Phase II, Hosur — 635109',fyGoods:4980000,fyServices:0},
+    {id:'v-falcon',  name:'Falcon Components (SEZ Unit)',group:'Tamil Nadu', gstin:'33AAECF2098D1ZW',pan:'AAECF2098D',state:'TN',credit:30,ledger:'led-purchase-sez',  treatment:'sez',        deductee:'company',   address:'MEPZ Special Economic Zone, Tambaram, Chennai — 600045',fyGoods:1450000,fyServices:0},
+    {id:'v-vertex',  name:'Vertex Legal LLP',            group:'Delhi',      gstin:'07AAJFV8802Q1ZY',pan:'AAJFV8802Q',state:'DL',credit:30,ledger:'led-purchase-inter',treatment:'registered',deductee:'firm',      address:'K-12, Connaught Circus, New Delhi — 110001',fyGoods:0,fyServices:640000},
+    {id:'v-shakti',  name:'Shakti Power Systems',        group:'Gujarat',    gstin:'24AACCS1123R1ZE',pan:'AACCS1123R',state:'GJ',credit:45,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',   address:'Plot 78, GIDC Vatva, Ahmedabad — 382445',fyGoods:2300000,fyServices:0},
+    {id:'v-dhanraj', name:'Dhanraj Metals & Alloys',     group:'Gujarat',    gstin:'24AABCD6654F1ZN',pan:'AABCD6654F',state:'GJ',credit:30,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',   address:'Survey 44, Odhav Ring Road, Ahmedabad — 382415',fyGoods:12400000,fyServices:0},
+    {id:'v-quantum', name:'Quantum Analytics Pvt Ltd',   group:'Telangana',  gstin:'36AAECQ7745H1ZV',pan:'AAECQ7745H',state:'TG',credit:30,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',   address:'Cyber Gateway, HITEC City, Hyderabad — 500081',fyGoods:0,fyServices:890000},
+    {id:'v-globaltech',name:'Global Tech Imports Pte Ltd',group:'Overseas',  gstin:'',               pan:'',          state:'OT',credit:60,ledger:'led-purchase-import',treatment:'overseas',   deductee:'company',   address:'138 Cecil Street, #12-01, Singapore 069538',fyGoods:3200000,fyServices:0}
   ],
+
   items:[
-    {id:'it-i3',   name:'i3/8GB/256GB SSD/Win 11 Pro Desktop',kind:'goods',hsn:'8471',unit:'Nos',rate:34500,tax:'tax-18',godown:'gd-main'},
-    {id:'it-mon',  name:'24" LED Monitor — IPS',            kind:'goods',hsn:'8528',unit:'Nos',rate:8200, tax:'tax-18',godown:'gd-main'},
-    {id:'it-kbm',  name:'Wireless Keyboard & Mouse Combo',  kind:'goods',hsn:'8471',unit:'Set',rate:1150, tax:'tax-18',godown:'gd-hsr'},
-    {id:'it-ups',  name:'UPS 600 VA Line-Interactive',      kind:'goods',hsn:'8504',unit:'Nos',rate:3150, tax:'tax-18',godown:'gd-main'},
-    {id:'it-a4',   name:'A4 Copier Paper 75 GSM',           kind:'goods',hsn:'4802',unit:'Ream',rate:245, tax:'tax-12',godown:'gd-main'},
-    {id:'it-amc',  name:'Onsite AMC — Desktop (per unit/yr)',kind:'service',hsn:'998713',unit:'Nos',rate:8000,tax:'tax-18',godown:''},
-    {id:'it-instl',name:'Installation & Commissioning',      kind:'service',hsn:'998739',unit:'Job',rate:45000,tax:'tax-18',godown:''}
+    {id:'it-i3',   name:'i3/8GB/256GB SSD/Win 11 Pro Desktop', group:'Goods — IT hardware',kind:'goods',  hsn:'8471',  unit:'Nos',  rate:34500, tax:'tax-18',godown:'gd-main'},
+    {id:'it-i5',   name:'i5/16GB/512GB SSD/Win 11 Pro Desktop',group:'Goods — IT hardware',kind:'goods',  hsn:'8471',  unit:'Nos',  rate:52800, tax:'tax-18',godown:'gd-main'},
+    {id:'it-lap',  name:'ThinkBook 14 — i5 Laptop',            group:'Goods — IT hardware',kind:'goods',  hsn:'8471',  unit:'Nos',  rate:61500, tax:'tax-18',godown:'gd-main'},
+    {id:'it-mon',  name:'24" LED Monitor — IPS',               group:'Goods — IT hardware',kind:'goods',  hsn:'8528',  unit:'Nos',  rate:8200,  tax:'tax-18',godown:'gd-main'},
+    {id:'it-mon27',name:'27" 4K Monitor',                      group:'Goods — IT hardware',kind:'goods',  hsn:'8528',  unit:'Nos',  rate:24900, tax:'tax-18',godown:'gd-main'},
+    {id:'it-kbm',  name:'Wireless Keyboard & Mouse Combo',     group:'Goods — IT hardware',kind:'goods',  hsn:'8471',  unit:'Set',  rate:1150,  tax:'tax-18',godown:'gd-hsr'},
+    {id:'it-dock', name:'USB-C Docking Station',               group:'Goods — IT hardware',kind:'goods',  hsn:'8471',  unit:'Nos',  rate:7400,  tax:'tax-18',godown:'gd-main'},
+    {id:'it-print',name:'Laser Printer — Mono Duplex',         group:'Goods — IT hardware',kind:'goods',  hsn:'8443',  unit:'Nos',  rate:18600, tax:'tax-18',godown:'gd-main'},
+    {id:'it-toner',name:'Laser Toner Cartridge 88A',           group:'Goods — IT hardware',kind:'goods',  hsn:'8443',  unit:'Nos',  rate:4850,  tax:'tax-18',godown:'gd-main'},
+    {id:'it-switch',name:'24-Port Gigabit Switch',             group:'Goods — Networking', kind:'goods',  hsn:'8517',  unit:'Nos',  rate:12400, tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-ap',   name:'Wi-Fi 6 Access Point',                group:'Goods — Networking', kind:'goods',  hsn:'8517',  unit:'Nos',  rate:8900,  tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-hdmi', name:'HDMI 2.0 Cable — 3 m',                group:'Goods — Networking', kind:'goods',  hsn:'8544',  unit:'Nos',  rate:520,   tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-cat6', name:'CAT-6 Patch Cable — 5 m',             group:'Goods — Networking', kind:'goods',  hsn:'8544',  unit:'Nos',  rate:180,   tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-cctv', name:'IP CCTV Camera — 4 MP',               group:'Goods — Networking', kind:'goods',  hsn:'8525',  unit:'Nos',  rate:5600,  tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-ups',  name:'UPS 600 VA Line-Interactive',         group:'Goods — Power',      kind:'goods',  hsn:'8504',  unit:'Nos',  rate:3150,  tax:'tax-18',godown:'gd-main'},
+    {id:'it-ups1k',name:'UPS 1 kVA with Isolation',            group:'Goods — Power',      kind:'goods',  hsn:'8504',  unit:'Nos',  rate:9800,  tax:'tax-18',godown:'gd-main'},
+    {id:'it-solar',name:'Solar Panel 540 Wp',                  group:'Goods — Power',      kind:'goods',  hsn:'8541',  unit:'Nos',  rate:14200, tax:'tax-12',godown:'gd-wh2'},
+    {id:'it-chair',name:'Ergonomic Task Chair',                group:'Goods — Furniture',  kind:'goods',  hsn:'9401',  unit:'Nos',  rate:8900,  tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-desk', name:'Height-Adjustable Desk — 1200 mm',    group:'Goods — Furniture',  kind:'goods',  hsn:'9403',  unit:'Nos',  rate:21500, tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-cab',  name:'Storage Cabinet — 4 Drawer',          group:'Goods — Furniture',  kind:'goods',  hsn:'9403',  unit:'Nos',  rate:12800, tax:'tax-18',godown:'gd-wh2'},
+    {id:'it-ac',   name:'Split AC 1.5 Ton — 5 Star',           group:'Goods — Facilities', kind:'goods',  hsn:'8415',  unit:'Nos',  rate:42500, tax:'tax-28',godown:'gd-main'},
+    {id:'it-water',name:'Water Dispenser — Hot & Cold',        group:'Goods — Facilities', kind:'goods',  hsn:'8418',  unit:'Nos',  rate:11200, tax:'tax-18',godown:'gd-main'},
+    {id:'it-a4',   name:'A4 Copier Paper 75 GSM',              group:'Goods — Stationery', kind:'goods',  hsn:'4802',  unit:'Ream', rate:245,   tax:'tax-12',godown:'gd-main'},
+    {id:'it-file', name:'Box File — Foolscap',                 group:'Goods — Stationery', kind:'goods',  hsn:'4820',  unit:'Nos',  rate:96,    tax:'tax-18',godown:'gd-hsr'},
+    {id:'it-note', name:'Spiral Notebook A5 (Pack of 6)',      group:'Goods — Stationery', kind:'goods',  hsn:'4820',  unit:'Pack', rate:320,   tax:'tax-12',godown:'gd-hsr'},
+    {id:'it-pen',  name:'Gel Pen 0.7 mm (Pack of 10)',         group:'Goods — Stationery', kind:'goods',  hsn:'9608',  unit:'Pack', rate:180,   tax:'tax-12',godown:'gd-hsr'},
+    {id:'it-tea',  name:'Tea & Coffee Premix',                 group:'Goods — Pantry',     kind:'goods',  hsn:'2101',  unit:'Kg',   rate:480,   tax:'tax-18',godown:'gd-main'},
+    {id:'it-sanit',name:'Hand Sanitiser 500 ml',               group:'Goods — Pantry',     kind:'goods',  hsn:'3808',  unit:'Nos',  rate:145,   tax:'tax-18',godown:'gd-main'},
+    {id:'it-mask', name:'N95 Mask (Box of 20)',                group:'Goods — Pantry',     kind:'goods',  hsn:'6307',  unit:'Box',  rate:640,   tax:'tax-5', godown:'gd-main'},
+    {id:'it-amc',  name:'Onsite AMC — Desktop (per unit/yr)',  group:'Services',           kind:'service',hsn:'998713',unit:'Nos',  rate:8000,  tax:'tax-18',godown:''},
+    {id:'it-instl',name:'Installation & Commissioning',        group:'Services',           kind:'service',hsn:'998739',unit:'Job',  rate:45000, tax:'tax-18',godown:''},
+    {id:'it-audit',name:'Network Security Audit',              group:'Services',           kind:'service',hsn:'998316',unit:'Job',  rate:125000,tax:'tax-18',godown:''},
+    {id:'it-train',name:'Corporate Training — per day',        group:'Services',           kind:'service',hsn:'999293',unit:'Day',  rate:18000, tax:'tax-18',godown:''},
+    {id:'it-clean',name:'Housekeeping — per month',            group:'Services',           kind:'service',hsn:'998533',unit:'Month',rate:42000, tax:'tax-18',godown:''}
   ],
+
   godowns:[
-    {id:'gd-main',name:'Main Store — Bengaluru'},
-    {id:'gd-hsr',name:'HSR Branch Store'},
-    {id:'gd-wh2',name:'Warehouse 2 — Peenya'}
+    {id:'gd-main',name:'Main Store — Bengaluru',    group:'Karnataka'},
+    {id:'gd-hsr', name:'HSR Branch Store',          group:'Karnataka'},
+    {id:'gd-wh2', name:'Warehouse 2 — Peenya',      group:'Karnataka'},
+    {id:'gd-mh',  name:'Warehouse — Bhiwandi',      group:'Maharashtra'},
+    {id:'gd-chn', name:'Chennai Depot',             group:'Tamil Nadu'},
+    {id:'gd-del', name:'Delhi Transit Store',       group:'Delhi'},
+    {id:'gd-tra', name:'Goods in Transit',          group:'Control'},
+    {id:'gd-rej', name:'Rejection Store',           group:'Control'}
   ],
+
   costCentres:[
-    {id:'cc-admin',name:'Administration'},{id:'cc-sales',name:'Sales & Marketing'},
-    {id:'cc-eng',name:'Engineering'},{id:'cc-ops',name:'Operations'}
+    {id:'cc-admin', name:'Administration',      group:'Departments'},
+    {id:'cc-fin',   name:'Finance & Accounts',  group:'Departments'},
+    {id:'cc-hr',    name:'Human Resources',     group:'Departments'},
+    {id:'cc-eng',   name:'Engineering',         group:'Departments'},
+    {id:'cc-design',name:'Product & Design',    group:'Departments'},
+    {id:'cc-sales', name:'Sales & Marketing',   group:'Departments'},
+    {id:'cc-cs',    name:'Customer Success',    group:'Departments'},
+    {id:'cc-ops',   name:'Operations',          group:'Departments'},
+    {id:'cc-it',    name:'IT & Infrastructure', group:'Departments'},
+    {id:'cc-legal', name:'Legal & Compliance',  group:'Departments'},
+    {id:'cc-atlas', name:'Project Atlas',       group:'Projects'},
+    {id:'cc-north', name:'Project Northstar',   group:'Projects'}
   ],
+
   costCentreClasses:[
-    {id:'ccc-dept',name:'Departmental Split'},{id:'ccc-eng',name:'Engineering — 100%'},{id:'ccc-ops',name:'Operations — 100%'}
+    {id:'ccc-dept', name:'Departmental Split (Admin 40 / Eng 35 / Sales 25)'},
+    {id:'ccc-eng',  name:'Engineering — 100%'},
+    {id:'ccc-ops',  name:'Operations — 100%'},
+    {id:'ccc-rev',  name:'Revenue Share (Sales 60 / Customer Success 40)'},
+    {id:'ccc-atlas',name:'Project Atlas — 100%'}
   ],
+
   purchaseLedgers:[
-    {id:'led-purchase-local',name:'Purchase — Local (GST)'},
-    {id:'led-purchase-inter',name:'Purchase — Interstate (GST)'},
-    {id:'led-purchase-exempt',name:'Purchase — Exempt'}
+    {id:'led-purchase-local',  name:'Purchase — Local (GST)'},
+    {id:'led-purchase-inter',  name:'Purchase — Interstate (GST)'},
+    {id:'led-purchase-exempt', name:'Purchase — Exempt'},
+    {id:'led-purchase-import', name:'Purchase — Import'},
+    {id:'led-purchase-sez',    name:'Purchase — SEZ'},
+    {id:'led-purchase-rcm',    name:'Purchase — Reverse Charge'},
+    {id:'led-purchase-capital',name:'Purchase — Capital Goods'}
   ],
-  /* expense ledgers carry the nature of payment, which drives TDS */
+
+  /* expense ledgers carry the nature of payment, which is what drives TDS */
   expenseLedgers:[
-    {id:'led-install',name:'Installation & Commissioning',tax:'tax-18',tds:'194C',sac:'998739'},
-    {id:'led-amc',name:'Annual Maintenance Contract',tax:'tax-18',tds:'194J-tech',sac:'998713'},
-    {id:'led-prof',name:'Professional / Consultancy Fees',tax:'tax-18',tds:'194J-prof',sac:'998311'},
-    {id:'led-freight',name:'Freight & Cartage Inward',tax:'tax-18',tds:'194C',sac:'996511'},
-    {id:'led-rent',name:'Rent — Plant & Machinery',tax:'tax-18',tds:'194I-pm',sac:'997314'},
-    {id:'led-packing',name:'Packing & Forwarding',tax:'tax-18',tds:'',sac:'998540'},
-    {id:'led-discount',name:'Trade Discount Received',tax:'tax-0',tds:'',sac:''}
+    {id:'led-install',  name:'Installation & Commissioning', group:'Contracted work',tax:'tax-18',tds:'194C',     sac:'998739'},
+    {id:'led-freight',  name:'Freight & Cartage Inward',     group:'Contracted work',tax:'tax-18',tds:'194C',     sac:'996511'},
+    {id:'led-courier',  name:'Courier & Postage',            group:'Contracted work',tax:'tax-18',tds:'194C',     sac:'996812'},
+    {id:'led-housekeep',name:'Housekeeping & Facility',      group:'Contracted work',tax:'tax-18',tds:'194C',     sac:'998533'},
+    {id:'led-security', name:'Security Services',            group:'Contracted work',tax:'tax-18',tds:'194C',     sac:'998525'},
+    {id:'led-advert',   name:'Advertising & Promotion',      group:'Contracted work',tax:'tax-18',tds:'194C',     sac:'998361'},
+    {id:'led-amc',      name:'Annual Maintenance Contract',  group:'Professional',   tax:'tax-18',tds:'194J-tech',sac:'998713'},
+    {id:'led-software', name:'Software Subscription',        group:'Professional',   tax:'tax-18',tds:'194J-tech',sac:'998434'},
+    {id:'led-prof',     name:'Professional / Consultancy Fees',group:'Professional', tax:'tax-18',tds:'194J-prof',sac:'998311'},
+    {id:'led-legal',    name:'Legal & Compliance Fees',      group:'Professional',   tax:'tax-18',tds:'194J-prof',sac:'998213'},
+    {id:'led-audit',    name:'Audit Fees',                   group:'Professional',   tax:'tax-18',tds:'194J-prof',sac:'998221'},
+    {id:'led-training', name:'Training & Development',       group:'Professional',   tax:'tax-18',tds:'194J-prof',sac:'999293'},
+    {id:'led-rent',     name:'Rent — Plant & Machinery',     group:'Rent & finance', tax:'tax-18',tds:'194I-pm',  sac:'997314'},
+    {id:'led-rentbld',  name:'Rent — Office Premises',       group:'Rent & finance', tax:'tax-18',tds:'194I-bld', sac:'997212'},
+    {id:'led-commission',name:'Commission / Brokerage',      group:'Rent & finance', tax:'tax-18',tds:'194H',     sac:'998599'},
+    {id:'led-interest', name:'Interest on Late Payment',     group:'Rent & finance', tax:'tax-0', tds:'194A',     sac:'997119'},
+    {id:'led-packing',  name:'Packing & Forwarding',         group:'No TDS',         tax:'tax-18',tds:'',         sac:'998540'},
+    {id:'led-travel',   name:'Travel & Conveyance',          group:'No TDS',         tax:'tax-5', tds:'',         sac:'996411'},
+    {id:'led-insurance',name:'Insurance Premium',            group:'No TDS',         tax:'tax-18',tds:'',         sac:'997134'},
+    {id:'led-discount', name:'Trade Discount Received',      group:'No TDS',         tax:'tax-0', tds:'',         sac:''}
   ],
+
   taxes:[
-    {id:'tax-0',name:'Nil Rated (0%)',rate:0},{id:'tax-5',name:'GST 5%',rate:5},
-    {id:'tax-12',name:'GST 12%',rate:12},{id:'tax-18',name:'GST 18%',rate:18},{id:'tax-28',name:'GST 28%',rate:28}
+    {id:'tax-0',   name:'Nil Rated (0%)', rate:0},
+    {id:'tax-025', name:'GST 0.25%',      rate:0.25},
+    {id:'tax-3',   name:'GST 3%',         rate:3},
+    {id:'tax-5',   name:'GST 5%',         rate:5},
+    {id:'tax-12',  name:'GST 12%',        rate:12},
+    {id:'tax-18',  name:'GST 18%',        rate:18},
+    {id:'tax-28',  name:'GST 28%',        rate:28}
   ],
+
   /* --- TDS sections ------------------------------------------------------
-     single  : per-invoice threshold, annual : aggregate threshold for the FY
-     rates for FY 2025-26 style purchase deductions                        */
+     single  : per-invoice threshold, annual : aggregate threshold for the FY */
   tdsSections:[
-    {id:'194C',     name:'194C — Contractor / Sub-contractor', rate:2,   rateIndividual:1, single:30000, annual:100000, base:'services'},
-    {id:'194J-tech',name:'194J — Technical services',          rate:2,   single:0, annual:30000, base:'services'},
-    {id:'194J-prof',name:'194J — Professional fees',           rate:10,  single:0, annual:30000, base:'services'},
-    {id:'194I-pm',  name:'194I — Rent (plant & machinery)',    rate:2,   single:0, annual:240000, base:'services'},
-    {id:'194Q',     name:'194Q — Purchase of goods',           rate:0.1, single:0, annual:5000000, base:'goods', onExcess:true}
+    {id:'194C',     name:'194C — Contractor / Sub-contractor', rate:2,  rateIndividual:1, single:30000, annual:100000, base:'services'},
+    {id:'194J-tech',name:'194J — Technical services',          rate:2,  single:0, annual:30000,  base:'services'},
+    {id:'194J-prof',name:'194J — Professional fees',           rate:10, single:0, annual:30000,  base:'services'},
+    {id:'194H',     name:'194H — Commission / brokerage',      rate:2,  single:0, annual:20000,  base:'services'},
+    {id:'194I-pm',  name:'194I — Rent (plant & machinery)',    rate:2,  single:0, annual:240000, base:'services'},
+    {id:'194I-bld', name:'194I — Rent (land & building)',      rate:10, single:0, annual:240000, base:'services'},
+    {id:'194A',     name:'194A — Interest other than securities',rate:10,single:0,annual:40000,  base:'services'},
+    {id:'194Q',     name:'194Q — Purchase of goods',           rate:0.1,single:0, annual:5000000,base:'goods', onExcess:true}
   ],
+
+  /* already in the books — used for the duplicate-invoice check */
   existingBills:[
     {vendor:'v-technova',invoiceNo:'TNS/25-26/0912',date:'2026-06-18',amount:412000},
-    {vendor:'v-sunrise',invoiceNo:'SS/2026-27/2312',date:'2026-06-30',amount:22450}
+    {vendor:'v-technova',invoiceNo:'TNS/25-26/0977',date:'2026-07-02',amount:238500},
+    {vendor:'v-sunrise', invoiceNo:'SS/2026-27/2312',date:'2026-06-30',amount:22450},
+    {vendor:'v-anand',   invoiceNo:'APM/26/4471',   date:'2026-07-09',amount:1180000},
+    {vendor:'v-globe',   invoiceNo:'GLF-88213',     date:'2026-07-15',amount:64800},
+    {vendor:'v-meridian',invoiceNo:'MFS/JUL/2026',  date:'2026-07-01',amount:145000},
+    {vendor:'v-vertex',  invoiceNo:'VL-2026-118',   date:'2026-06-24',amount:275000},
+    {vendor:'v-dhanraj', invoiceNo:'DMA/26-27/0330',date:'2026-07-20',amount:2140000}
   ],
-  lastVoucherSeq:{purchase:184,'purchase-imp':12,'debit-note':31}
+
+  lastVoucherSeq:{purchase:184,'purchase-imp':12,'purchase-sez':4,'purchase-rcm':9,'purchase-ret':6,'debit-note':31}
 };
 
 /* The document the demo extraction "reads". Goods cross the 194Q threshold and
@@ -924,9 +1030,25 @@ function fyLabel(iso){                                   // Indian FY runs Apr�
   const start = m>=4 ? y : y-1;
   return `${String(start).slice(2)}-${String(start+1).slice(2)}`;
 }
+const optionTag = (o,selected)=>`<option value="${o.id}"${o.id===selected?' selected':''}>${esc(o.name)}</option>`;
 function options(list,placeholder,selected){
   return (placeholder?`<option value=""${selected?'':' selected'} disabled>${esc(placeholder)}</option>`:'') +
-    list.map(o=>`<option value="${o.id}"${o.id===selected?' selected':''}>${esc(o.name)}</option>`).join('');
+    list.map(o=>optionTag(o,selected)).join('');
+}
+/* same, but honouring a `group` field so long lists stay scannable */
+function options2(list,placeholder,selected){
+  const groups = new Map();
+  list.forEach(o=>{
+    const g = o.group||'';
+    if(!groups.has(g)) groups.set(g,[]);
+    groups.get(g).push(o);
+  });
+  let html = placeholder?`<option value=""${selected?'':' selected'} disabled>${esc(placeholder)}</option>`:'';
+  groups.forEach((items,g)=>{
+    const inner = items.map(o=>optionTag(o,selected)).join('');
+    html += g ? `<optgroup label="${esc(g)}">${inner}</optgroup>` : inner;
+  });
+  return html;
 }
 function toast(msg,kind=''){
   const el = document.createElement('div');
@@ -947,7 +1069,7 @@ let state;
 
 function freshState(){
   return {
-    mode:'item', ccMode:'class',
+    mode:'item', ccMode:'centre',
     branch:'', voucherType:'purchase', voucherNo:'', voucherDate:today(), billDate:'', dueDate:'',
     supplierInvoiceNo:'', costCentreClass:'',
     vendor:'', vendorCostCentre:'', billingAddress:'', gstTreatment:'', gstin:'',
@@ -1143,7 +1265,8 @@ function ledgerSelect(row){
   return `<select class="cell__select t-cell" data-f="ledger">
     <option value=""${row.ledger?'':' selected'} disabled>Select Ledger</option>
     <optgroup label="Purchase">${MASTERS.purchaseLedgers.map(opt).join('')}</optgroup>
-    <optgroup label="Expenses & charges">${MASTERS.expenseLedgers.map(opt).join('')}</optgroup>
+    ${[...new Set(MASTERS.expenseLedgers.map(l=>l.group))].map(g=>
+      `<optgroup label="${esc(g)}">${MASTERS.expenseLedgers.filter(l=>l.group===g).map(opt).join('')}</optgroup>`).join('')}
   </select>`;
 }
 
@@ -1238,7 +1361,8 @@ function renderItems(){
         <label class="cell"><input class="cell__input t-cell" data-f="description" value="${esc(row.description)}" placeholder="Enter Description"></label>
       </div>
       <div class="tcell col-item">
-        <label class="cell"><input class="cell__input t-cell" data-f="item" list="items-list" value="${esc(master?master.name:row.item)}" placeholder="Type or Select Item">${caret}</label>
+        <label class="cell"><input class="cell__input t-cell" data-f="item" list="items-list" value="${esc(master?master.name:row.item)}" placeholder="Type or Select Item">
+          <button type="button" class="cellcaret" data-act="pickitem" aria-label="Show item suggestions">${caret}</button></label>
         <div class="itemmeta">
           <button type="button" class="kindtoggle" data-f="kind" data-kind="${row.kind}"
                   title="Switch between goods and service">${row.kind==='service'?'Service':'Goods'}</button>
@@ -1250,11 +1374,11 @@ function renderItems(){
       </div>
       <div class="tcell col-med">
         <label class="cell${ccLocked()?' is-disabled':''}">
-          <select class="cell__select t-cell" data-f="costCentre">${options(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select>${caret}</label>
+          <select class="cell__select t-cell" data-f="costCentre">${options2(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select>${caret}</label>
       </div>
       <div class="tcell col-godown">
         <label class="cell${row.kind==='service'?' is-disabled':''}">
-          <select class="cell__select t-cell" data-f="godown">${options(MASTERS.godowns,row.kind==='service'?'Not applicable':'Select Godown/Location',row.godown)}</select>${caret}</label>
+          <select class="cell__select t-cell" data-f="godown">${options2(MASTERS.godowns,row.kind==='service'?'Not applicable':'Select Godown/Location',row.godown)}</select>${caret}</label>
       </div>
       <div class="tcell col-qty">
         <div class="split"><input class="split__value t-cell" data-f="qty" inputmode="decimal" value="${row.qty||0}">
@@ -1456,7 +1580,6 @@ function renderHeader(){
   $('#cc-toggle').setAttribute('aria-checked', state.ccMode==='centre');
   $('#cc-label-class').classList.toggle('is-off', state.ccMode==='centre');
   $('#cc-label-centre').classList.toggle('is-off', state.ccMode==='class');
-  $('#cc-class-control').classList.toggle('is-disabled', state.ccMode==='centre');
   $('#block-items').hidden = state.mode!=='item';
   $$('.segmented button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===state.mode));
 }
@@ -1541,6 +1664,7 @@ document.addEventListener('change', e=>{
     state.reverseCharge = el.value==='yes';
   }else{
     state[bind] = el.value;
+    if(bind==='costCentreClass' && el.value) state.ccMode='class';   // picking a class applies it
     if(bind==='vendor') applyVendor();
     if(bind==='branch') applyBranch();
     if(bind==='gstTreatment') applyTreatment();
@@ -1557,6 +1681,7 @@ function applyVendor(){
   state.sourceState    = v.state;                       // supply moves vendor -> branch
   if(!state.purchaseLedger) state.purchaseLedger = v.ledger;
   if(state.billDate) state.dueDate = addDays(state.billDate, v.credit);
+  applyTreatment();                        // the vendor's treatment may force RCM
   syncLedgerToSupply();
 }
 function applyBranch(){
@@ -1566,7 +1691,8 @@ function applyBranch(){
 }
 function applyTreatment(){
   // an unregistered supplier shifts the liability to the recipient
-  if(state.gstTreatment==='unregistered'){ state.reverseCharge = true; state.gstin=''; }
+  if(state.gstTreatment==='unregistered'){ state.reverseCharge = true; state.gstin = ''; }
+  else if(state.gstTreatment){ state.reverseCharge = false; }
   if(state.gstTreatment==='registered' && !state.gstin){
     state.gstin = byId(MASTERS.vendors,state.vendor)?.gstin || '';
   }
@@ -1707,6 +1833,11 @@ document.addEventListener('click', e=>{
   if(btn.dataset.f==='clearOverride' && ctx?.row){
     ctx.row.amountOverride = null;
     render(); return;
+  }
+  if(btn.dataset.act==='pickitem'){
+    const inp = btn.closest('.cell').querySelector('input');
+    inp.focus(); inp.showPicker?.();
+    return;
   }
   if(btn.dataset.act==='menu' && ctx?.row){ openRowMenu(btn, ctx); return; }
 
@@ -1921,13 +2052,13 @@ pane.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) runExtr
 function previewVoucherNo(){
   const vt = byId(MASTERS.voucherTypes,state.voucherType);
   if(!vt) return 'Auto Generated';
-  const seq = MASTERS.lastVoucherSeq[state.voucherType]+1;
+  const seq = (MASTERS.lastVoucherSeq[state.voucherType]||0)+1;
   return `${vt.prefix}/${fyLabel(state.voucherDate)}/${String(seq).padStart(3,'0')}`;
 }
 function nextVoucherNo(){
   if(state.voucherNo.trim()) return state.voucherNo.trim();   // hand-typed wins
   const vt = byId(MASTERS.voucherTypes,state.voucherType);
-  const seq = ++MASTERS.lastVoucherSeq[state.voucherType];
+  const seq = MASTERS.lastVoucherSeq[state.voucherType] = (MASTERS.lastVoucherSeq[state.voucherType]||0)+1;
   return `${vt.prefix}/${fyLabel(state.voucherDate)}/${String(seq).padStart(3,'0')}`;
 }
 
@@ -2071,8 +2202,8 @@ function reset(){
 function boot(){
   $('[data-bind="branch"]').innerHTML           = options(MASTERS.branches,'Select Location','');
   $('[data-bind="voucherType"]').innerHTML      = options(MASTERS.voucherTypes,'Select Voucher Type','purchase');
-  $('[data-bind="vendor"]').innerHTML           = options(MASTERS.vendors,'Select Vendor','');
-  $('[data-bind="vendorCostCentre"]').innerHTML = options(MASTERS.costCentres,'Select Cost Centre','');
+  $('[data-bind="vendor"]').innerHTML           = options2(MASTERS.vendors,'Select Vendor','');
+  $('[data-bind="vendorCostCentre"]').innerHTML = options2(MASTERS.costCentres,'Select Cost Centre','');
   $('[data-bind="costCentreClass"]').innerHTML  = options(MASTERS.costCentreClasses,'Select Cost Centre Class','');
   $('[data-bind="purchaseLedger"]').innerHTML   = options(MASTERS.purchaseLedgers,'Select Ledger','');
   $('[data-bind="gstTreatment"]').innerHTML     = options(MASTERS.gstTreatments,'Select GST Treatment','');
@@ -2081,7 +2212,7 @@ function boot(){
 
   const dl = document.createElement('datalist');
   dl.id = 'items-list';
-  dl.innerHTML = MASTERS.items.map(i=>`<option value="${esc(i.name)}">${esc(i.kind)} · ${esc(i.hsn)} · ₹${i.rate}</option>`).join('');
+  dl.innerHTML = MASTERS.items.map(i=>`<option value="${esc(i.name)}">${esc(i.group)} · HSN/SAC ${esc(i.hsn)} · ${esc(i.unit)} · ₹${inr.format(i.rate)}</option>`).join('');
   document.body.append(dl);
 
   state = freshState();
