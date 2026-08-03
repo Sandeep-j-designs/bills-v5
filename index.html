@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New Bill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------- tokens */
+:root{
+  --surface:#ffffff;
+  --bg-primary:#fbfbfe;
+  --bg-secondary:#f6f7ff;
+  --stroke:#efefef;
+  --interactive:#e2e5fb;
+
+  --brand:#465ed5;
+  --brand-deep:#3146b0;
+  --brand-soft:#bac3f4;
+  --on-brand:#ffffff;
+
+  --text:#1e1e1e;
+  --text-muted:#707070;
+  --danger:#fd1717;
+  --success:#128a53;
+  --warning:#a86400;
+
+  --font:'Open Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --radius:6px;
+  --topbar-h:51px;
+  --gutter:20px;
+  --doc-w:50%;                                        /* dragged by the splitter */
+  --pane-h:clamp(420px,calc(100vh - var(--topbar-h) - var(--gutter) * 2),806px);
+
+  --field-shadow:drop-shadow(0 1px 1px rgba(0,0,0,.07));
+  --knob-shadow:0 2px 4px rgba(39,39,39,.1);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--surface);color:var(--text);
+  font-family:var(--font);-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p,dl,dd,dt{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit}
+[hidden]{display:none !important}
+
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ------------------------------------------------------------- typography */
+.t-title  {font-size:24px;line-height:30px;letter-spacing:-.15px;font-weight:500}
+.t-section{font-size:16px;line-height:22px;letter-spacing:-.18px;font-weight:600;color:var(--text-muted)}
+.t-label  {font-size:12px;line-height:16px;letter-spacing:-.12px;font-weight:600;color:var(--text-muted)}
+.t-value  {font-size:14px;line-height:20px;letter-spacing:-.16px;font-weight:400;color:var(--text-muted)}
+.t-cell   {font-size:12px;line-height:20px;font-weight:400;color:var(--text-muted)}
+.req{color:var(--danger)}
+
+/* ----------------------------------------------------------------- icons */
+.ico{display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ico svg{display:block}
+.ico-11{width:11px;height:11px}
+.ico-12{width:12px;height:12px}
+.ico-13{width:13px;height:13px}
+.ico-14{width:14px;height:14px}
+.ico-16{width:16px;height:16px}
+.ico-18{width:18px;height:18px}
+.ico-20{width:20px;height:20px}
+.ico--muted{color:var(--text-muted)}
+.ico--brand{color:var(--brand-deep)}
+
+/* --------------------------------------------------------------- buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  height:34px;padding:8px 16px;border-radius:var(--radius);border:none;
+  font-size:14px;line-height:20px;letter-spacing:-.16px;font-weight:600;white-space:nowrap;
+}
+.btn--outline{background:var(--surface);border:1px solid var(--brand-soft);color:var(--brand-deep)}
+.btn--outline:hover{background:var(--bg-secondary)}
+.btn--solid{background:var(--brand);color:var(--on-brand)}
+.btn--solid:hover:not(:disabled){background:var(--brand-deep)}
+.btn--solid:disabled{opacity:.4;cursor:not-allowed}
+.btn--quiet{background:transparent;color:var(--brand-deep);padding-inline:0;align-self:flex-start}
+.btn--quiet:hover{text-decoration:underline}
+.btn--danger{background:transparent;color:var(--danger);border:1px solid currentColor;height:28px;padding:4px 12px;font-size:12px}
+.link{background:none;border:none;padding:0;color:var(--brand-deep);font-size:12px;text-decoration:underline;font-weight:600}
+
+/* ---------------------------------------------------------------- topbar */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:10px var(--gutter);background:var(--surface);border-bottom:1px solid var(--stroke);
+}
+.topbar__meta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.topbar__ref{font-size:12px;color:var(--text-muted)}
+.topbar__actions{display:flex;align-items:center;gap:12px}
+
+/* ------------------------------------------------------------- workspace */
+.workspace{display:flex;align-items:flex-start;gap:16px;max-width:1440px;margin:0 auto;padding:var(--gutter) 12px}
+.workspace.is-resizing{user-select:none;cursor:col-resize}
+
+/* --------------------------------------------------------- document pane */
+.doc-pane{
+  position:sticky;top:calc(var(--topbar-h) + var(--gutter));
+  flex:0 0 var(--doc-w);min-width:0;
+  display:flex;align-items:center;justify-content:center;
+  height:var(--pane-h);padding:20px 16px;
+  background:var(--bg-primary);border:1px solid var(--stroke);border-radius:var(--radius);
+}
+.doc-pane.is-dropping{border-color:var(--brand-soft);background:var(--bg-secondary)}
+.doc-pane.is-loaded{align-items:stretch;padding:0;background:var(--surface);overflow:hidden}
+.doc-pane__inner{display:flex;flex-direction:column;align-items:center;gap:32px;max-width:280px;text-align:center}
+.doc-pane__heading{display:flex;align-items:center;gap:14px}
+.doc-pane__heading p{font-size:16px;line-height:23px;font-weight:600;color:var(--text-muted)}
+.doc-pane__hint{display:flex;align-items:center;gap:9px}
+.doc-pane__hint p{font-size:12px;line-height:20px;font-weight:600;color:var(--text-muted)}
+.doc-pane__upload{display:flex;flex-direction:column;align-items:center;gap:16px}
+.doc-pane__formats{font-size:12px;line-height:20px;color:var(--text-muted)}
+
+.extract{display:flex;flex-direction:column;gap:20px;width:100%;max-width:340px}
+.extract__file{display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;font-weight:600}
+.extract__bar{height:4px;border-radius:99px;background:var(--interactive);overflow:hidden}
+.extract__fill{height:100%;width:0;border-radius:99px;background:var(--brand);transition:width .45s ease}
+.steps{display:flex;flex-direction:column;gap:10px;text-align:left}
+.step{display:flex;align-items:center;gap:10px;font-size:12px;line-height:18px;color:var(--text-muted);opacity:.45;transition:opacity .2s}
+.step.is-active,.step.is-done{opacity:1}
+.step.is-done{color:var(--text)}
+.step__dot{flex:none;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--brand-soft);display:grid;place-items:center;color:var(--surface)}
+.step.is-active .step__dot{border-color:var(--brand);border-right-color:transparent;animation:spin .7s linear infinite}
+.step.is-done .step__dot{background:var(--brand-deep);border-color:var(--brand-deep)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.preview{display:flex;flex-direction:column;height:100%;width:100%}
+.preview__bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--stroke);background:var(--bg-primary)}
+.preview__name{font-size:12px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview__body{flex:1;min-height:0;overflow:auto;background:#f2f3f7;padding:16px;display:flex;justify-content:center}
+.preview__body embed,.preview__body img{width:100%;max-width:640px;height:100%;min-height:520px;border:none;background:#fff}
+.preview__body img{object-fit:contain;height:auto}
+
+.inv{width:100%;max-width:640px;background:#fff;padding:26px 28px;font-size:11px;line-height:1.55;color:#222;box-shadow:0 1px 3px rgba(0,0,0,.12);height:max-content}
+.inv h3{font-size:15px;letter-spacing:.02em}
+.inv__head{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid #222;padding-bottom:10px}
+.inv__title{text-align:right;font-size:13px;font-weight:700;letter-spacing:.14em;color:#555}
+.inv__parties{display:flex;gap:20px;padding:12px 0;border-bottom:1px solid #ddd}
+.inv__parties>div{flex:1}
+.inv__k{color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.inv table{width:100%;border-collapse:collapse;margin-top:12px;font-size:10.5px}
+.inv th{background:#f3f4f8;text-align:left;padding:6px;border:1px solid #ddd;font-size:10px}
+.inv td{padding:6px;border:1px solid #e5e5e5;vertical-align:top}
+.inv .num{text-align:right;white-space:nowrap}
+.inv__totals{margin-left:auto;width:62%;margin-top:10px}
+.inv__totals td{border:none;padding:3px 6px}
+.inv__grand td{border-top:1.5px solid #222;font-weight:700;font-size:12px;padding-top:6px}
+.inv__foot{margin-top:16px;padding-top:10px;border-top:1px dashed #ccc;color:#777;font-size:10px}
+
+/* ------------------------------------------------------- resize splitter */
+.splitter{
+  position:sticky;top:calc(var(--topbar-h) + var(--gutter));
+  flex:0 0 6px;height:var(--pane-h);border:none;padding:0;background:none;cursor:col-resize;touch-action:none;
+}
+.splitter::before{content:"";display:block;width:2px;height:100%;margin:0 auto;border-radius:99px;background:var(--stroke);transition:background .12s ease}
+.splitter:hover::before,.splitter:focus-visible::before,.is-resizing .splitter::before{background:var(--brand-soft)}
+.splitter:focus-visible{outline:none}
+
+/* -------------------------------------------------------- form container */
+.form{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:32px}
+.form__narrow{width:100%;max-width:642px}
+
+/* ---------------------------------------------------------------- banner */
+.banner{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--radius);background:var(--bg-secondary);border:1px solid var(--brand-soft);font-size:12px;line-height:18px}
+.banner--warn{background:#fff8e8;border-color:#f0d69a}
+.banner__body{flex:1}
+.banner__title{font-weight:700;color:var(--text);margin-bottom:2px}
+.banner p{color:var(--text-muted)}
+
+/* ------------------------------------------------------------- segmented */
+.segmented{display:inline-flex;align-self:flex-start;border-radius:var(--radius)}
+.segmented button{padding:4px 16px;background:var(--surface);border:1px solid var(--brand-soft);font-size:14px;line-height:22px;font-weight:600;color:var(--text-muted)}
+.segmented button:first-child{border-radius:var(--radius) 0 0 var(--radius)}
+.segmented button:last-child{border-left:none;border-radius:0 var(--radius) var(--radius) 0}
+.segmented button[aria-pressed="true"]{background:var(--bg-secondary);color:var(--brand-deep)}
+
+/* ------------------------------------------------------------- form card */
+.card{padding:20px;border-radius:var(--radius);background:var(--bg-primary);display:grid;grid-template-columns:1fr 1fr;gap:24px 30px}
+.card__full{grid-column:1/-1}
+.card__group{display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-width:0}
+.field__error{font-size:11px;line-height:14px;color:var(--danger);display:none}
+.field.is-invalid .field__error{display:block}
+.field.is-invalid .control{border-color:var(--danger)}
+
+/* ------------------------------------------------------- inputs & selects */
+.control{
+  position:relative;display:flex;align-items:center;gap:8px;width:100%;height:34px;
+  padding:8px 16px;border:1px solid var(--brand-soft);border-radius:var(--radius);
+  background:var(--surface);filter:var(--field-shadow);text-align:left;
+}
+.control:focus-within{border-color:var(--brand-deep)}
+.control > .t-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.control__input,.control__select{flex:1;min-width:0;appearance:none;border:none;background:none;outline:none;padding:0;color:var(--text-muted);text-overflow:ellipsis}
+.control__input::placeholder{color:var(--text-muted);opacity:1}
+.control.is-disabled{opacity:.6;pointer-events:none}
+.control__date{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;padding:0;cursor:pointer}
+.control.is-extracted,.cell.is-extracted{background:#eef1ff;border-color:var(--brand-soft)}
+.pencil{background:none;border:none;padding:0;display:inline-flex;color:var(--brand-deep)}
+
+/* ---------------------------------------------------------------- switch */
+.switch{position:relative;width:36px;height:20px;flex:none;padding:0;border:none;border-radius:100px;background:var(--interactive)}
+.switch::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:100px;background:var(--surface);box-shadow:var(--knob-shadow);transition:left .15s ease}
+.switch[aria-checked="true"]{background:var(--brand)}
+.switch[aria-checked="true"]::after{left:18px}
+.switch-row{display:flex;align-items:center;gap:24px}
+.switch-row p.is-off{opacity:.5}
+
+/* ----------------------------------------------------------------- block */
+.block{display:flex;flex-direction:column;gap:16px}
+.picker{display:flex;align-items:center;gap:18px;padding:8px 0;flex-wrap:wrap}
+.picker__label{font-size:14px;line-height:20px;color:var(--text)}
+.picker select{
+  appearance:none;border:none;background:none;outline:none;padding:0 18px 0 0;
+  color:var(--brand-deep);font-size:12px;line-height:20px;cursor:pointer;
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 13 13' fill='none'%3E%3Cpath d='M3.25 5.875 6.5 9.125 9.75 5.875' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right center;
+}
+.hint{font-size:11px;line-height:16px;color:var(--text-muted)}
+
+/* ---------------------------------------------------------------- tables */
+.table-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--brand-soft) transparent}
+.table-scroll::-webkit-scrollbar{height:8px}
+.table-scroll::-webkit-scrollbar-thumb{background:var(--brand-soft);border-radius:99px}
+.table-scroll::-webkit-scrollbar-track{background:transparent}
+
+/* width:100% keeps every table flush with its container (so the tables line
+   up); min-width:max-content makes it scroll instead of squashing */
+.table{display:flex;flex-direction:column;width:100%;min-width:max-content;background:var(--surface)}
+.trow{display:flex}
+.trow--empty{padding:18px 12px;font-size:12px;color:var(--text-muted);border:1px solid var(--stroke);border-top:none}
+/* Every body cell is a grid with a fixed 34px control row, so the primary
+   field lines up across the whole row regardless of what sits beneath it.
+   Tables whose rows carry a second line reserve that track in every cell. */
+.tcell{
+  flex:none;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:34px;
+  align-content:center;gap:8px;
+  padding:12px 10px;border:1px solid var(--stroke);border-top:none;border-right:none;min-height:75px;
+}
+.table--meta .tcell{grid-template-rows:34px 28px;min-height:94px}
+.tcell--last{border-right:1px solid var(--stroke)}
+.trow--head .tcell{
+  display:flex;min-height:42px;border:none;background:var(--bg-secondary);
+  font-size:14px;line-height:22px;font-weight:600;color:var(--text-muted);white-space:nowrap;
+  flex-direction:row;align-items:center;justify-content:flex-start;gap:0;padding:10px;
+}
+.trow--head .tcell--end{justify-content:flex-end}
+.trow--head .tcell--check{justify-content:center}
+.trow.is-selected .tcell{background:#f8f9ff}
+.tcell--check{justify-items:center;padding:12px 10px}
+.tcell--end{justify-items:end}
+.tcell--grow{flex:1 1 auto;min-width:0}
+
+.col-check {width:30px}
+.col-menu  {width:43px}
+.col-qty   {width:115px}
+.col-num   {width:167px}
+.col-tax   {width:167px}
+.col-item  {width:262px}
+.col-godown{width:220px}
+.col-med   {width:223px}
+.col-desc  {width:230px}
+.col-wide  {width:260px}
+
+.cell{
+  display:flex;align-items:center;gap:8px;width:100%;height:34px;padding:6px 15px;
+  border:1px solid var(--brand-soft);border-radius:var(--radius);background:var(--surface);text-align:left;
+}
+.cell:focus-within{border-color:var(--brand-deep)}
+.cell > .t-cell{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell__input,.cell__select{flex:1;min-width:0;appearance:none;border:none;background:none;outline:none;padding:0;color:var(--text-muted);text-overflow:ellipsis}
+.cell__input::placeholder{color:var(--text-muted);opacity:1}
+.cell.is-disabled{opacity:.55;pointer-events:none}
+.cell-num,.cell-num .cell__input{text-align:right}
+.cell-center .cell__input{text-align:center}
+.tcell.is-invalid .cell{border-color:var(--danger)}
+
+/* goods/service toggle and HSN sit side by side under the item picker */
+.itemmeta{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
+.kindtoggle{
+  flex:none;padding:5px 12px;border:none;border-radius:var(--radius);
+  background:var(--brand);color:#fff;font-size:12px;font-weight:600;line-height:18px;
+}
+.kindtoggle[data-kind="service"]{background:#0f7b8a}
+.hsn{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);min-width:0;white-space:nowrap}
+.hsn__input{
+  width:100%;min-width:44px;max-width:130px;border:none;border-bottom:1px dashed transparent;
+  background:none;outline:none;color:var(--text);font-size:12px;padding:1px 0;
+}
+.hsn__input:hover{border-bottom-color:var(--brand-soft)}
+.hsn__input:focus{border-bottom-color:var(--brand-deep)}
+
+/* ITC chip under a tax ledger */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+  padding:4px 10px;border-radius:var(--radius);border:none;
+  background:#f1f2f6;color:var(--text);font-size:11px;font-weight:600;line-height:16px;
+}
+.chip--no{background:#ffeaea;color:#8c1111}
+
+/* split field — value + unit/type affordance */
+.split{display:flex;align-items:center;height:34px;width:100%}
+.split__value{flex:1;min-width:0;height:34px;padding:5px 10px;text-align:right;border:1px solid var(--brand-soft);border-right:none;border-radius:var(--radius) 0 0 var(--radius);background:var(--surface);outline:none;color:var(--text-muted)}
+.split__value:focus{border-color:var(--brand-deep)}
+.split__addon{display:flex;align-items:center;justify-content:center;gap:3px;height:34px;min-width:28px;padding:0 6px;background:var(--surface);font-size:11px;color:var(--text-muted);border:1px solid var(--brand-soft);border-radius:0 var(--radius) var(--radius) 0}
+.split__addon--btn:hover{background:var(--bg-secondary)}
+
+.row-menu{display:flex;align-items:center;justify-content:center;width:16px;height:16px;padding:0;background:none;border:none;transform:rotate(-90deg)}
+.checkbox{display:grid;place-items:center;width:20px;height:20px;padding:0;background:none;border:none}
+.checkbox__box{width:16px;height:16px;border-radius:3px;border:1px solid var(--brand-soft);background:var(--surface);display:grid;place-items:center;color:var(--surface)}
+.checkbox[aria-checked="true"] .checkbox__box,.checkbox[aria-checked="mixed"] .checkbox__box{background:var(--brand-deep);border-color:var(--brand-deep)}
+.checkbox svg{display:none}
+.checkbox[aria-checked="true"] svg,.checkbox[aria-checked="mixed"] svg{display:block}
+
+.menu{position:absolute;z-index:50;min-width:158px;padding:4px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--stroke);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.menu button{text-align:left;padding:7px 10px;border:none;background:none;font-size:12px;border-radius:5px;color:var(--text)}
+.menu button:hover{background:var(--bg-secondary)}
+.menu button.is-danger{color:var(--danger)}
+
+.bulkbar{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--radius);background:var(--bg-secondary);border:1px solid var(--brand-soft);font-size:12px}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.pill--ok{background:#e6f5ee;color:var(--success)}
+.pill--info{background:var(--bg-secondary);color:var(--brand-deep)}
+.pill--warn{background:#fff3d9;color:var(--warning)}
+
+/* --------------------------------------------------------------- summary */
+.summary{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.narration{flex:1 1 280px;display:flex;flex-direction:column;gap:16px}
+.narration textarea{
+  height:200px;padding:8px 15px;resize:vertical;border:1px solid var(--brand-soft);border-radius:var(--radius);
+  background:var(--surface);font-family:var(--font);font-size:12px;line-height:18px;color:var(--text-muted);outline:none;
+}
+.narration textarea:focus{border-color:var(--brand-deep)}
+
+.breakdown{flex:0 0 344px;min-width:0;display:flex;flex-direction:column;padding:18px 20px;border-radius:var(--radius);background:var(--bg-primary)}
+.bd-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 0;font-size:14px;color:var(--text-muted)}
+.bd-row span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+.bd-rule{height:1px;background:var(--stroke);margin:7px 0}
+.bd-adj{display:flex;align-items:center;gap:8px;padding:4px 0;min-width:0}
+.bd-adj input{height:34px;border:1px solid var(--brand-soft);border-radius:var(--radius);background:var(--surface);padding:6px 12px;font-size:13px;color:var(--text-muted);outline:none;min-width:0;width:0}
+.bd-adj input:focus{border-color:var(--brand-deep)}
+.bd-adj__label{flex:1 1 60px}
+.bd-adj__amt{flex:0 0 76px;text-align:right}
+.bd-adj__out{flex:0 0 74px;text-align:right;font-size:13px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.bd-adj__del{background:none;border:none;padding:0;color:var(--danger);font-size:16px;line-height:1}
+.bd-grand{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-top:10px;font-size:20px;line-height:26px;font-weight:600}
+.bd-grand span:first-child{color:var(--text-muted)}
+.bd-grand span:last-child{color:var(--brand-deep);font-variant-numeric:tabular-nums}
+.bd-note{font-size:11px;line-height:15px;color:var(--warning);padding-top:8px}
+
+/* ---------------------------------------------------------------- dialog */
+dialog{border:none;border-radius:10px;padding:0;max-width:min(680px,92vw);width:100%;box-shadow:0 20px 60px rgba(20,20,40,.28)}
+dialog::backdrop{background:rgba(20,22,40,.45)}
+.sheet__head{padding:18px 22px;border-bottom:1px solid var(--stroke)}
+.sheet__head h2{font-size:18px;font-weight:600}
+.sheet__head p{font-size:12px;color:var(--text-muted);margin-top:4px}
+.sheet__body{padding:18px 22px;max-height:60vh;overflow:auto}
+.sheet__foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--stroke);background:var(--bg-primary)}
+.jtable{width:100%;border-collapse:collapse;font-size:12px}
+.jtable th{text-align:left;padding:8px;background:var(--bg-secondary);color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.jtable td{padding:8px;border-bottom:1px solid var(--stroke);vertical-align:top}
+.jtable .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.jtable tfoot td{font-weight:700;border-top:2px solid var(--text);border-bottom:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:12px;margin-bottom:16px}
+.kv dt{color:var(--text-muted)}
+.kv dd{font-weight:600}
+
+/* ----------------------------------------------------------------- toast */
+.toasts{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--text);color:#fff;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:rise .2s ease}
+.toast--err{background:#8c1111}
+.toast--ok{background:#0f6b43}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+
+/* ----------------------------------------------------------- responsive */
+@media (max-width:1080px){
+  /* stretch, not flex-start — in column direction flex-start would shrink-wrap
+     the form to the widest table and blow out the page */
+  .workspace{flex-direction:column;align-items:stretch;gap:20px}
+  .doc-pane{position:static;flex:none;width:100%;height:auto;min-height:380px;padding:32px 16px}
+  .doc-pane.is-loaded{height:70vh}
+  .splitter{display:none}
+}
+@media (max-width:640px){
+  :root{--gutter:12px}
+  .card{grid-template-columns:1fr;gap:20px;padding:16px}
+  .t-title{font-size:20px;line-height:26px}
+  .topbar{flex-wrap:wrap}
+  .breakdown{flex:1 1 100%}
+}
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-chevron" viewBox="0 0 7.5 4.5" fill="none">
+    <path d="M0.75 0.75L3.75 3.75L6.75 0.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-caret" viewBox="0 0 13 13" fill="none">
+    <path d="M3.25 5.875L6.5 9.125L9.75 5.875" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-calendar" viewBox="0 0 10.5 11.5" fill="none">
+    <path d="M3.25 0.75V2.75M7.25 0.75V2.75M0.75 4.75H9.75M1.75 1.75H8.75C9.30229 1.75 9.75 2.19772 9.75 2.75V9.75C9.75 10.3023 9.30229 10.75 8.75 10.75H1.75C1.19772 10.75 0.75 10.3023 0.75 9.75V2.75C0.75 2.19772 1.19772 1.75 1.75 1.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-checkbox" viewBox="0 0 16 16" fill="none">
+    <path d="M13.8333 0.5H2.16667C1.24619 0.5 0.5 1.24619 0.5 2.16667V13.8333C0.5 14.7538 1.24619 15.5 2.16667 15.5H13.8333C14.7538 15.5 15.5 14.7538 15.5 13.8333V2.16667C15.5 1.24619 14.7538 0.5 13.8333 0.5Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-upload" viewBox="0 0 14.3158 14.3158" fill="none">
+    <path d="M13.6 9.30526V12.1684C13.6 12.5481 13.4492 12.9122 13.1807 13.1807C12.9122 13.4492 12.5481 13.6 12.1684 13.6H2.14737C1.76769 13.6 1.40356 13.4492 1.13509 13.1807C0.866616 12.9122 0.715789 12.5481 0.715789 12.1684V9.30526M3.57895 4.29474L7.15789 0.715789L10.7368 4.29474M7.15789 0.715789V9.30526" stroke="currentColor" stroke-width="1.43158" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-info" viewBox="0 0 15.2702 15.2702" fill="none">
+    <path d="M7.63502 13.9975C11.149 13.9975 13.9976 11.1489 13.9976 7.63493C13.9976 4.12098 11.149 1.27235 7.63502 1.27235C4.12107 1.27235 1.27245 4.12098 1.27245 7.63493C1.27245 11.1489 4.12107 13.9975 7.63502 13.9975Z" stroke="currentColor" stroke-width="1.27251" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M7.63574 10.1793V7.63432" stroke="currentColor" stroke-width="1.27251" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M7.63574 5.08741H7.64145" stroke="currentColor" stroke-width="1.27251" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-sparkle" viewBox="0 0 12.407 12.407" fill="none">
+    <path d="M5.13748 8.0147C5.09132 7.8358 4.99807 7.67253 4.86743 7.54188C4.73678 7.41124 4.57351 7.31799 4.39461 7.27183L1.22306 6.454C1.16895 6.43865 1.12133 6.40606 1.08742 6.36118C1.05351 6.31631 1.03516 6.26159 1.03516 6.20535C1.03516 6.1491 1.05351 6.09439 1.08742 6.04951C1.12133 6.00464 1.16895 5.97205 1.22306 5.95669L4.39461 5.13834C4.57345 5.09223 4.73667 4.99906 4.86731 4.86851C4.99796 4.73796 5.09124 4.5748 5.13748 4.39599L5.95531 1.22445C5.97051 1.17012 6.00306 1.12226 6.04801 1.08817C6.09295 1.05408 6.14781 1.03563 6.20422 1.03563C6.26063 1.03563 6.31549 1.05408 6.36044 1.08817C6.40538 1.12226 6.43793 1.17012 6.45314 1.22445L7.27045 4.39599C7.3166 4.57489 7.40985 4.73816 7.5405 4.86881C7.67115 4.99946 7.83442 5.09271 8.01332 5.13886L11.1849 5.95617C11.2394 5.97122 11.2875 6.00374 11.3218 6.04875C11.3561 6.09376 11.3746 6.14877 11.3746 6.20535C11.3746 6.26192 11.3561 6.31693 11.3218 6.36195C11.2875 6.40696 11.2394 6.43948 11.1849 6.45452L8.01332 7.27183C7.83442 7.31799 7.67115 7.41124 7.5405 7.54188C7.40985 7.67253 7.3166 7.8358 7.27045 8.0147L6.45262 11.1862C6.43742 11.2406 6.40486 11.2884 6.35992 11.3225C6.31498 11.3566 6.26011 11.3751 6.2037 11.3751C6.14729 11.3751 6.09243 11.3566 6.04749 11.3225C6.00255 11.2884 5.96999 11.2406 5.95479 11.1862L5.13748 8.0147Z" stroke="currentColor" stroke-width="1.03392" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M10.3393 1.55031V3.61815" stroke="currentColor" stroke-width="1.03392" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M11.3738 2.585H9.30598" stroke="currentColor" stroke-width="1.03392" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M2.06852 8.78778V9.82169" stroke="currentColor" stroke-width="1.03392" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M2.58509 9.30777H1.55118" stroke="currentColor" stroke-width="1.03392" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 12 12" fill="none">
+    <path d="M0.75 6H11.25M6 0.75V11.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-percent" viewBox="0 0 14 14" fill="none">
+    <path d="M11.0833 2.91667L2.91667 11.0833M5.25 3.79167C5.25 4.59708 4.59708 5.25 3.79167 5.25C2.98625 5.25 2.33333 4.59708 2.33333 3.79167C2.33333 2.98625 2.98625 2.33333 3.79167 2.33333C4.59708 2.33333 5.25 2.98625 5.25 3.79167ZM11.6667 10.2083C11.6667 11.0137 11.0137 11.6667 10.2083 11.6667C9.40292 11.6667 8.75 11.0137 8.75 10.2083C8.75 9.40292 9.40292 8.75 10.2083 8.75C11.0137 8.75 11.6667 9.40292 11.6667 10.2083Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-dots" viewBox="0 0 4 16">
+    <path d="M2 11.25C1.53587 11.25 1.09075 11.4344 0.762563 11.7626C0.434374 12.0908 0.25 12.5359 0.25 13C0.25 13.4641 0.434374 13.9092 0.762563 14.2374C1.09075 14.5656 1.53587 14.75 2 14.75C2.46413 14.75 2.90925 14.5656 3.23744 14.2374C3.56563 13.9092 3.75 13.4641 3.75 13C3.75 12.5359 3.56563 12.0908 3.23744 11.7626C2.90925 11.4344 2.46413 11.25 2 11.25ZM2 6.25C1.53587 6.25 1.09075 6.43437 0.762563 6.76256C0.434374 7.09075 0.25 7.53587 0.25 8C0.25 8.46413 0.434374 8.90925 0.762563 9.23744C1.09075 9.56563 1.53587 9.75 2 9.75C2.46413 9.75 2.90925 9.56563 3.23744 9.23744C3.56563 8.90925 3.75 8.46413 3.75 8C3.75 7.53587 3.56563 7.09075 3.23744 6.76256C2.90925 6.43437 2.46413 6.25 2 6.25ZM3.75 3C3.75 2.53587 3.56563 2.09075 3.23744 1.76256C2.90925 1.43437 2.46413 1.25 2 1.25C1.53587 1.25 1.09075 1.43437 0.762563 1.76256C0.434374 2.09075 0.25 2.53587 0.25 3C0.25 3.46413 0.434374 3.90925 0.762563 4.23744C1.09075 4.56563 1.53587 4.75 2 4.75C2.46413 4.75 2.90925 4.56563 3.23744 4.23744C3.56563 3.90925 3.75 3.46413 3.75 3Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-tick" viewBox="0 0 12 12" fill="none">
+    <path d="M1.5 6.2L4.4 9L10.5 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-dash" viewBox="0 0 12 12" fill="none">
+    <path d="M2.5 6h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-file" viewBox="0 0 14 16" fill="none">
+    <path d="M8.5.5H2.5a1.5 1.5 0 0 0-1.5 1.5v12a1.5 1.5 0 0 0 1.5 1.5h9a1.5 1.5 0 0 0 1.5-1.5V5l-4.5-4.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M8.5.5V5H13" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-pencil" viewBox="0 0 14 14" fill="none">
+    <path d="M9.6 1.6a1.4 1.4 0 0 1 2 2L4.4 10.8 1.5 11.6l.8-2.9L9.6 1.6Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+  </symbol>
+</defs></svg>
+
+<header class="topbar">
+  <div class="topbar__meta">
+    <h1 class="t-title">New Bill</h1>
+    <span class="topbar__ref" id="voucher-ref"></span>
+  </div>
+  <div class="topbar__actions">
+    <button type="button" class="btn btn--outline" id="btn-discard">Discard</button>
+    <button type="button" class="btn btn--solid" id="btn-allocate" disabled>Allocate Bill</button>
+  </div>
+</header>
+
+<main class="workspace">
+
+  <!-- Source document -->
+  <section class="doc-pane" id="doc-pane">
+    <div class="doc-pane__inner" id="doc-empty">
+      <div class="doc-pane__heading">
+        <p>Bill Document</p>
+        <span class="ico ico-16 ico--muted"><svg width="15.27" height="15.27"><use href="#i-info"/></svg></span>
+      </div>
+      <div class="doc-pane__hint">
+        <span class="ico ico-13 ico--brand"><svg width="12.4" height="12.4"><use href="#i-sparkle"/></svg></span>
+        <p>Upload your bills to auto fetch data</p>
+      </div>
+      <div class="doc-pane__upload">
+        <button type="button" class="btn btn--outline" id="btn-upload">
+          <span class="ico ico-16"><svg width="14.3" height="14.3"><use href="#i-upload"/></svg></span>
+          Upload Bill
+        </button>
+        <p class="doc-pane__formats">
+          Supported formats: pdf, csv, xls, xlsx<br>
+          Drop a file here, or <button type="button" class="link" id="btn-sample">use a sample bill</button>
+        </p>
+      </div>
+    </div>
+
+    <div class="extract" id="doc-extract" hidden>
+      <div class="extract__file">
+        <span class="ico ico-14 ico--brand"><svg width="14" height="16"><use href="#i-file"/></svg></span>
+        <span id="extract-name"></span>
+      </div>
+      <div class="extract__bar"><div class="extract__fill" id="extract-fill"></div></div>
+      <div class="steps" id="extract-steps"></div>
+    </div>
+
+    <div class="preview" id="doc-preview" hidden>
+      <div class="preview__bar">
+        <span class="ico ico-14 ico--brand"><svg width="14" height="16"><use href="#i-file"/></svg></span>
+        <span class="preview__name" id="preview-name"></span>
+        <button type="button" class="link" id="btn-replace">Replace</button>
+      </div>
+      <div class="preview__body" id="preview-body"></div>
+    </div>
+
+    <input type="file" id="file-input" class="sr-only" accept=".pdf,.csv,.xls,.xlsx,.png,.jpg,.jpeg">
+  </section>
+
+  <button type="button" class="splitter" role="separator" aria-orientation="vertical"
+          aria-label="Resize document pane" aria-valuemin="25" aria-valuemax="70" aria-valuenow="50"></button>
+
+  <!-- Bill form -->
+  <section class="form">
+
+    <div class="banner banner--warn form__narrow" id="dupe-banner" hidden>
+      <span class="ico ico-13" style="color:#a86400"><svg width="15.27" height="15.27"><use href="#i-info"/></svg></span>
+      <div class="banner__body">
+        <p class="banner__title">Possible duplicate</p>
+        <p id="dupe-text"></p>
+      </div>
+    </div>
+
+    <div class="segmented" role="group" aria-label="Entry mode">
+      <button type="button" data-mode="item" aria-pressed="true">Item Mode</button>
+      <button type="button" data-mode="accounting" aria-pressed="false">Accounting Mode</button>
+    </div>
+
+    <!-- Voucher & vendor -->
+    <section class="card form__narrow">
+      <div class="field" data-field="branch">
+        <p class="t-label"><span class="req">*</span> GST Registration (My Branch)</p>
+        <label class="control">
+          <select class="control__select t-value" data-bind="branch"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+        <p class="field__error">Select the branch raising this bill</p>
+      </div>
+
+      <div class="field" data-field="voucherType">
+        <p class="t-label"><span class="req">*</span> Voucher Type</p>
+        <label class="control">
+          <select class="control__select t-value" data-bind="voucherType"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+        <p class="field__error">Select a voucher type</p>
+      </div>
+
+      <div class="field">
+        <p class="t-label"><span class="req">*</span> Voucher No</p>
+        <label class="control">
+          <input class="control__input t-value" type="text" data-bind="voucherNo" id="voucher-no" placeholder="Auto Generated">
+          <span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>
+        </label>
+      </div>
+
+      <div class="field" data-field="voucherDate">
+        <p class="t-label"><span class="req">*</span> Voucher Date</p>
+        <label class="control">
+          <span class="t-value" data-display="voucherDate">Select Voucher Date</span>
+          <span class="ico ico-12 ico--muted"><svg width="10.5" height="11.5"><use href="#i-calendar"/></svg></span>
+          <input type="date" class="control__date" data-bind="voucherDate" aria-label="Voucher date">
+        </label>
+        <p class="field__error">Pick a voucher date</p>
+      </div>
+
+      <div class="field" data-field="billDate">
+        <p class="t-label"><span class="req">*</span> Bill Date</p>
+        <label class="control">
+          <span class="t-value" data-display="billDate">Select Bill Date</span>
+          <span class="ico ico-12 ico--muted"><svg width="10.5" height="11.5"><use href="#i-calendar"/></svg></span>
+          <input type="date" class="control__date" data-bind="billDate" aria-label="Bill date">
+        </label>
+        <p class="field__error">Pick the supplier's bill date</p>
+      </div>
+
+      <div class="field" data-field="dueDate">
+        <p class="t-label"><span class="req">*</span> Due Date</p>
+        <label class="control">
+          <span class="t-value" data-display="dueDate">Select Due Date</span>
+          <span class="ico ico-12 ico--muted"><svg width="10.5" height="11.5"><use href="#i-calendar"/></svg></span>
+          <input type="date" class="control__date" data-bind="dueDate" aria-label="Due date">
+        </label>
+        <p class="field__error">Due date cannot be before the bill date</p>
+      </div>
+
+      <div class="field" data-field="supplierInvoiceNo">
+        <p class="t-label"><span class="req">*</span> Supplier Invoice No.</p>
+        <label class="control">
+          <input class="control__input t-value" type="text" data-bind="supplierInvoiceNo" placeholder="Enter Supplier Invoice No.">
+        </label>
+        <p class="field__error">Enter the supplier's invoice number</p>
+      </div>
+
+      <div class="card__group">
+        <div class="switch-row">
+          <p class="t-label" id="cc-label-class">Cost Centre Class</p>
+          <button type="button" class="switch" id="cc-toggle" role="switch" aria-checked="false"
+                  aria-label="Switch between cost centre class and per-line cost centre"></button>
+          <p class="t-label is-off" id="cc-label-centre">Cost Centre</p>
+        </div>
+        <label class="control" id="cc-class-control">
+          <select class="control__select t-value" data-bind="costCentreClass"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+      </div>
+
+      <h2 class="t-section card__full">Vendor Details</h2>
+
+      <div class="field" data-field="vendor">
+        <p class="t-label"><span class="req">*</span> Vendor Name</p>
+        <label class="control">
+          <select class="control__select t-value" data-bind="vendor"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+        <p class="field__error">Select the vendor</p>
+      </div>
+
+      <div class="field">
+        <p class="t-label">Cost Centre</p>
+        <label class="control">
+          <select class="control__select t-value" data-bind="vendorCostCentre"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+      </div>
+
+      <div class="field card__full">
+        <p class="t-label">Billing Address</p>
+        <label class="control">
+          <input class="control__input t-value" type="text" data-bind="billingAddress" placeholder="Enter billing address">
+          <span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>
+        </label>
+      </div>
+
+      <div class="field" data-field="gstTreatment">
+        <p class="t-label"><span class="req">*</span> GST Treatment</p>
+        <label class="control">
+          <select class="control__select t-value" data-bind="gstTreatment"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+        <p class="field__error">Select the vendor's GST treatment</p>
+      </div>
+
+      <div class="field" data-field="gstin">
+        <p class="t-label"><span class="req">*</span> GSTIN</p>
+        <label class="control">
+          <input class="control__input t-value" type="text" data-bind="gstin" placeholder="Enter GSTIN">
+          <span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>
+        </label>
+        <p class="field__error">A registered vendor needs a 15-character GSTIN</p>
+      </div>
+
+      <div class="field" data-field="sourceState">
+        <p class="t-label"><span class="req">*</span> Source of Supply</p>
+        <label class="control">
+          <select class="control__select t-value" data-bind="sourceState"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+        <p class="field__error">Select the source state</p>
+      </div>
+
+      <div class="field" data-field="destState">
+        <p class="t-label"><span class="req">*</span> Destination of Supply</p>
+        <label class="control">
+          <select class="control__select t-value" data-bind="destState"></select>
+          <span class="ico ico-12 ico--muted"><svg width="7.5" height="4.5"><use href="#i-chevron"/></svg></span>
+        </label>
+        <p class="field__error">Select the destination state</p>
+      </div>
+
+      <p class="hint card__full" id="supply-note"></p>
+    </section>
+
+    <!-- Item details -->
+    <section class="block" id="block-items">
+      <h2 class="t-section">Item Details</h2>
+
+      <div class="picker" data-field="purchaseLedger">
+        <p class="picker__label"><span class="req">*</span> Purchase Ledger</p>
+        <select data-bind="purchaseLedger" aria-label="Purchase ledger"></select>
+      </div>
+
+      <div class="bulkbar" id="items-bulk" hidden>
+        <span id="items-bulk-text"></span>
+        <button type="button" class="btn btn--danger" data-bulk="items">Delete selected</button>
+      </div>
+
+      <div class="table-scroll"><div class="table table--meta" id="items-table"></div></div>
+
+      <button type="button" class="btn btn--quiet" id="btn-add-item">
+        <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
+        Add Line Item
+      </button>
+    </section>
+
+    <!-- Ledgers -->
+    <section class="block">
+      <h2 class="t-section">Ledgers</h2>
+      <div class="bulkbar" id="ledgers-bulk" hidden>
+        <span id="ledgers-bulk-text"></span>
+        <button type="button" class="btn btn--danger" data-bulk="ledgers">Delete selected</button>
+      </div>
+      <div class="table-scroll"><div class="table" id="ledgers-table"></div></div>
+      <button type="button" class="btn btn--quiet" id="btn-add-ledger">
+        <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
+        Add Ledger
+      </button>
+    </section>
+
+    <!-- Taxes -->
+    <section class="block">
+      <h2 class="t-section">Taxes</h2>
+      <div class="picker">
+        <p class="picker__label">Reverse Charges</p>
+        <select data-bind="reverseCharge" aria-label="Reverse charge applicability">
+          <option value="no">Not Applicable</option>
+          <option value="yes">Applicable</option>
+        </select>
+      </div>
+      <p class="hint" id="tax-note"></p>
+      <div class="table-scroll"><div class="table table--meta" id="taxes-table"></div></div>
+      <button type="button" class="btn btn--quiet" id="btn-add-tax">
+        <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
+        Add Ledger
+      </button>
+    </section>
+
+    <!-- Narration & breakdown -->
+    <div class="summary form__narrow">
+      <div class="narration">
+        <p class="t-label">Narration (Optional)</p>
+        <textarea data-bind="narration" placeholder="Enter Narration"></textarea>
+      </div>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+  </section>
+</main>
+
+<dialog id="journal-dialog">
+  <div class="sheet__head">
+    <h2>Bill allocated</h2>
+    <p id="journal-sub"></p>
+  </div>
+  <div class="sheet__body" id="journal-body"></div>
+  <div class="sheet__foot">
+    <button type="button" class="btn btn--outline" id="journal-close">Close</button>
+    <button type="button" class="btn btn--solid" id="journal-new">Create another bill</button>
+  </div>
+</dialog>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   1. MASTERS
+   ==========================================================================*/
+const STATES = [
+  ['AP','Andhra Pradesh','37'],['AS','Assam','18'],['BR','Bihar','10'],['CG','Chhattisgarh','22'],
+  ['DL','Delhi','07'],['GA','Goa','30'],['GJ','Gujarat','24'],['HR','Haryana','06'],
+  ['HP','Himachal Pradesh','02'],['JK','Jammu & Kashmir','01'],['JH','Jharkhand','20'],
+  ['KA','Karnataka','29'],['KL','Kerala','32'],['MP','Madhya Pradesh','23'],['MH','Maharashtra','27'],
+  ['OD','Odisha','21'],['PB','Punjab','03'],['RJ','Rajasthan','08'],['TN','Tamil Nadu','33'],
+  ['TG','Telangana','36'],['UP','Uttar Pradesh','09'],['UK','Uttarakhand','05'],['WB','West Bengal','19']
+].map(([code,name,gst])=>({id:code,name:`(${code}) ${name}`,plain:name,gst}));
+
+const MASTERS = {
+  states:STATES,
+  branches:[
+    {id:'br-ka',name:'Karbon Business — Karnataka (29)',gstin:'29AAFCK1234M1Z5',state:'KA'},
+    {id:'br-mh',name:'Karbon Business — Maharashtra (27)',gstin:'27AAFCK1234M1Z1',state:'MH'},
+    {id:'br-tn',name:'Karbon Business — Tamil Nadu (33)',gstin:'33AAFCK1234M1ZB',state:'TN'}
+  ],
+  voucherTypes:[
+    {id:'purchase',name:'Purchase',prefix:'PUR'},
+    {id:'purchase-imp',name:'Purchase — Import',prefix:'PIMP'},
+    {id:'debit-note',name:'Debit Note',prefix:'DN'}
+  ],
+  gstTreatments:[
+    {id:'registered',name:'Registered Business'},
+    {id:'unregistered',name:'Unregistered Business'},
+    {id:'composition',name:'Composition Dealer'},
+    {id:'sez',name:'SEZ Unit'},
+    {id:'overseas',name:'Overseas / Import'}
+  ],
+  /* deductee type decides the 194C rate; PAN absence forces 20% u/s 206AA */
+  vendors:[
+    {id:'v-technova',name:'Technova Systems LLP',gstin:'29AAGFT1122R1Z8',pan:'AAGFT1122R',state:'KA',
+     credit:15,ledger:'led-purchase-local',treatment:'registered',deductee:'company',
+     address:'#7, 4th Cross, Koramangala Industrial Layout, Bengaluru — 560034',
+     fyGoods:4920000, fyServices:0},
+    {id:'v-sunrise',name:'Sunrise Stationers Pvt Ltd',gstin:'29AACCS8899P1ZQ',pan:'AACCS8899P',state:'KA',
+     credit:30,ledger:'led-purchase-local',treatment:'registered',deductee:'company',
+     address:'14, Nandidurga Road, Benson Town, Bengaluru — 560046',
+     fyGoods:860000, fyServices:0},
+    {id:'v-anand',name:'Anand Paper Mills Ltd',gstin:'27AAECA5566L1ZK',pan:'AAECA5566L',state:'MH',
+     credit:45,ledger:'led-purchase-inter',treatment:'registered',deductee:'company',
+     address:'Plot 22, MIDC Andheri East, Mumbai — 400093',
+     fyGoods:5400000, fyServices:0},
+    {id:'v-kiran',name:'Kiran Associates (Consultants)',gstin:'',pan:'AFZPK7190K',state:'KA',
+     credit:15,ledger:'led-purchase-exempt',treatment:'unregistered',deductee:'individual',
+     address:'202, Shanti Nilaya, Jayanagar 4th Block, Bengaluru — 560011',
+     fyGoods:0, fyServices:210000},
+    {id:'v-globe',name:'Globe Logistics & Freight',gstin:'29AABCG3344H1ZP',pan:'AABCG3344H',state:'KA',
+     credit:7,ledger:'led-purchase-local',treatment:'registered',deductee:'company',
+     address:'Gate 3, Air Cargo Complex, Devanahalli, Bengaluru — 562110',
+     fyGoods:0, fyServices:640000}
+  ],
+  items:[
+    {id:'it-i3',   name:'i3/8GB/256GB SSD/Win 11 Pro Desktop',kind:'goods',hsn:'8471',unit:'Nos',rate:34500,tax:'tax-18',godown:'gd-main'},
+    {id:'it-mon',  name:'24" LED Monitor — IPS',            kind:'goods',hsn:'8528',unit:'Nos',rate:8200, tax:'tax-18',godown:'gd-main'},
+    {id:'it-kbm',  name:'Wireless Keyboard & Mouse Combo',  kind:'goods',hsn:'8471',unit:'Set',rate:1150, tax:'tax-18',godown:'gd-hsr'},
+    {id:'it-ups',  name:'UPS 600 VA Line-Interactive',      kind:'goods',hsn:'8504',unit:'Nos',rate:3150, tax:'tax-18',godown:'gd-main'},
+    {id:'it-a4',   name:'A4 Copier Paper 75 GSM',           kind:'goods',hsn:'4802',unit:'Ream',rate:245, tax:'tax-12',godown:'gd-main'},
+    {id:'it-amc',  name:'Onsite AMC — Desktop (per unit/yr)',kind:'service',hsn:'998713',unit:'Nos',rate:8000,tax:'tax-18',godown:''},
+    {id:'it-instl',name:'Installation & Commissioning',      kind:'service',hsn:'998739',unit:'Job',rate:45000,tax:'tax-18',godown:''}
+  ],
+  godowns:[
+    {id:'gd-main',name:'Main Store — Bengaluru'},
+    {id:'gd-hsr',name:'HSR Branch Store'},
+    {id:'gd-wh2',name:'Warehouse 2 — Peenya'}
+  ],
+  costCentres:[
+    {id:'cc-admin',name:'Administration'},{id:'cc-sales',name:'Sales & Marketing'},
+    {id:'cc-eng',name:'Engineering'},{id:'cc-ops',name:'Operations'}
+  ],
+  costCentreClasses:[
+    {id:'ccc-dept',name:'Departmental Split'},{id:'ccc-eng',name:'Engineering — 100%'},{id:'ccc-ops',name:'Operations — 100%'}
+  ],
+  purchaseLedgers:[
+    {id:'led-purchase-local',name:'Purchase — Local (GST)'},
+    {id:'led-purchase-inter',name:'Purchase — Interstate (GST)'},
+    {id:'led-purchase-exempt',name:'Purchase — Exempt'}
+  ],
+  /* expense ledgers carry the nature of payment, which drives TDS */
+  expenseLedgers:[
+    {id:'led-install',name:'Installation & Commissioning',tax:'tax-18',tds:'194C',sac:'998739'},
+    {id:'led-amc',name:'Annual Maintenance Contract',tax:'tax-18',tds:'194J-tech',sac:'998713'},
+    {id:'led-prof',name:'Professional / Consultancy Fees',tax:'tax-18',tds:'194J-prof',sac:'998311'},
+    {id:'led-freight',name:'Freight & Cartage Inward',tax:'tax-18',tds:'194C',sac:'996511'},
+    {id:'led-rent',name:'Rent — Plant & Machinery',tax:'tax-18',tds:'194I-pm',sac:'997314'},
+    {id:'led-packing',name:'Packing & Forwarding',tax:'tax-18',tds:'',sac:'998540'},
+    {id:'led-discount',name:'Trade Discount Received',tax:'tax-0',tds:'',sac:''}
+  ],
+  taxes:[
+    {id:'tax-0',name:'Nil Rated (0%)',rate:0},{id:'tax-5',name:'GST 5%',rate:5},
+    {id:'tax-12',name:'GST 12%',rate:12},{id:'tax-18',name:'GST 18%',rate:18},{id:'tax-28',name:'GST 28%',rate:28}
+  ],
+  /* --- TDS sections ------------------------------------------------------
+     single  : per-invoice threshold, annual : aggregate threshold for the FY
+     rates for FY 2025-26 style purchase deductions                        */
+  tdsSections:[
+    {id:'194C',     name:'194C — Contractor / Sub-contractor', rate:2,   rateIndividual:1, single:30000, annual:100000, base:'services'},
+    {id:'194J-tech',name:'194J — Technical services',          rate:2,   single:0, annual:30000, base:'services'},
+    {id:'194J-prof',name:'194J — Professional fees',           rate:10,  single:0, annual:30000, base:'services'},
+    {id:'194I-pm',  name:'194I — Rent (plant & machinery)',    rate:2,   single:0, annual:240000, base:'services'},
+    {id:'194Q',     name:'194Q — Purchase of goods',           rate:0.1, single:0, annual:5000000, base:'goods', onExcess:true}
+  ],
+  existingBills:[
+    {vendor:'v-technova',invoiceNo:'TNS/25-26/0912',date:'2026-06-18',amount:412000},
+    {vendor:'v-sunrise',invoiceNo:'SS/2026-27/2312',date:'2026-06-30',amount:22450}
+  ],
+  lastVoucherSeq:{purchase:184,'purchase-imp':12,'debit-note':31}
+};
+
+/* The document the demo extraction "reads". Goods cross the 194Q threshold and
+   the two service lines attract 194C and 194J, so TDS is exercised end to end. */
+const SAMPLE = {
+  fileName:'Technova-Systems-TNS-25-26-1043.pdf',
+  branch:'br-ka', vendor:'v-technova', voucherType:'purchase',
+  supplierInvoiceNo:'TNS/25-26/1043',
+  billDate:'2026-07-28',
+  purchaseLedger:'led-purchase-local',
+  narration:'Desktop refresh for Engineering — PO/2026/0442. Includes installation and 1-year onsite AMC.',
+  costCentreClass:'ccc-dept',
+  items:[
+    {item:'it-i3', description:'Purchase of i3 Desktop, 8GB/256GB SSD',kind:'goods',hsn:'8471',godown:'gd-main',qty:12,rate:34500,discount:2,discountType:'pct',tax:'tax-18',costCentre:'cc-eng'},
+    {item:'it-mon',description:'24" LED Monitor — IPS',                kind:'goods',hsn:'8528',godown:'gd-main',qty:12,rate:8200, discount:0,discountType:'pct',tax:'tax-18',costCentre:'cc-eng'},
+    {item:'it-kbm',description:'Wireless Keyboard & Mouse Combo',      kind:'goods',hsn:'8471',godown:'gd-hsr', qty:12,rate:1150, discount:0,discountType:'pct',tax:'tax-18',costCentre:'cc-eng'}
+  ],
+  ledgers:[
+    {ledger:'led-install',description:'Installation & commissioning — 12 seats',tax:'tax-18',amount:45000,costCentre:'cc-ops'},
+    {ledger:'led-amc',    description:'Onsite AMC — 12 desktops, 1 year',      tax:'tax-18',amount:96000,costCentre:'cc-eng'}
+  ],
+  lowConfidence:[]
+};
+
+/* ============================================================================
+   2. HELPERS
+   ==========================================================================*/
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const byId = (list,id)=>list.find(x=>x.id===id);
+const num = v=>{const n=parseFloat(String(v??'').replace(/[^0-9.\-]/g,''));return isFinite(n)?n:0};
+const r2  = n=>Math.round((n+Number.EPSILON)*100)/100;
+const inr = new Intl.NumberFormat('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money = n=>'₹ '+inr.format(r2(n||0));
+const esc = s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let uidSeq = 0;
+const uid = ()=>'r'+(++uidSeq);
+
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const ordinal = d=>d>3&&d<21 ? d+'th' : d+({1:'st',2:'nd',3:'rd'}[d%10]||'th');
+function fmtDate(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-').map(Number);
+  return `${ordinal(d)} ${MONTHS[m-1]}, ${y}`;
+}
+/* Local-date arithmetic. toISOString() converts to UTC and rolls the date back
+   a day for anyone east of Greenwich, so build the string from local parts. */
+const isoOf = dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+const today = ()=>isoOf(new Date());
+function addDays(iso,days){
+  const [y,m,d] = iso.split('-').map(Number);
+  return isoOf(new Date(y,m-1,d+days));
+}
+function fyLabel(iso){                                   // Indian FY runs Apr–Mar
+  const [y,m] = iso.split('-').map(Number);
+  const start = m>=4 ? y : y-1;
+  return `${String(start).slice(2)}-${String(start+1).slice(2)}`;
+}
+function options(list,placeholder,selected){
+  return (placeholder?`<option value=""${selected?'':' selected'} disabled>${esc(placeholder)}</option>`:'') +
+    list.map(o=>`<option value="${o.id}"${o.id===selected?' selected':''}>${esc(o.name)}</option>`).join('');
+}
+function toast(msg,kind=''){
+  const el = document.createElement('div');
+  el.className = 'toast'+(kind?' toast--'+kind:'');
+  el.textContent = msg;
+  $('#toasts').append(el);
+  setTimeout(()=>el.remove(),3600);
+}
+
+/* ============================================================================
+   3. STATE — every value here is user-editable; nothing is derived-only
+   ==========================================================================*/
+const blankItem = ()=>({id:uid(),sel:false,description:'',item:'',kind:'goods',hsn:'',godown:'',
+                        costCentre:'',qty:0,rate:0,discount:0,discountType:'pct',tax:'',amountOverride:null});
+const blankLedger = ()=>({id:uid(),sel:false,description:'',ledger:'',costCentre:'',tax:'',amount:0});
+
+let state;
+
+function freshState(){
+  return {
+    mode:'item', ccMode:'class',
+    branch:'', voucherType:'purchase', voucherNo:'', voucherDate:today(), billDate:'', dueDate:'',
+    supplierInvoiceNo:'', costCentreClass:'',
+    vendor:'', vendorCostCentre:'', billingAddress:'', gstTreatment:'', gstin:'',
+    sourceState:'', destState:'',
+    purchaseLedger:'', reverseCharge:false, narration:'',
+    items:[blankItem()], ledgers:[blankLedger()],
+    taxLines:[], adjustments:[],
+    validated:false, document:null, allocated:false
+  };
+}
+
+/* ============================================================================
+   4. CALCULATION ENGINE
+   --------------------------------------------------------------------------
+   Line   : gross = qty x rate; discount % or flat; taxable = gross - discount
+            (a hand-typed Amount overrides the computed figure)
+   GST    : source state == destination state -> CGST + SGST (half each)
+            otherwise                         -> IGST (full rate)
+            Composition / Overseas vendors are not charged GST.
+   TDS    : deducted on taxable value only (GST excluded, CBDT circ. 23/2017),
+            subject to per-invoice and FY-aggregate thresholds. 194Q applies
+            only to the value crossing the 50 lakh purchase threshold.
+   Payable: sub total + GST - TDS + adjustments, rounded to the rupee.
+   ==========================================================================*/
+function lineOf(row){
+  const gross = num(row.qty)*num(row.rate);
+  const disc  = row.discountType==='pct' ? gross*num(row.discount)/100 : num(row.discount);
+  const computed = Math.max(0, gross-disc);
+  const taxable = row.amountOverride===null||row.amountOverride===undefined ? computed : num(row.amountOverride);
+  const rate = byId(MASTERS.taxes,row.tax)?.rate ?? 0;
+  return {gross:r2(gross),disc:r2(disc),computed:r2(computed),taxable:r2(taxable),rate,tax:r2(taxable*rate/100)};
+}
+function ledgerLineOf(row){
+  const taxable = num(row.amount);
+  const rate = byId(MASTERS.taxes,row.tax)?.rate ?? 0;
+  return {taxable:r2(taxable),rate,tax:r2(taxable*rate/100)};
+}
+function gstApplies(){
+  return !['composition','overseas'].includes(state.gstTreatment);
+}
+function isIntraState(){
+  if(!state.sourceState || !state.destState) return null;
+  return state.sourceState===state.destState;
+}
+
+/* --- suggestions: what the engine thinks the tax / TDS lines should be ---- */
+function suggestTaxLines(){
+  const intra = isIntraState();
+  if(intra===null || !gstApplies()) return [];
+  const slabs = new Map();
+  const add = (rate,base)=>{ if(rate) slabs.set(rate, r2((slabs.get(rate)||0)+base)); };
+  if(state.mode==='item') state.items.forEach(r=>{const l=lineOf(r); add(l.rate,l.taxable)});
+  state.ledgers.forEach(r=>{const l=ledgerLineOf(r); add(l.rate,l.taxable)});
+
+  const out = [];
+  [...slabs.entries()].sort((a,b)=>a[0]-b[0]).forEach(([rate,base])=>{
+    if(intra){
+      out.push({type:'gst',key:`CGST-${rate}`,name:`Input CGST ${rate/2}%`,rate:rate/2,base,amount:r2(base*rate/200)});
+      out.push({type:'gst',key:`SGST-${rate}`,name:`Input SGST ${rate/2}%`,rate:rate/2,base,amount:r2(base*rate/200)});
+    }else{
+      out.push({type:'gst',key:`IGST-${rate}`,name:`Input IGST ${rate}%`,rate,base,amount:r2(base*rate/100)});
+    }
+  });
+  return out;
+}
+
+function suggestTdsLines(){
+  const v = byId(MASTERS.vendors,state.vendor);
+  if(!v) return [];
+  const out = [];
+
+  // --- services: group each expense ledger's value under its TDS section ---
+  const bySection = new Map();
+  state.ledgers.forEach(r=>{
+    const led = byId(MASTERS.expenseLedgers,r.ledger);
+    if(!led?.tds) return;
+    const e = bySection.get(led.tds) || {base:0,single:0};
+    e.base = r2(e.base + num(r.amount));
+    e.single = Math.max(e.single, num(r.amount));
+    bySection.set(led.tds, e);
+  });
+  bySection.forEach((e,secId)=>{
+    const sec = byId(MASTERS.tdsSections,secId);
+    const priorFY = v.fyServices;
+    const crossesSingle = sec.single ? e.single >= sec.single : true;
+    const crossesAnnual = (priorFY + e.base) >= sec.annual;
+    const applies = crossesSingle || crossesAnnual;
+    let rate = (sec.rateIndividual && v.deductee==='individual') ? sec.rateIndividual : sec.rate;
+    if(!v.pan) rate = 20;                                  // s.206AA — no PAN
+    out.push({
+      type:'tds', key:secId, section:secId, name:sec.name, rate:applies?rate:0, base:e.base,
+      amount:applies?r2(e.base*rate/100):0,
+      note: applies
+        ? (v.pan?'':'No PAN — 20% u/s 206AA · ')+(crossesSingle&&sec.single?`single payment ≥ ${money(sec.single)}`:`FY aggregate ≥ ${money(sec.annual)}`)
+        : `below threshold — not deducted`,
+      detail:`Single ${money(sec.single)} / annual ${money(sec.annual)} · this vendor FY services ${money(priorFY)} + ${money(e.base)}`
+    });
+  });
+
+  // --- goods: 194Q on the value crossing the 50 lakh FY threshold ----------
+  if(state.mode==='item'){
+    const goodsValue = r2(state.items.reduce((s,r)=>s+lineOf(r).taxable,0));
+    if(goodsValue>0){
+      const sec = byId(MASTERS.tdsSections,'194Q');
+      const prior = v.fyGoods;
+      const cumulative = r2(prior+goodsValue);
+      const excess = r2(Math.max(0, cumulative - sec.annual));
+      const chargeable = r2(Math.min(goodsValue, excess));
+      let rate = v.pan ? sec.rate : 5;                     // 206AA caps 194Q at 5%
+      out.push({
+        type:'tds', key:'194Q', section:'194Q', name:sec.name, rate:chargeable>0?rate:0,
+        base:chargeable, amount:chargeable>0?r2(chargeable*rate/100):0,
+        note: chargeable>0
+          ? `only the value above the ${money(sec.annual)} FY threshold`
+          : `below the ${money(sec.annual)} FY threshold — not deducted`,
+        detail:`FY purchases ${money(prior)} + ${money(goodsValue)} = ${money(cumulative)}`
+      });
+    }
+  }
+  return out;
+}
+
+/* Merge engine suggestions into the editable lines: untouched rows follow the
+   engine, hand-edited rows are left alone, user-added rows always survive. */
+function syncLines(listName, suggestions){
+  const list = state[listName];
+  const seen = new Set();
+  suggestions.forEach(s=>{
+    seen.add(s.key);
+    const found = list.find(l=>l.key===s.key);
+    if(!found){ list.push({id:uid(),auto:true,touched:false,itc:'eligible',...s}); }
+    else if(!found.touched){ Object.assign(found,s); }
+  });
+  for(let i=list.length-1;i>=0;i--){
+    const l = list[i];
+    if(l.auto && !l.touched && !seen.has(l.key)) list.splice(i,1);
+  }
+}
+
+/* GST and TDS are both tax lines — they live in one list, split only by type */
+const gstLines = ()=>state.taxLines.filter(t=>t.type!=='tds');
+const tdsLines = ()=>state.taxLines.filter(t=>t.type==='tds');
+
+function compute(){
+  syncLines('taxLines', [...suggestTaxLines(), ...suggestTdsLines()]);
+
+  const rows = state.mode==='item' ? state.items.map(lineOf) : [];
+  const ledgerRows = state.ledgers.map(ledgerLineOf);
+  const itemsTaxable  = r2(rows.reduce((s,l)=>s+l.taxable,0));
+  const ledgerTaxable = r2(ledgerRows.reduce((s,l)=>s+l.taxable,0));
+  const subTotal = r2(itemsTaxable+ledgerTaxable);
+
+  const gstTotal = r2(gstLines().reduce((s,t)=>s+num(t.amount),0));
+  const gstIneligible = r2(gstLines().filter(t=>t.itc==='ineligible').reduce((s,t)=>s+num(t.amount),0));
+  const tdsTotal = r2(tdsLines().reduce((s,t)=>s+num(t.amount),0));
+  const adjTotal = r2(state.adjustments.reduce((s,a)=>s+num(a.amount),0));
+
+  const heads = {};
+  gstLines().forEach(t=>{
+    const head = (t.name.match(/CGST|SGST|IGST|Cess/i)||['Tax'])[0].toUpperCase();
+    heads[head] = r2((heads[head]||0)+num(t.amount));
+  });
+
+  const beforeRound = r2(subTotal + (state.reverseCharge?0:gstTotal) - tdsTotal + adjTotal);
+  const grand = Math.round(beforeRound);
+  const roundOff = r2(grand-beforeRound);
+
+  return {intra:isIntraState(),rows,ledgerRows,itemsTaxable,ledgerTaxable,subTotal,
+          gstTotal,gstIneligible,tdsTotal,adjTotal,heads,beforeRound,grand,roundOff};
+}
+
+/* ============================================================================
+   5. RENDER
+   ==========================================================================*/
+const caret  = `<span class="ico ico-13 ico--muted"><svg width="13" height="13"><use href="#i-caret"/></svg></span>`;
+const dots   = `<span class="ico ico--brand"><svg width="4" height="16"><use href="#i-dots"/></svg></span>`;
+const pencil = `<span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>`;
+function checkbox(checked,mixed){
+  const st = mixed?'mixed':(checked?'true':'false');
+  return `<button type="button" class="checkbox" role="checkbox" aria-checked="${st}">
+    <span class="checkbox__box"><svg width="10" height="10"><use href="#i-${mixed?'dash':'tick'}"/></svg></span></button>`;
+}
+const ccLocked = ()=>state.ccMode==='class';
+function ccPlaceholder(){
+  if(!ccLocked()) return 'Select Cost Centre';
+  const cls = byId(MASTERS.costCentreClasses,state.costCentreClass);
+  return cls ? cls.name : 'Set by class';
+}
+
+function renderItems(){
+  const head = `<div class="trow trow--head">
+    <div class="tcell col-check tcell--check">${checkbox(state.items.length>0&&state.items.every(r=>r.sel),state.items.some(r=>r.sel)&&!state.items.every(r=>r.sel))}</div>
+    <div class="tcell col-desc tcell--grow">Item Description</div>
+    <div class="tcell col-item">Item</div>
+    <div class="tcell col-med">Cost Centre</div>
+    <div class="tcell col-godown">Godown/Location</div>
+    <div class="tcell col-qty">Quantity</div>
+    <div class="tcell col-num tcell--end">Unit Rate</div>
+    <div class="tcell col-num tcell--end">Discount</div>
+    <div class="tcell col-tax">Tax</div>
+    <div class="tcell col-num tcell--end"><span class="req">*</span>&nbsp;Amount</div>
+    <div class="tcell col-menu tcell--last"></div>
+  </div>`;
+
+  const rows = state.items.map(row=>{
+    const l = lineOf(row);
+    const master = byId(MASTERS.items,row.item);
+    const invalid = state.validated && l.taxable<=0;
+    const overridden = row.amountOverride!==null && row.amountOverride!==undefined;
+    return `<div class="trow${row.sel?' is-selected':''}" data-kind="items" data-id="${row.id}">
+      <div class="tcell col-check tcell--check">${checkbox(row.sel)}</div>
+      <div class="tcell col-desc tcell--grow">
+        <label class="cell"><input class="cell__input t-cell" data-f="description" value="${esc(row.description)}" placeholder="Enter Description"></label>
+      </div>
+      <div class="tcell col-item">
+        <label class="cell"><input class="cell__input t-cell" data-f="item" list="items-list" value="${esc(master?master.name:row.item)}" placeholder="Type or Select Item">${caret}</label>
+        <div class="itemmeta">
+          <button type="button" class="kindtoggle" data-f="kind" data-kind="${row.kind}"
+                  title="Switch between goods and service">${row.kind==='service'?'Service':'Goods'}</button>
+          <span class="hsn">HSN/SAC:
+            <input class="hsn__input" data-f="hsn" value="${esc(row.hsn)}" placeholder="—" aria-label="HSN or SAC code">
+            ${pencil}
+          </span>
+        </div>
+      </div>
+      <div class="tcell col-med">
+        <label class="cell${ccLocked()?' is-disabled':''}">
+          <select class="cell__select t-cell" data-f="costCentre">${options(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select>${caret}</label>
+      </div>
+      <div class="tcell col-godown">
+        <label class="cell${row.kind==='service'?' is-disabled':''}">
+          <select class="cell__select t-cell" data-f="godown">${options(MASTERS.godowns,row.kind==='service'?'Not applicable':'Select Godown/Location',row.godown)}</select>${caret}</label>
+      </div>
+      <div class="tcell col-qty">
+        <div class="split"><input class="split__value t-cell" data-f="qty" inputmode="decimal" value="${row.qty||0}">
+        <span class="split__addon">${esc(master?master.unit:'—')}</span></div>
+      </div>
+      <div class="tcell col-num">
+        <label class="cell cell-center"><input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate||0}"></label>
+      </div>
+      <div class="tcell col-num">
+        <div class="split"><input class="split__value t-cell" data-f="discount" inputmode="decimal" value="${row.discount||0}">
+        <button type="button" class="split__addon split__addon--btn" data-f="discountType" title="Switch between % and flat amount">
+          ${row.discountType==='pct'?`<span class="ico ico-14 ico--muted"><svg width="14" height="14"><use href="#i-percent"/></svg></span>`:'₹'}${caret}</button></div>
+      </div>
+      <div class="tcell col-tax">
+        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select>${caret}</label>
+      </div>
+      <div class="tcell col-num${invalid?' is-invalid':''}">
+        <label class="cell cell-num"><input class="cell__input t-cell" data-f="amountOverride" inputmode="decimal" value="${inr.format(l.taxable)}"></label>
+        ${overridden?`<button type="button" class="link" data-f="clearOverride">Reset to ${inr.format(l.computed)}</button>`:''}
+      </div>
+      <div class="tcell col-menu tcell--last">
+        <button type="button" class="row-menu" data-act="menu" aria-label="Row options">${dots}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  $('#items-table').innerHTML = head + (rows || `<div class="trow trow--empty">No line items yet — use “Add Line Item”.</div>`);
+  const n = state.items.filter(r=>r.sel).length;
+  $('#items-bulk').hidden = n===0;
+  $('#items-bulk-text').textContent = `${n} line item${n===1?'':'s'} selected`;
+}
+
+function renderLedgers(){
+  const head = `<div class="trow trow--head">
+    <div class="tcell col-check tcell--check">${checkbox(state.ledgers.length>0&&state.ledgers.every(r=>r.sel),state.ledgers.some(r=>r.sel)&&!state.ledgers.every(r=>r.sel))}</div>
+    <div class="tcell col-med tcell--grow">Description</div>
+    <div class="tcell col-med">Ledger Name</div>
+    <div class="tcell col-med">Cost Centre</div>
+    <div class="tcell col-tax">Tax</div>
+    <div class="tcell col-num tcell--end">Amount</div>
+    <div class="tcell col-menu tcell--last"></div>
+  </div>`;
+
+  const rows = state.ledgers.map(row=>
+    `<div class="trow${row.sel?' is-selected':''}" data-kind="ledgers" data-id="${row.id}">
+      <div class="tcell col-check tcell--check">${checkbox(row.sel)}</div>
+      <div class="tcell col-med tcell--grow">
+        <label class="cell"><input class="cell__input t-cell" data-f="description" value="${esc(row.description)}" placeholder="Enter Description"></label>
+      </div>
+      <div class="tcell col-med">
+        <label class="cell"><select class="cell__select t-cell" data-f="ledger">${options(MASTERS.expenseLedgers,'Select Ledger',row.ledger)}</select>${caret}</label>
+      </div>
+      <div class="tcell col-med">
+        <label class="cell${ccLocked()?' is-disabled':''}">
+          <select class="cell__select t-cell" data-f="costCentre">${options(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select>${caret}</label>
+      </div>
+      <div class="tcell col-tax">
+        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select>${caret}</label>
+      </div>
+      <div class="tcell col-num">
+        <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${row.amount||0}"></label>
+      </div>
+      <div class="tcell col-menu tcell--last">
+        <button type="button" class="row-menu" data-act="menu" aria-label="Row options">${dots}</button>
+      </div>
+    </div>`).join('');
+
+  $('#ledgers-table').innerHTML = head + (rows || `<div class="trow trow--empty">No ledger lines — use “Add Ledger”.</div>`);
+  const n = state.ledgers.filter(r=>r.sel).length;
+  $('#ledgers-bulk').hidden = n===0;
+  $('#ledgers-bulk-text').textContent = `${n} ledger line${n===1?'':'s'} selected`;
+}
+
+/* Ledger picker for a tax line: GST input ledgers and TDS sections in one list,
+   because a TDS deduction is just another tax line on the bill. */
+function gstLedgerChoices(){
+  const out = [];
+  [0,2.5,6,9,14].forEach(r=>['CGST','SGST'].forEach(h=>out.push(`Input ${h} ${r}%`)));
+  [0,5,12,18,28].forEach(r=>out.push(`Input IGST ${r}%`));
+  out.push('Input Cess');
+  return out;
+}
+function taxLedgerSelect(row){
+  const value = row.type==='tds' ? 'tds:'+row.section : row.name;
+  const gst = gstLedgerChoices();
+  if(row.type!=='tds' && row.name && !gst.includes(row.name)) gst.unshift(row.name);
+  const opt = (v,label)=>`<option value="${esc(v)}"${v===value?' selected':''}>${esc(label)}</option>`;
+  return `<select class="cell__select t-cell" data-f="ledger">
+    <optgroup label="GST">${gst.map(n=>opt(n,n)).join('')}</optgroup>
+    <optgroup label="TDS deduction">${MASTERS.tdsSections.map(s=>opt('tds:'+s.id, s.name)).join('')}</optgroup>
+  </select>`;
+}
+
+function renderTaxes(){
+  const head = `<div class="trow trow--head">
+    <div class="tcell col-wide tcell--grow">Ledger Name</div>
+    <div class="tcell col-tax tcell--end">Tax Rate</div>
+    <div class="tcell col-num tcell--end"><span class="req">*</span>&nbsp;Amount</div>
+    <div class="tcell col-menu tcell--last"></div>
+  </div>`;
+
+  const v = byId(MASTERS.vendors,state.vendor);
+  $('#tax-note').textContent = v
+    ? `GST is charged on the taxable value; TDS is deducted from it (GST excluded, CBDT circ. 23/2017). PAN ${v.pan||'not on file'} · deductee type: ${v.deductee}.`
+    : '';
+
+  if(!state.taxLines.length){
+    const why = !gstApplies() ? 'This GST treatment does not attract GST on the purchase.'
+      : isIntraState()===null ? 'Set Source and Destination of Supply — GST splits into CGST/SGST or IGST from those states.'
+      : 'Set a tax rate on a line item or ledger to compute GST.';
+    $('#taxes-table').innerHTML = head + `<div class="trow trow--empty">${why}</div>`;
+    return;
+  }
+
+  const ordered = [...gstLines(), ...tdsLines()];
+  $('#taxes-table').innerHTML = head + ordered.map(row=>{
+    const tds = row.type==='tds';
+    // TDS rows are just a ledger; the threshold working stays in the tooltip
+    const meta = tds ? '' :
+      `<button type="button" class="chip${row.itc==='ineligible'?' chip--no':''}" data-f="itc"
+               title="Toggle input tax credit eligibility">
+         ${row.itc==='ineligible'?'Not eligible for ITC':'Eligible for ITC'} ${pencil}</button>`;
+    const tip = tds ? ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"` : '';
+
+    return `<div class="trow" data-kind="taxLines" data-id="${row.id}">
+      <div class="tcell col-wide tcell--grow">
+        <label class="cell"${tip}>${taxLedgerSelect(row)}${caret}</label>
+        ${meta}
+      </div>
+      <div class="tcell col-tax">
+        <label class="cell cell-num"><input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate}">%</label>
+      </div>
+      <div class="tcell col-num">
+        <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
+      </div>
+      <div class="tcell col-menu tcell--last">
+        <button type="button" class="row-menu" data-act="menu" aria-label="Row options">${dots}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBreakdown(calc){
+  const rule = '<div class="bd-rule"></div>';
+  let html = `<div class="bd-row"><span>Sub Total</span><span>${money(calc.subTotal)}</span></div>` + rule;
+
+  const headEntries = Object.entries(calc.heads);
+  if(headEntries.length){
+    html += headEntries.map(([k,v])=>`<div class="bd-row"><span>${esc(k)}</span><span>${money(v)}</span></div>`).join('') + rule;
+  }
+  html += `<div class="bd-row"><span>TDS</span><span>${calc.tdsTotal?'− ':''}${money(calc.tdsTotal)}</span></div>` + rule;
+
+  html += `<div class="bd-row" style="padding-bottom:2px"><span>Adjustment</span><span></span></div>`;
+  html += state.adjustments.map(a=>`
+    <div class="bd-adj" data-adj="${a.id}">
+      <input class="bd-adj__label" data-af="label" value="${esc(a.label)}" placeholder="Adjustments">
+      <input class="bd-adj__amt" data-af="amount" inputmode="decimal" value="${a.amount||0}">
+      <span class="bd-adj__out">${money(num(a.amount))}</span>
+      <button type="button" class="bd-adj__del" data-af="del" aria-label="Remove adjustment">&times;</button>
+    </div>`).join('');
+  html += `<button type="button" class="btn btn--quiet" id="btn-add-adj" style="height:28px">
+             <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>Add Adjustment</button>`;
+
+  if(calc.roundOff) html += rule + `<div class="bd-row"><span>Round Off</span><span>${money(calc.roundOff)}</span></div>`;
+  html += rule + `<div class="bd-grand"><span>Grand Total</span><span>${money(calc.grand)}</span></div>`;
+
+  if(state.reverseCharge && calc.gstTotal)
+    html += `<p class="bd-note">Reverse charge — ${money(calc.gstTotal)} GST is payable by you, not to the vendor, and is excluded above.</p>`;
+  if(calc.gstIneligible)
+    html += `<p class="bd-note">${money(calc.gstIneligible)} GST marked ineligible for ITC is charged to expense, not to the input credit ledger.</p>`;
+
+  $('#breakdown').innerHTML = html;
+}
+
+function renderSupplyNote(){
+  const src = byId(MASTERS.states,state.sourceState);
+  const dst = byId(MASTERS.states,state.destState);
+  const el = $('#supply-note');
+  if(!src||!dst){ el.textContent=''; return; }
+  const intra = state.sourceState===state.destState;
+  const v = byId(MASTERS.vendors,state.vendor);
+  el.innerHTML = `${esc(src.plain)} → ${esc(dst.plain)} · <strong>${intra?'Intra-state — CGST + SGST':'Inter-state — IGST'}</strong>` +
+    (v?` · PAN ${esc(v.pan||'—')} · credit ${v.credit} days · FY purchases with this vendor ${money(v.fyGoods)}`:'');
+}
+
+function renderHeader(){
+  $$('[data-bind]').forEach(el=>{
+    const k = el.dataset.bind;
+    if(el.type==='date'){ el.value = state[k]||''; return; }
+    if(k==='reverseCharge'){ el.value = state.reverseCharge?'yes':'no'; return; }
+    if(document.activeElement===el) return;                 // don't fight the caret
+    if(el.value!==(state[k]??'')) el.value = state[k]??'';
+  });
+  $$('[data-display]').forEach(el=>{
+    const v = state[el.dataset.display];
+    el.textContent = v ? fmtDate(v) : el.dataset.placeholder;
+  });
+  $('#voucher-no').placeholder = state.voucherType ? previewVoucherNo() : 'Auto Generated';
+  $('#cc-toggle').setAttribute('aria-checked', state.ccMode==='centre');
+  $('#cc-label-class').classList.toggle('is-off', state.ccMode==='centre');
+  $('#cc-label-centre').classList.toggle('is-off', state.ccMode==='class');
+  $('#cc-class-control').classList.toggle('is-disabled', state.ccMode==='centre');
+  $('#block-items').hidden = state.mode!=='item';
+  $$('.segmented button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===state.mode));
+}
+
+function render(){
+  const calc = compute();
+  renderHeader();
+  renderItems();
+  renderLedgers();
+  renderTaxes();
+  renderBreakdown(calc);
+  renderSupplyNote();
+  checkDuplicate();
+  $('#btn-allocate').disabled = validate(false).length>0;
+  if(state.validated) validate(true);
+  return calc;
+}
+
+/* ============================================================================
+   6. VALIDATION
+   ==========================================================================*/
+function validate(paint){
+  const errs = [];
+  const need = (key,cond,msg)=>{ if(!cond) errs.push({key,msg}); };
+
+  need('branch', !!state.branch, 'Select the branch');
+  need('voucherType', !!state.voucherType, 'Select a voucher type');
+  need('voucherDate', !!state.voucherDate, 'Pick a voucher date');
+  need('billDate', !!state.billDate, 'Pick the bill date');
+  need('dueDate', !!state.dueDate && (!state.billDate || state.dueDate>=state.billDate), 'Due date cannot be before the bill date');
+  need('supplierInvoiceNo', state.supplierInvoiceNo.trim().length>0, 'Enter the supplier invoice number');
+  need('vendor', !!state.vendor, 'Select the vendor');
+  need('gstTreatment', !!state.gstTreatment, 'Select the GST treatment');
+  need('gstin', state.gstTreatment!=='registered' || state.gstin.trim().length===15, 'A registered vendor needs a 15-character GSTIN');
+  need('sourceState', !!state.sourceState, 'Select the source of supply');
+  need('destState', !!state.destState, 'Select the destination of supply');
+  if(state.mode==='item') need('purchaseLedger', !!state.purchaseLedger, 'Select the purchase ledger');
+
+  const calc = compute();
+  if(calc.subTotal<=0) errs.push({key:'__rows',msg:'Add at least one line with a value'});
+
+  if(paint){
+    const keys = new Set(errs.map(e=>e.key));
+    $$('[data-field]').forEach(f=>f.classList.toggle('is-invalid', keys.has(f.dataset.field)));
+  }
+  return errs;
+}
+
+function checkDuplicate(){
+  const inv = state.supplierInvoiceNo.trim().toLowerCase();
+  const hit = MASTERS.existingBills.find(b=>b.vendor===state.vendor && b.invoiceNo.toLowerCase()===inv);
+  $('#dupe-banner').hidden = !hit;
+  if(hit) $('#dupe-text').textContent =
+    `${byId(MASTERS.vendors,hit.vendor).name} already has invoice ${hit.invoiceNo} dated ${fmtDate(hit.date)} for ${money(hit.amount)}.`;
+}
+
+/* ============================================================================
+   7. BINDINGS
+   ==========================================================================*/
+document.addEventListener('input', e=>{
+  const el = e.target, bind = el.dataset.bind;
+  if(!bind || el.closest('.table')) return;
+  state[bind] = el.value;
+  if(['supplierInvoiceNo','narration','billingAddress','gstin','voucherNo'].includes(bind)){
+    checkDuplicate();
+    $('#btn-allocate').disabled = validate(false).length>0;
+    return;                                             // avoid re-render mid-typing
+  }
+  render();
+});
+
+document.addEventListener('change', e=>{
+  const el = e.target, bind = el.dataset.bind;
+  if(!bind || el.closest('.table')) return;
+  if(el.type==='date'){
+    state[bind] = el.value;
+    if(bind==='billDate'){
+      const v = byId(MASTERS.vendors,state.vendor);
+      if(v && el.value) state.dueDate = addDays(el.value, v.credit);
+    }
+  }else if(bind==='reverseCharge'){
+    state.reverseCharge = el.value==='yes';
+  }else{
+    state[bind] = el.value;
+    if(bind==='vendor') applyVendor();
+    if(bind==='branch') applyBranch();
+    if(bind==='gstTreatment') applyTreatment();
+  }
+  render();
+});
+
+function applyVendor(){
+  const v = byId(MASTERS.vendors,state.vendor);
+  if(!v) return;
+  state.billingAddress = v.address;
+  state.gstin          = v.gstin;
+  state.gstTreatment   = v.treatment;
+  state.sourceState    = v.state;                       // supply moves vendor -> branch
+  if(!state.purchaseLedger) state.purchaseLedger = v.ledger;
+  if(state.billDate) state.dueDate = addDays(state.billDate, v.credit);
+  syncLedgerToSupply();
+}
+function applyBranch(){
+  const b = byId(MASTERS.branches,state.branch);
+  if(b) state.destState = b.state;
+  syncLedgerToSupply();
+}
+function applyTreatment(){
+  // an unregistered supplier shifts the liability to the recipient
+  if(state.gstTreatment==='unregistered'){ state.reverseCharge = true; state.gstin=''; }
+  if(state.gstTreatment==='registered' && !state.gstin){
+    state.gstin = byId(MASTERS.vendors,state.vendor)?.gstin || '';
+  }
+}
+function syncLedgerToSupply(){
+  const intra = isIntraState();
+  if(intra===true  && state.purchaseLedger==='led-purchase-inter') state.purchaseLedger='led-purchase-local';
+  if(intra===false && state.purchaseLedger==='led-purchase-local') state.purchaseLedger='led-purchase-inter';
+}
+
+/* --- table rows ---------------------------------------------------------- */
+function rowOf(el){
+  const tr = el.closest('.trow[data-id]');
+  if(!tr) return null;
+  const list = state[tr.dataset.kind];
+  return {tr, list, row:list?.find(r=>r.id===tr.dataset.id)};
+}
+const LIVE_NUMERIC = ['qty','rate','discount','amount','amountOverride','base'];
+
+document.addEventListener('input', e=>{
+  const f = e.target.dataset.f;
+  if(!f) return;
+  const ctx = rowOf(e.target); if(!ctx?.row) return;
+  const row = ctx.row, kind = ctx.tr.dataset.kind;
+
+  if(f==='item'){
+    const match = MASTERS.items.find(i=>i.name.toLowerCase()===e.target.value.trim().toLowerCase());
+    if(match){
+      row.item = match.id;
+      if(!row.description) row.description = match.name;
+      row.rate = match.rate; row.tax = match.tax; row.kind = match.kind; row.hsn = match.hsn;
+      if(!row.godown) row.godown = match.godown;
+      render(); return;
+    }
+    row.item = e.target.value; return;                  // free text — no re-render
+  }
+  if(LIVE_NUMERIC.includes(f)){
+    row[f] = num(e.target.value);
+    if(kind==='taxLines') row.touched = true;
+
+    // keep the dependent figure in the same row live, without stealing focus
+    const setSibling = (sel,val)=>{
+      const el = ctx.tr.querySelector(sel);
+      if(el && el!==e.target) el.value = val;
+    };
+    if(kind==='taxLines' && (f==='base'||f==='rate')){
+      row.amount = r2(num(row.base)*num(row.rate)/100);
+      setSibling('[data-f="amount"]', inr.format(row.amount));
+    }
+    if(kind==='items' && f!=='amountOverride'){
+      setSibling('[data-f="amountOverride"]', inr.format(lineOf(row).taxable));
+    }
+    renderBreakdown(compute());
+    $('#btn-allocate').disabled = validate(false).length>0;
+    return;
+  }
+  row[f] = e.target.value;
+  if(kind==='taxLines') row.touched = true;
+});
+
+document.addEventListener('change', e=>{
+  const f = e.target.dataset.f;
+  if(!f || e.target.tagName!=='SELECT') return;
+  const ctx = rowOf(e.target); if(!ctx?.row) return;
+  const kind = ctx.tr.dataset.kind, row = ctx.row;
+
+  // the tax table's ledger picker spans GST ledgers and TDS sections
+  if(kind==='taxLines' && f==='ledger'){
+    row.touched = true;
+    if(e.target.value.startsWith('tds:')){
+      const sec = byId(MASTERS.tdsSections, e.target.value.slice(4));
+      row.type='tds'; row.section=sec.id; row.name=sec.name; row.rate=sec.rate;
+      row.amount = r2(num(row.base)*sec.rate/100);
+      row.note = ''; row.detail = '';
+    }else{
+      row.type='gst'; row.section=undefined; row.name=e.target.value;
+      const m = row.name.match(/([\d.]+)%/);
+      if(m){ row.rate = parseFloat(m[1]); row.amount = r2(num(row.base)*row.rate/100); }
+    }
+    render(); return;
+  }
+
+  row[f] = e.target.value;
+  if(kind==='taxLines') row.touched = true;
+  if(f==='ledger'){
+    const led = byId(MASTERS.expenseLedgers,e.target.value);
+    if(led){
+      if(!row.tax) row.tax = led.tax;
+      if(!row.description) row.description = led.name;
+    }
+  }
+  render();
+});
+
+/* --- adjustments --------------------------------------------------------- */
+document.addEventListener('input', e=>{
+  const af = e.target.dataset.af;
+  if(!af) return;
+  const wrap = e.target.closest('[data-adj]');
+  const adj = state.adjustments.find(a=>a.id===wrap.dataset.adj);
+  if(!adj) return;
+  adj[af] = af==='amount' ? num(e.target.value) : e.target.value;
+  if(af==='amount'){
+    wrap.querySelector('.bd-adj__out').textContent = money(adj.amount);
+    const calc = compute();
+    $('.bd-grand span:last-child').textContent = money(calc.grand);
+  }
+});
+
+/* --- clicks -------------------------------------------------------------- */
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+
+  if(btn.dataset.af==='del'){
+    const id = btn.closest('[data-adj]').dataset.adj;
+    state.adjustments = state.adjustments.filter(a=>a.id!==id);
+    render(); return;
+  }
+  if(btn.id==='btn-add-adj'){
+    state.adjustments.push({id:uid(),label:'',amount:0});
+    render(); return;
+  }
+
+  const ctx = rowOf(btn);
+
+  if(btn.dataset.f==='discountType' && ctx?.row){
+    ctx.row.discountType = ctx.row.discountType==='pct'?'flat':'pct';
+    render(); return;
+  }
+  if(btn.dataset.f==='kind' && ctx?.row){
+    ctx.row.kind = ctx.row.kind==='goods'?'service':'goods';
+    if(ctx.row.kind==='service') ctx.row.godown='';
+    render(); return;
+  }
+  if(btn.dataset.f==='itc' && ctx?.row){
+    ctx.row.itc = ctx.row.itc==='ineligible'?'eligible':'ineligible';
+    render(); return;
+  }
+  if(btn.dataset.f==='clearOverride' && ctx?.row){
+    ctx.row.amountOverride = null;
+    render(); return;
+  }
+  if(btn.dataset.act==='menu' && ctx?.row){ openRowMenu(btn, ctx); return; }
+
+  if(btn.classList.contains('checkbox')){
+    const tr = btn.closest('.trow');
+    if(tr.classList.contains('trow--head')){
+      const kind = tr.parentElement.id.replace('-table','');
+      const list = state[kind];
+      const all = list.every(r=>r.sel);
+      list.forEach(r=>r.sel=!all);
+    }else if(ctx?.row){ ctx.row.sel = !ctx.row.sel; }
+    render(); return;
+  }
+  if(btn.dataset.bulk){
+    const kind = btn.dataset.bulk;
+    state[kind] = state[kind].filter(r=>!r.sel);
+    if(!state[kind].length) state[kind].push(kind==='items'?blankItem():blankLedger());
+    render(); toast('Selected rows deleted'); return;
+  }
+});
+
+/* --- row menu popup ------------------------------------------------------ */
+function closeMenu(){ $('.menu')?.remove(); }
+function openRowMenu(anchor, ctx){
+  closeMenu();
+  const kind = ctx.tr.dataset.kind;
+  const i = ctx.list.indexOf(ctx.row);
+  const simple = kind==='taxLines';
+  const menu = document.createElement('div');
+  menu.className = 'menu';
+  menu.innerHTML = `<button type="button" data-a="dup">Duplicate row</button>` +
+    (simple?'':`<button type="button" data-a="clear">Clear row</button>`) +
+    `<button type="button" data-a="del" class="is-danger">Delete row</button>`;
+  document.body.append(menu);
+  const r = anchor.getBoundingClientRect();
+  menu.style.top  = (window.scrollY + r.bottom + 6)+'px';
+  menu.style.left = (window.scrollX + Math.min(r.left, document.documentElement.clientWidth - menu.offsetWidth - 12))+'px';
+
+  menu.addEventListener('click',ev=>{
+    const a = ev.target.closest('button')?.dataset.a;
+    if(a==='dup')   ctx.list.splice(i+1,0,{...ctx.row,id:uid(),sel:false,auto:false,touched:true,key:uid()});
+    if(a==='clear') ctx.list[i] = kind==='items'?blankItem():blankLedger();
+    if(a==='del'){
+      ctx.list.splice(i,1);
+      if(!ctx.list.length && !simple) ctx.list.push(kind==='items'?blankItem():blankLedger());
+    }
+    closeMenu(); render();
+  });
+  setTimeout(()=>document.addEventListener('click',onAway,{once:true}));
+  function onAway(ev){ if(!menu.contains(ev.target)) closeMenu(); }
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeMenu(); });
+
+/* --- date pickers & misc buttons ----------------------------------------- */
+$$('.control__date').forEach(inp=>inp.addEventListener('click',()=>inp.showPicker?.()));
+$$('[data-display]').forEach(el=>{ el.dataset.placeholder = el.textContent; });
+
+$('#cc-toggle').addEventListener('click',()=>{ state.ccMode = state.ccMode==='class'?'centre':'class'; render(); });
+$$('.segmented button').forEach(b=>b.addEventListener('click',()=>{ state.mode = b.dataset.mode; render(); }));
+$('#btn-add-item').addEventListener('click',()=>{ state.items.push(blankItem()); render(); });
+$('#btn-add-ledger').addEventListener('click',()=>{ state.ledgers.push(blankLedger()); render(); });
+$('#btn-add-tax').addEventListener('click',()=>{
+  state.taxLines.push({id:uid(),key:uid(),type:'gst',auto:false,touched:true,name:'Input Cess',rate:0,base:0,amount:0,itc:'eligible'});
+  render();
+});
+
+/* ============================================================================
+   8. UPLOAD → EXTRACTION (simulated pipeline over the bundled sample bill)
+   ==========================================================================*/
+const STEPS = [
+  ['Uploading document',420],['Reading pages (OCR)',780],['Extracting invoice fields',720],
+  ['Matching vendor, items & ledgers',680],['Computing GST and TDS',520]
+];
+
+function showPaneState(which){
+  $('#doc-empty').hidden   = which!=='empty';
+  $('#doc-extract').hidden = which!=='extract';
+  $('#doc-preview').hidden = which!=='preview';
+  $('#doc-pane').classList.toggle('is-loaded', which==='preview');
+}
+
+async function runExtraction(file){
+  $('#extract-name').textContent = file ? file.name : SAMPLE.fileName;
+  $('#extract-steps').innerHTML = STEPS.map(([label],i)=>
+    `<div class="step" data-i="${i}"><span class="step__dot"><svg width="9" height="9"><use href="#i-tick"/></svg></span>${esc(label)}</div>`).join('');
+  $('#extract-fill').style.width = '0';
+  showPaneState('extract');
+
+  for(let i=0;i<STEPS.length;i++){
+    const el = $(`.step[data-i="${i}"]`);
+    el.classList.add('is-active');
+    await new Promise(r=>setTimeout(r,STEPS[i][1]));
+    el.classList.remove('is-active'); el.classList.add('is-done');
+    $('#extract-fill').style.width = ((i+1)/STEPS.length*100)+'%';
+  }
+  applyExtraction(file);
+}
+
+function applyExtraction(file){
+  const v = byId(MASTERS.vendors,SAMPLE.vendor);
+  const b = byId(MASTERS.branches,SAMPLE.branch);
+
+  state.branch            = SAMPLE.branch;
+  state.voucherType       = SAMPLE.voucherType;
+  state.vendor            = SAMPLE.vendor;
+  state.supplierInvoiceNo = SAMPLE.supplierInvoiceNo;
+  state.billDate          = SAMPLE.billDate;
+  state.dueDate           = addDays(SAMPLE.billDate, v.credit);
+  state.purchaseLedger    = SAMPLE.purchaseLedger;
+  state.narration         = SAMPLE.narration;
+  state.costCentreClass   = SAMPLE.costCentreClass;
+  state.billingAddress    = v.address;
+  state.gstin             = v.gstin;
+  state.gstTreatment      = v.treatment;
+  state.sourceState       = v.state;
+  state.destState         = b.state;
+
+  state.items   = SAMPLE.items.map(r=>({...blankItem(),...r}));
+  state.ledgers = SAMPLE.ledgers.map(r=>({...blankLedger(),...r}));
+  state.taxLines = []; state.adjustments = [];
+
+  state.document = {name:file?file.name:SAMPLE.fileName};
+  const calc = render();
+
+  $('#preview-name').textContent = state.document.name;
+  $('#preview-body').innerHTML = '';
+  if(file && /\.pdf$/i.test(file.name)){
+    const o = document.createElement('embed');
+    o.src = URL.createObjectURL(file); o.type='application/pdf';
+    $('#preview-body').append(o);
+  }else if(file && /\.(png|jpe?g)$/i.test(file.name)){
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file); img.alt='Uploaded bill';
+    $('#preview-body').append(img);
+  }else{
+    $('#preview-body').innerHTML = facsimile(calc);
+  }
+  showPaneState('preview');
+
+  $$('.control,.cell').forEach(el=>el.classList.add('is-extracted'));
+  setTimeout(()=>$$('.is-extracted').forEach(el=>el.classList.remove('is-extracted')),2600);
+  toast('Bill data extracted — review and allocate','ok');
+}
+
+function facsimile(calc){
+  const v = byId(MASTERS.vendors,SAMPLE.vendor);
+  const b = byId(MASTERS.branches,SAMPLE.branch);
+  const rows = state.items.map(r=>{
+    const l = lineOf(r);
+    return `<tr><td>${esc(r.description)}</td><td>${esc(r.hsn)}</td>
+      <td class="num">${r.qty}</td><td class="num">${inr.format(r.rate)}</td>
+      <td class="num">${r.discount?r.discount+(r.discountType==='pct'?'%':''):'—'}</td>
+      <td class="num">${inr.format(l.taxable)}</td></tr>`;
+  }).join('');
+  const led = state.ledgers.map(r=>{
+    const m = byId(MASTERS.expenseLedgers,r.ledger);
+    return `<tr><td>${esc(r.description)}</td><td>${esc(m?m.sac:'')}</td><td class="num">—</td>
+      <td class="num">—</td><td class="num">—</td><td class="num">${inr.format(num(r.amount))}</td></tr>`;
+  }).join('');
+  // a supplier invoice carries GST only — TDS is the buyer's deduction and is
+  // never printed on it, so the system has to predict it from the masters
+  const taxes = gstLines().map(t=>
+    `<tr><td>${esc(t.name.replace('Input ',''))}</td><td class="num">${inr.format(num(t.amount))}</td></tr>`).join('');
+
+  return `<article class="inv">
+    <div class="inv__head">
+      <div><h3>${esc(v.name)}</h3><div>${esc(v.address)}</div>
+           <div>GSTIN: ${esc(v.gstin)} · PAN: ${esc(v.pan)}</div></div>
+      <div class="inv__title">TAX<br>INVOICE</div>
+    </div>
+    <div class="inv__parties">
+      <div><div class="inv__k">Billed to</div><strong>${esc(b.name)}</strong><div>GSTIN: ${esc(b.gstin)}</div></div>
+      <div><div class="inv__k">Invoice no.</div><strong>${esc(SAMPLE.supplierInvoiceNo)}</strong>
+           <div class="inv__k" style="margin-top:6px">Invoice date</div><strong>${fmtDate(SAMPLE.billDate)}</strong>
+           <div class="inv__k" style="margin-top:6px">Place of supply</div><strong>${esc(byId(MASTERS.states,v.state).plain)}</strong></div>
+    </div>
+    <table>
+      <thead><tr><th>Description</th><th>HSN/SAC</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Disc.</th><th class="num">Taxable</th></tr></thead>
+      <tbody>${rows}${led}</tbody>
+    </table>
+    <table class="inv__totals">
+      <tr><td>Taxable value</td><td class="num">${inr.format(calc.subTotal)}</td></tr>
+      ${taxes}
+      <tr class="inv__grand"><td>Invoice total</td><td class="num">₹ ${inr.format(calc.subTotal+calc.gstTotal)}</td></tr>
+    </table>
+    <div class="inv__foot">Payment due within ${v.credit} days · E. &amp; O.E.<br>
+      No tax is deducted at source by us. TDS, where applicable under Chapter XVII-B, is to be
+      deducted by the buyer and the balance remitted.<br>
+      Demo facsimile generated from the bundled sample data — no document was sent anywhere.</div>
+  </article>`;
+}
+
+$('#btn-upload').addEventListener('click',()=>$('#file-input').click());
+$('#btn-replace').addEventListener('click',()=>$('#file-input').click());
+$('#btn-sample').addEventListener('click',()=>runExtraction(null));
+$('#file-input').addEventListener('change',e=>{
+  const f = e.target.files[0];
+  if(f) runExtraction(f);
+  e.target.value = '';
+});
+
+const pane = $('#doc-pane');
+['dragenter','dragover'].forEach(t=>pane.addEventListener(t,e=>{e.preventDefault();pane.classList.add('is-dropping')}));
+['dragleave','drop'].forEach(t=>pane.addEventListener(t,e=>{e.preventDefault();pane.classList.remove('is-dropping')}));
+pane.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) runExtraction(f); });
+
+/* ============================================================================
+   9. ALLOCATE — number the voucher and post the double entry
+   ==========================================================================*/
+function previewVoucherNo(){
+  const vt = byId(MASTERS.voucherTypes,state.voucherType);
+  if(!vt) return 'Auto Generated';
+  const seq = MASTERS.lastVoucherSeq[state.voucherType]+1;
+  return `${vt.prefix}/${fyLabel(state.voucherDate)}/${String(seq).padStart(3,'0')}`;
+}
+function nextVoucherNo(){
+  if(state.voucherNo.trim()) return state.voucherNo.trim();   // hand-typed wins
+  const vt = byId(MASTERS.voucherTypes,state.voucherType);
+  const seq = ++MASTERS.lastVoucherSeq[state.voucherType];
+  return `${vt.prefix}/${fyLabel(state.voucherDate)}/${String(seq).padStart(3,'0')}`;
+}
+
+function journalEntries(calc){
+  const lines = [];
+  const ineligible = gstLines().filter(t=>t.itc==='ineligible');
+  const eligible   = gstLines().filter(t=>t.itc!=='ineligible');
+
+  if(state.mode==='item' && calc.itemsTaxable)
+    lines.push({account:byId(MASTERS.purchaseLedgers,state.purchaseLedger)?.name||'Purchase',dr:calc.itemsTaxable,cr:0});
+
+  state.ledgers.forEach(r=>{
+    const amt = num(r.amount); if(!amt) return;
+    lines.push({account:byId(MASTERS.expenseLedgers,r.ledger)?.name||'Unallocated expense',dr:amt,cr:0});
+  });
+
+  if(!state.reverseCharge){
+    eligible.forEach(t=>num(t.amount) && lines.push({account:t.name,dr:num(t.amount),cr:0}));
+    // ITC that cannot be claimed is a cost, not an asset
+    const inelTotal = r2(ineligible.reduce((s,t)=>s+num(t.amount),0));
+    if(inelTotal) lines.push({account:'GST Expense — ITC not eligible',dr:inelTotal,cr:0});
+  }
+  state.adjustments.forEach(a=>{
+    const amt = num(a.amount); if(!amt) return;
+    lines.push({account:a.label||'Adjustment',dr:amt>0?amt:0,cr:amt<0?-amt:0});
+  });
+  if(calc.roundOff>0) lines.push({account:'Round Off',dr:calc.roundOff,cr:0});
+  if(calc.roundOff<0) lines.push({account:'Round Off',dr:0,cr:-calc.roundOff});
+
+  tdsLines().forEach(t=>num(t.amount) &&
+    lines.push({account:`TDS Payable — ${t.section||t.name}`,dr:0,cr:num(t.amount)}));
+
+  lines.push({account:byId(MASTERS.vendors,state.vendor).name,dr:0,cr:calc.grand,party:true});
+
+  if(state.reverseCharge && calc.gstTotal){
+    gstLines().forEach(t=>num(t.amount) && lines.push({account:t.name+' (RCM)',dr:num(t.amount),cr:0}));
+    lines.push({account:'GST Payable under Reverse Charge',dr:0,cr:calc.gstTotal});
+  }
+  return lines;
+}
+
+$('#btn-allocate').addEventListener('click',()=>{
+  state.validated = true;
+  const errs = validate(true);
+  if(errs.length){
+    toast(errs[0].msg || 'Fill the highlighted fields before allocating','err');
+    $('.is-invalid')?.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  const calc = compute();
+  const voucherNo = nextVoucherNo();
+  state.voucherNo = voucherNo;
+  $('#voucher-no').value = voucherNo;
+  $('#voucher-ref').textContent = `${voucherNo} · ${fmtDate(state.voucherDate)}`;
+
+  const entries = journalEntries(calc);
+  const drTotal = r2(entries.reduce((s,l)=>s+l.dr,0));
+  const crTotal = r2(entries.reduce((s,l)=>s+l.cr,0));
+  const v = byId(MASTERS.vendors,state.vendor);
+
+  $('#journal-sub').textContent = `${voucherNo} · ${v.name} · ${fmtDate(state.billDate)}`;
+  $('#journal-body').innerHTML = `
+    <dl class="kv">
+      <dt>Supplier invoice</dt><dd>${esc(state.supplierInvoiceNo)}</dd>
+      <dt>Due date</dt><dd>${fmtDate(state.dueDate)}</dd>
+      <dt>Supply</dt><dd>${esc(byId(MASTERS.states,state.sourceState).plain)} → ${esc(byId(MASTERS.states,state.destState).plain)} · ${calc.intra?'CGST + SGST':'IGST'}</dd>
+      <dt>GST treatment</dt><dd>${esc(byId(MASTERS.gstTreatments,state.gstTreatment).name)}${state.reverseCharge?' · reverse charge':''}</dd>
+      ${calc.tdsTotal?`<dt>TDS deducted</dt><dd>${money(calc.tdsTotal)} (${tdsLines().filter(t=>t.amount>0).map(t=>t.section).join(', ')})</dd>`:''}
+      ${calc.gstIneligible?`<dt>ITC not eligible</dt><dd>${money(calc.gstIneligible)}</dd>`:''}
+    </dl>
+    <table class="jtable">
+      <thead><tr><th>Account</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+      <tbody>${entries.map(l=>`<tr>
+        <td>${l.party?'<strong>':''}${esc(l.account)}${l.party?'</strong>':''}</td>
+        <td class="num">${l.dr?inr.format(l.dr):''}</td>
+        <td class="num">${l.cr?inr.format(l.cr):''}</td></tr>`).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td>${drTotal===crTotal?'<span class="pill pill--ok">Balanced</span>':'<span class="pill pill--warn">Out of balance</span>'}</td>
+        <td class="num">${inr.format(drTotal)}</td><td class="num">${inr.format(crTotal)}</td></tr></tfoot>
+    </table>`;
+  $('#journal-dialog').showModal();
+  toast('Bill allocated — '+voucherNo,'ok');
+});
+
+$('#journal-close').addEventListener('click',()=>$('#journal-dialog').close());
+$('#journal-new').addEventListener('click',()=>{ $('#journal-dialog').close(); reset(); });
+$('#btn-discard').addEventListener('click',()=>{ if(confirm('Discard this bill? All entered data will be lost.')) reset(); });
+
+function reset(){
+  state = freshState();
+  $('#voucher-ref').textContent = '';
+  $('#preview-body').innerHTML = '';
+  showPaneState('empty');
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================================================================
+   10. SPLITTER
+   ==========================================================================*/
+(()=>{
+  const workspace = $('.workspace'), splitter = $('.splitter');
+  const MIN=25, MAX=70, DEFAULT=50;
+  let width = DEFAULT;
+  const apply = pct=>{
+    width = Math.min(MAX,Math.max(MIN,pct));
+    workspace.style.setProperty('--doc-w', width+'%');
+    splitter.setAttribute('aria-valuenow', Math.round(width));
+  };
+  splitter.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    const bounds = workspace.getBoundingClientRect();
+    splitter.setPointerCapture(e.pointerId);
+    workspace.classList.add('is-resizing');
+    const onMove = ev=>apply((ev.clientX-bounds.left)/bounds.width*100);
+    const onUp = ()=>{
+      workspace.classList.remove('is-resizing');
+      splitter.removeEventListener('pointermove',onMove);
+      splitter.removeEventListener('pointerup',onUp);
+      splitter.removeEventListener('pointercancel',onUp);
+    };
+    splitter.addEventListener('pointermove',onMove);
+    splitter.addEventListener('pointerup',onUp);
+    splitter.addEventListener('pointercancel',onUp);
+  });
+  splitter.addEventListener('dblclick',()=>apply(DEFAULT));
+  splitter.addEventListener('keydown',e=>{
+    const step = e.shiftKey?10:2;
+    if(e.key==='ArrowLeft') apply(width-step);
+    else if(e.key==='ArrowRight') apply(width+step);
+    else if(e.key==='Home') apply(DEFAULT);
+    else return;
+    e.preventDefault();
+  });
+})();
+
+/* ============================================================================
+   11. BOOT
+   ==========================================================================*/
+function boot(){
+  $('[data-bind="branch"]').innerHTML           = options(MASTERS.branches,'Select Location','');
+  $('[data-bind="voucherType"]').innerHTML      = options(MASTERS.voucherTypes,'Select Voucher Type','purchase');
+  $('[data-bind="vendor"]').innerHTML           = options(MASTERS.vendors,'Select Vendor','');
+  $('[data-bind="vendorCostCentre"]').innerHTML = options(MASTERS.costCentres,'Select Cost Centre','');
+  $('[data-bind="costCentreClass"]').innerHTML  = options(MASTERS.costCentreClasses,'Select Cost Centre Class','');
+  $('[data-bind="purchaseLedger"]').innerHTML   = options(MASTERS.purchaseLedgers,'Select Ledger','');
+  $('[data-bind="gstTreatment"]').innerHTML     = options(MASTERS.gstTreatments,'Select GST Treatment','');
+  $('[data-bind="sourceState"]').innerHTML      = options(MASTERS.states,'Select Source of Supply','');
+  $('[data-bind="destState"]').innerHTML        = options(MASTERS.states,'Select Destination of Supply','');
+
+  const dl = document.createElement('datalist');
+  dl.id = 'items-list';
+  dl.innerHTML = MASTERS.items.map(i=>`<option value="${esc(i.name)}">${esc(i.kind)} · ${esc(i.hsn)} · ₹${i.rate}</option>`).join('');
+  document.body.append(dl);
+
+  state = freshState();
+  render();
+}
+boot();
+</script>
+
+</body>
+</html>
