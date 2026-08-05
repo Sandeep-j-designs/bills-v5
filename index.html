@@ -37,6 +37,8 @@
   --pane-h:clamp(420px,calc(100dvh - var(--topbar-h) - var(--gutter) * 2),806px);
 
   --chevron:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 7.5 4.5' fill='none'%3E%3Cpath d='M0.75 0.75L3.75 3.75L6.75 0.75' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  /* six dots, two by three — the grip on the pane splitter */
+  --grip:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='16' viewBox='0 0 12 16'%3E%3Cg fill='%233146b0'%3E%3Ccircle cx='3.5' cy='3' r='1.35'/%3E%3Ccircle cx='8.5' cy='3' r='1.35'/%3E%3Ccircle cx='3.5' cy='8' r='1.35'/%3E%3Ccircle cx='8.5' cy='8' r='1.35'/%3E%3Ccircle cx='3.5' cy='13' r='1.35'/%3E%3Ccircle cx='8.5' cy='13' r='1.35'/%3E%3C/g%3E%3C/svg%3E");
   --field-shadow:drop-shadow(0 1px 1px rgba(0,0,0,.07));
   --knob-shadow:0 2px 4px rgba(39,39,39,.1);
 }
@@ -161,14 +163,24 @@ input,select,textarea{font:inherit}
 .inv__grand td{border-top:1.5px solid #222;font-weight:700;font-size:12px;padding-top:6px}
 .inv__foot{margin-top:16px;padding-top:10px;border-top:1px dashed #ccc;color:#777;font-size:10px}
 
-/* ------------------------------------------------------- resize splitter */
+/* ------------------------------------------------------- resize splitter
+   The rule is quiet until you approach it, but the grip is always there —
+   a divider you can drag has to say so without being hovered first. */
 .splitter{
   position:sticky;top:calc(var(--topbar-h) + var(--gutter));
   flex:0 0 6px;height:var(--pane-h);border:none;padding:0;background:none;cursor:col-resize;touch-action:none;
 }
 .splitter::before{content:"";display:block;width:2px;height:100%;margin:0 auto;border-radius:99px;background:var(--stroke);transition:background .12s ease}
+.splitter::after{
+  content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:20px;height:32px;border-radius:7px;background-color:var(--brand-soft);
+  background-image:var(--grip);background-repeat:no-repeat;background-position:center;
+  transition:background-color .12s ease,box-shadow .12s ease;
+}
 .splitter:hover::before,.splitter:focus-visible::before,.is-resizing .splitter::before{background:var(--brand-soft)}
+.splitter:hover::after,.is-resizing .splitter::after{background-color:#a9b4ef}
 .splitter:focus-visible{outline:none}
+.splitter:focus-visible::after{box-shadow:0 0 0 3px var(--interactive)}
 
 /* -------------------------------------------------------- form container */
 .form{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:32px;
@@ -713,10 +725,21 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
    Panes are a viewport decision; everything inside the form is a container
    decision, because the form's width is set by the splitter position.
 
-     >= 1120px   two panes side by side, document pane drag-resizable
-     <  1120px   panes stack, document above the form
-     <  640px    compact chrome
-     coarse ptr  44px minimum control height
+   viewport                        form container
+     >= 1920px  workspace 1800       >= 900px  header card 900
+     >= 1600px  workspace 1560       >= 700px  header card 820
+     >= 1120px  panes side by side    < 600px  card single column,
+     <  1120px  panes stack                    breakdown compacted
+     <  640px   compact chrome
+     >= 1000px tall  document pane may run to 920
+     coarse ptr      44px minimum control height
+
+   Above 1440 the extra width goes to the two panes and to the header card,
+   not into new columns. The fields in that card are pairs — Bill Date with
+   Due Date, Source with Destination of Supply — and a third column would
+   split the pairs across rows for no gain. The tables and the breakdown are
+   already full width, so they take the room automatically: a wider form is
+   the only thing that stops the item table clipping columns.
    ---------------------------------------------------------------------- */
 @container form (max-width:600px){
   .card{grid-template-columns:minmax(0,1fr);gap:20px}
@@ -724,6 +747,27 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   .breakdown{padding:16px}
   .bd-row,.bd-line,.bd-grand,.bd-sec__head{grid-template-columns:minmax(0,1fr) 62px 116px 22px;gap:8px}
   .bd-grand{font-size:18px}
+}
+/* The card follows the form column, not the viewport — the splitter can make
+   the form wide at 1440 and the stacked layout makes it wide at 1100, and in
+   both cases the card should take the room rather than leave it empty. */
+@container form (min-width:700px){ .form__narrow{max-width:820px} }
+@container form (min-width:900px){ .form__narrow{max-width:900px} }
+
+/* The doc pane's max-width reserves room for the form beside it, so the
+   reserve grows with the card — dragging the splitter right must never
+   squeeze the form below the card it has to hold. */
+@media (min-width:1600px){
+  .workspace{max-width:1560px}
+  .doc-pane{max-width:calc(100% - 870px)}
+}
+@media (min-width:1920px){
+  .workspace{max-width:1800px}
+  .doc-pane{max-width:calc(100% - 950px)}
+}
+/* a tall viewport can show more of the bill before the pane starts scrolling */
+@media (min-height:1000px){
+  :root{--pane-h:clamp(420px,calc(100dvh - var(--topbar-h) - var(--gutter) * 2),920px)}
 }
 
 @media (max-width:1119px){
