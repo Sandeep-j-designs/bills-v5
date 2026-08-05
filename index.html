@@ -14,6 +14,7 @@
   --bg-primary:#fbfbfe;
   --bg-secondary:#f6f7ff;
   --stroke:#efefef;
+  --hairline:#ebebf4;   /* rules inside a tinted panel — carries the same indigo bias as the ground, so it reads as part of the surface rather than a grey line laid over it */
   --interactive:#e2e5fb;
 
   --brand:#465ed5;
@@ -71,6 +72,7 @@ input,select,textarea{font:inherit}
 .ico-16{width:16px;height:16px}
 .ico-18{width:18px;height:18px}
 .ico-20{width:20px;height:20px}
+.ico-24{width:24px;height:24px}
 .ico--muted{color:var(--text-muted)}
 .ico--brand{color:var(--brand-deep)}
 
@@ -347,6 +349,29 @@ input[readonly]{cursor:default}
 .menu button:hover{background:var(--bg-secondary)}
 .menu button.is-danger{color:var(--danger)}
 
+/* The ITC call is three answers, not a switch — "ineligible" is two different
+   findings and they post differently, so the row asks which one. It commits on
+   Save rather than on selection, because the ineligible answers pull a second
+   decision (the expense ledger) along behind them. */
+.menu--itc{min-width:260px;padding:6px}
+.itcopt{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:5px;cursor:pointer;font-size:12px;line-height:18px;color:var(--text)}
+.itcopt:hover{background:var(--bg-secondary)}
+.itcopt input{position:absolute;width:1px;height:1px;opacity:0}
+.itcopt__dot{
+  flex:none;width:14px;height:14px;border-radius:50%;border:1px solid var(--brand-soft);
+  background:var(--surface);display:grid;place-items:center;
+}
+.itcopt input:checked + .itcopt__dot{border-color:var(--brand-deep);border-width:4px}
+.itcopt input:focus-visible + .itcopt__dot{box-shadow:0 0 0 2px var(--brand-soft)}
+/* the ledger the ineligible answers imply, stated where the answer is given */
+.itcled{display:flex;align-items:center;gap:8px;padding:8px 10px 4px;margin-top:2px;border-top:1px solid var(--stroke);font-size:11px;color:var(--text-muted)}
+.itcled button{flex:1;min-width:0;padding:0;color:var(--brand-deep);font-weight:600;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.itcled button:hover{background:none;text-decoration:underline}
+.menu__foot{display:flex;justify-content:flex-end;gap:6px;padding:6px 4px 2px;margin-top:2px;border-top:1px solid var(--stroke)}
+.menu__foot button{padding:6px 12px;font-weight:600}
+.menu__foot .is-save{background:var(--brand);color:var(--on-brand)}
+.menu__foot .is-save:hover{background:var(--brand-deep)}
+
 .bulkbar{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--radius);background:var(--bg-secondary);border:1px solid var(--brand-soft);font-size:12px}
 
 .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
@@ -355,45 +380,188 @@ input[readonly]{cursor:default}
 .pill--warn{background:#fff3d9;color:var(--warning)}
 
 /* ------------------------------------------------------------- narration */
+/* The box is as tall as what is written in it. A narration is usually one
+   line and occasionally five, so a fixed height is either mostly empty or
+   too small; it grows with the text and stops before it takes over the form.
+   No drag handle — there is nothing left for it to do. */
 .narration{display:flex;flex-direction:column;gap:16px}
 .narration textarea{
-  height:120px;padding:8px 15px;resize:vertical;border:1px solid var(--brand-soft);border-radius:var(--radius);
+  field-sizing:content;min-height:56px;max-height:280px;
+  padding:10px 15px;resize:none;border:1px solid var(--brand-soft);border-radius:var(--radius);
   background:var(--surface);font-family:var(--font);font-size:12px;line-height:18px;color:var(--text-muted);outline:none;
 }
 .narration textarea:focus{border-color:var(--brand-deep)}
 
 /* ------------------------------------------------------------- breakdown
-   Full width, and the place where the GST and TDS ledgers are chosen. Every
-   row shares one grid so the money column lines up from Sub Total to Grand
-   Total, whatever sits in the label column. */
+   Full width, and the place where the GST and TDS ledgers are chosen.
+
+   Sub Total, then one section per tax family — each with its own heading, its
+   own running subtotal and its own add action — then Adjustments, then the
+   Grand Total. Every row of every section shares one grid, so the money
+   column reads as a single column from the first figure to the last,
+   whatever sits in the label column. */
 .breakdown{
   display:flex;flex-direction:column;
-  padding:20px 24px;border-radius:var(--radius);background:var(--bg-primary);
+  padding:28px 28px 24px;border-radius:var(--radius);background:var(--bg-primary);
 }
-.bd-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:12px}
-.bd-head select{
-  appearance:none;border:none;background:none;outline:none;padding:0 18px 0 0;cursor:pointer;
-  color:var(--brand-deep);font-size:12px;line-height:20px;
+/* The gap has to clear the hover/focus chrome, which bleeds 6px past each
+   cell on both sides — at 12px two neighbouring surfaces overlapped. */
+.bd-row,.bd-line,.bd-grand,.bd-sec__head{
+  display:grid;grid-template-columns:minmax(0,1fr) 80px 168px 24px;gap:20px;align-items:center;
+}
+.bd-row{padding:2px 0 16px;font-size:14px;color:var(--text-muted)}
+.bd-row > :nth-child(3){
+  text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
+  color:var(--text);font-weight:600;
+}
+.bd-line{padding:4px 0}
+
+/* --- a section --------------------------------------------------------
+   A hairline and a heading are all the separation a family of lines needs,
+   so the whole weight of the separation is carried by space: a wide gap
+   above the rule, a narrower one below the heading, so each heading sits
+   with the lines it names rather than floating between two families. The
+   subtotal sits in the money column, so the sections can be added up
+   without the eye ever leaving that column. */
+.bd-sec{display:flex;flex-direction:column;margin-top:20px;border-top:1px solid var(--hairline)}
+.bd-sec__head{padding:18px 0 10px}
+.bd-sec__head > :first-child{grid-column:1 / 3;display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-width:0}
+.bd-sec__ttl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.bd-sec__amt{
+  grid-column:3;text-align:right;white-space:nowrap;
+  font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;
+}
+/* nothing there, or there but deliberately outside the Grand Total */
+.bd-sec__amt.is-zero,.bd-sec__amt.is-excluded{font-weight:400;color:var(--text-muted)}
+
+/* Reverse charge rides on the GST heading — it is a GST mechanism and nothing
+   else. At rest it reads as a stated value, not a link: the blue in this panel
+   is spent on the actions and the Grand Total. It only takes on the liability
+   colour once it is switched on, because then it changes who owes the tax. */
+.bd-rc{
+  display:inline-flex;align-items:center;gap:7px;padding:2px 8px;border-radius:var(--radius);
+  text-transform:none;letter-spacing:0;transition:background .12s ease;
+}
+.bd-rc:hover{background:var(--bg-secondary)}
+.bd-rc__label{font-size:11px;font-weight:600;color:var(--text-muted)}
+.bd-rc select{
+  appearance:none;border:none;background:none;outline:none;padding:0 15px 0 0;cursor:pointer;
+  font-family:var(--font);font-weight:600;color:var(--text);font-size:11px;line-height:18px;
+  field-sizing:content;               /* so the chevron hugs the chosen value */
   background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
 }
-.bd-row,.bd-line,.bd-grand{
-  display:grid;grid-template-columns:minmax(0,1fr) 104px 168px 30px;gap:12px;align-items:center;
+.bd-rc:has(select:focus-visible){background:var(--bg-secondary);box-shadow:0 0 0 2px var(--brand-soft)}
+.bd-rc.is-on select{color:var(--warning)}
+
+/* each section adds its own kind of ledger, so the action names what it adds.
+   It closes its section, so it keeps clear air beneath it before the next
+   hairline — otherwise it reads as the first thing in the section below. */
+.bd-add{
+  display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+  background:none;border:none;padding:14px 0 4px;
+  color:var(--brand-deep);font-size:12px;font-weight:600;line-height:16px;
 }
-.bd-row{padding:7px 0;font-size:14px;color:var(--text-muted)}
-.bd-row > :nth-child(3){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.bd-line{padding:6px 0}
-.bd-line__lead{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:440px}
+.bd-add .ico{opacity:.8}
+.bd-add:hover{text-decoration:underline}
+.bd-add:focus-visible{outline:2px solid var(--brand-soft);outline-offset:3px;border-radius:3px}
+
+/* The ledger picker and its ITC toggle share one line, so every tax row is
+   the same height as Sub Total and the money column reads as a column. */
+.bd-line__lead{display:flex;align-items:center;gap:16px;min-width:0;max-width:440px}
+.bd-line__lead > .cell{flex:1 1 auto;min-width:0}
+.bd-line__lead .chip{flex:none}
+/* Where a row carries an annotation, cap the picker so the chip reads as a
+   note on that ledger rather than drifting to the far edge of the column.
+   Rows without one keep the full width, so no ledger name is ever clipped. */
+.bd-line__lead:has(.chip) > .cell{flex:0 1 206px}
 .bd-line > .cell:first-child{max-width:440px}
-.bd-line__lead .chip{align-self:flex-start}
-.bd-del{background:none;border:none;padding:0;color:var(--danger);font-size:18px;line-height:1;justify-self:center}
-.bd-del:hover{opacity:.7}
-.bd-group{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);padding:10px 0 2px}
-.bd-rule{height:1px;background:var(--stroke);margin:8px 0}
-.bd-grand{align-items:baseline;padding-top:12px;font-size:20px;line-height:26px;font-weight:600}
+
+/* Removing a line is destructive and rarely wanted, so it stays out of the
+   composition until the row is aimed at — but never out of reach of the
+   keyboard, which brings it back with its focus ring. */
+.bd-del{
+  background:none;border:none;padding:0;color:var(--text-muted);opacity:0;
+  font-size:16px;line-height:1;justify-self:center;transition:color .12s ease,opacity .12s ease;
+}
+.bd-line:hover .bd-del{opacity:.5}
+.bd-del:hover{color:var(--danger);opacity:1}
+.bd-del:focus-visible{opacity:1;outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:3px}
+
+/* Inside the breakdown the fields stay quiet — no box until you touch one —
+   and carry no horizontal padding, so every label starts on the same left
+   edge as "Sub Total" and every figure ends on the same right edge as the
+   Grand Total. The hover/focus chrome bleeds outward from a pseudo-element
+   so showing it never shifts a number. */
+.breakdown .cell{
+  position:relative;height:32px;padding:6px 0;
+  border-color:transparent;background:transparent;
+}
+.breakdown .cell::before{
+  content:"";position:absolute;inset:0 -6px;border-radius:var(--radius);
+  transition:background .12s ease,box-shadow .12s ease;pointer-events:none;
+}
+.breakdown .cell:hover::before{background:var(--bg-secondary)}
+.breakdown .cell:focus-within::before{
+  background:var(--surface);box-shadow:inset 0 0 0 1px var(--brand-soft);
+}
+.breakdown .cell > *{position:relative}
+.breakdown .cell__input,.breakdown .cell__select{color:var(--text)}
+.breakdown .cell.is-invalid{border-color:var(--danger);border-style:solid}
+/* a select carries a 1px inner inset Chrome will not give up through padding;
+   pulling it back puts every ledger name on the same left edge as "Sub Total" */
+.breakdown .cell__select{margin-inline-start:-1px}
+
+/* The money column is sized by the Grand Total, not by the figures typed into
+   it. So the editable box is narrower than the column it sits in and hangs on
+   its right edge: every figure still ends on the same line, but the box keeps
+   clear of the rate beside it instead of running up against it. */
+.breakdown .cell-num:not(.cell-pct){max-width:124px;margin-left:auto}
+
+/* A rate is one token — the figure and its unit — not two columns with a gap
+   between them, so the input sizes to its own digits and the sign follows it. */
+.breakdown .cell-pct{justify-content:flex-end;gap:1px}
+.breakdown .cell-pct .cell__input{flex:0 1 auto;width:auto;min-width:14px;max-width:52px;field-sizing:content}
+.breakdown .cell-pct .pct{flex:none;color:var(--text-muted)}
+
+/* The ITC call is an edit, not a caption — so it carries a surface you can
+   aim at, and turns red only when the credit is actually being given up. Its
+   pencil stays quiet until you reach the chip: at rest the row should read as
+   a statement of the ledger, not as a row of pending edits. */
+/* it stands beside the ledger's own hover surface, so it is the same height —
+   two tinted boxes of different sizes side by side read as a misalignment */
+.bd-line__lead .chip{
+  height:32px;padding:0 11px;
+  background:var(--bg-secondary);color:var(--text-muted);font-weight:600;
+  border:1px solid transparent;
+  transition:background .12s ease,border-color .12s ease,color .12s ease;
+}
+.bd-line__lead .chip .ico{color:var(--text-muted);opacity:.55;transition:color .12s ease,opacity .12s ease}
+.bd-line__lead .chip:hover{border-color:var(--brand-soft);color:var(--text)}
+.bd-line__lead .chip:hover .ico{color:var(--brand-deep);opacity:1}
+.bd-line__lead .chip:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
+.bd-line__lead .chip--no{background:#fdeeee;color:#8c1111}
+.bd-line__lead .chip--no:hover{border-color:#f0b8b8;color:#8c1111}
+.bd-line__lead .chip--no:hover .ico{color:#8c1111}
+
+/* The liability itself is not restated in the sheet — it is the GST total,
+   which greys out because it leaves the Grand Total. All that sits beside the
+   switch is the way back into the dialog that settles the posting ledger. */
+.bd-rcedit{
+  display:inline-flex;align-items:center;gap:5px;padding:2px 6px;border:none;background:none;
+  border-radius:var(--radius);color:var(--brand-deep);font-size:11px;font-weight:600;line-height:18px;
+}
+.bd-rcedit:hover{background:var(--bg-secondary);text-decoration:underline}
+.bd-rcedit.is-invalid,.bd-rcedit.is-invalid .ico{color:var(--danger)}
+
+/* the sheet is closed with a full rule rather than a section hairline */
+.bd-grand{
+  align-items:baseline;margin-top:24px;padding-top:22px;border-top:1px solid var(--stroke);
+  font-size:20px;line-height:26px;font-weight:600;
+}
 .bd-grand > :first-child{color:var(--text-muted)}
 .bd-grand > :nth-child(3){text-align:right;color:var(--brand-deep);font-variant-numeric:tabular-nums}
 .bd-note{font-size:11px;line-height:15px;color:var(--warning);padding-top:8px}
-.bd-empty{font-size:12px;color:var(--text-muted);padding:6px 0}
+.bd-empty{font-size:12px;color:var(--text-muted);padding:8px 0 4px}
 
 /* ---------------------------------------------------------------- dialog */
 dialog{border:none;border-radius:10px;padding:0;max-width:min(680px,92vw);width:100%;box-shadow:0 20px 60px rgba(20,20,40,.28)}
@@ -403,6 +571,128 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 .sheet__head p{font-size:12px;color:var(--text-muted);margin-top:4px}
 .sheet__body{padding:18px 22px;max-height:60vh;overflow:auto}
 .sheet__foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--stroke);background:var(--bg-primary)}
+/* --- the ledger-picking modals -----------------------------------------
+   Two decisions on this screen name a ledger the document never states, so
+   neither can be read off the bill nor defaulted silently: where a reverse
+   charge posts, and where ineligible GST is expensed. Both are asked the
+   moment they become applicable, in the same shape, and then remembered. */
+#rcm-dialog,#itc-dialog{max-width:min(640px,92vw);border:1px solid var(--stroke);border-radius:var(--radius);
+  box-shadow:0 4px 12px rgba(0,0,0,.09)}
+.pickdlg{display:flex;flex-direction:column;gap:24px;padding:0 28px 28px}
+.pickdlg__head{
+  position:sticky;top:0;z-index:2;background:var(--surface);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:28px 0 12px;
+}
+.pickdlg__ttl{font-size:20px;line-height:28px;font-weight:600;color:var(--text)}
+.pickdlg__x{display:grid;place-items:center;width:24px;height:24px;padding:0;flex:none;
+  border:none;background:none;color:var(--text-muted);cursor:pointer;border-radius:var(--radius)}
+.pickdlg__x:hover{color:var(--text)}
+.pickdlg__note{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--radius);
+  background:var(--bg-primary);font-size:12px;line-height:24px;color:var(--text-muted)}
+.pickdlg__note b{font-weight:600}
+.pickdlg__group{display:flex;flex-direction:column;gap:16px}
+.pickdlg__lbl{font-size:16px;line-height:24px;color:var(--text-muted)}
+.pickdlg__lbl .req{font-weight:700}
+.pickdlg__pick{display:flex;align-items:center;gap:8px;height:48px;padding:12px 16px;
+  border:1px solid var(--brand-soft);border-radius:var(--radius);background:var(--surface)}
+.pickdlg__pick select{
+  flex:1;min-width:0;appearance:none;border:none;background:none;outline:none;padding:0;cursor:pointer;
+  font-family:var(--font);font-size:16px;line-height:20px;color:var(--text);text-overflow:ellipsis;
+}
+.pickdlg__pick select:invalid{color:var(--text-muted)}     /* the placeholder reads as one */
+.pickdlg__pick:focus-within{border-color:var(--brand-deep);box-shadow:0 0 0 2px var(--brand-soft)}
+.pickdlg__remember{display:flex;align-items:center;gap:8px}
+.pickdlg__check{display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font-size:14px;line-height:22px;color:var(--text-muted)}
+.pickdlg__check input{position:absolute;width:1px;height:1px;opacity:0}
+.pickdlg__check .checkbox__box{flex:none}
+.pickdlg__check .checkbox__box svg{display:none}
+.pickdlg__check input:checked + .checkbox__box{background:var(--brand-deep);border-color:var(--brand-deep)}
+.pickdlg__check input:checked + .checkbox__box svg{display:block}
+.pickdlg__check input:focus-visible + .checkbox__box{box-shadow:0 0 0 2px var(--brand-soft)}
+/* the note that says how far the preference reaches — on the icon, not in the layout */
+.pickdlg__info{position:relative;display:inline-flex}
+.pickdlg__i{display:grid;place-items:center;padding:0;border:none;background:none;cursor:help}
+.pickdlg__tip{
+  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+  width:225px;padding:5px 12px 7px;background:var(--surface);
+  border:1.095px solid var(--interactive);border-radius:6.571px;
+  box-shadow:0 5px 8px rgba(0,0,0,.09);
+  font-size:12px;line-height:20px;font-weight:600;color:var(--text);
+  opacity:0;visibility:hidden;transition:opacity .12s ease;z-index:3;
+}
+.pickdlg__info:hover .pickdlg__tip,.pickdlg__info:focus-within .pickdlg__tip{opacity:1;visibility:visible}
+.pickdlg__save{width:100%}
+@media (prefers-reduced-motion:reduce){.pickdlg__tip{transition:none}}
+
+/* --- allocating a line across cost centres -----------------------------
+   Wider than the ledger pickers because it is a working, not a question:
+   one block per category, each one dividing the same amount to 100%. */
+#cc-dialog{max-width:min(760px,94vw);border:1px solid var(--stroke);border-radius:var(--radius);
+  box-shadow:0 4px 12px rgba(0,0,0,.09)}
+.ccx{display:flex;flex-direction:column;max-height:86vh}
+.ccx__head{
+  display:flex;align-items:center;gap:16px;padding:22px 28px 18px;
+  border-bottom:1px solid var(--stroke);
+}
+.ccx__ttl{font-size:20px;line-height:28px;font-weight:600;color:var(--text)}
+.ccx__total{
+  margin-right:auto;padding:5px 14px;border-radius:99px;
+  border:1px solid var(--brand-soft);background:var(--bg-secondary);
+  font-size:12px;font-weight:600;color:var(--brand-deep);font-variant-numeric:tabular-nums;
+}
+.ccx__body{padding:8px 28px 4px;overflow:auto}
+.ccx__foot{
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:16px 28px 22px;
+  border-top:1px solid var(--stroke);
+}
+/* one category */
+.ccc{padding:20px 0}
+.ccc + .ccc{border-top:1px solid var(--stroke)}
+.ccc__head{display:flex;align-items:center;gap:12px;padding-bottom:14px}
+.ccc__lbl{font-size:14px;font-weight:600;color:var(--text)}
+.ccc__pick{display:inline-flex;align-items:center;margin-right:auto}
+.ccc__pick select{
+  appearance:none;border:none;background:none;outline:none;padding:0 18px 0 0;cursor:pointer;
+  font-family:var(--font);font-size:14px;font-weight:600;line-height:20px;color:var(--brand-deep);
+  field-sizing:content;
+  background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
+}
+/* the running total is the whole point of the block, so it is stated loudly */
+.ccc__pct{
+  padding:5px 12px;border-radius:var(--radius);font-size:12px;font-weight:600;
+  font-variant-numeric:tabular-nums;background:var(--bg-secondary);color:var(--text-muted);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.ccc__pct.is-done{background:#e6f5ee;color:var(--success)}
+.ccc__pct.is-over{background:#fdeeee;color:#8c1111}
+.ccc__drop{
+  display:grid;place-items:center;width:24px;height:24px;padding:0;flex:none;
+  border:none;background:none;color:var(--text-muted);border-radius:50%;
+}
+.ccc__drop:hover{color:var(--danger)}
+/* the working itself — the money column lines up as it does in the breakdown */
+.ccrow{display:grid;grid-template-columns:minmax(0,1fr) 96px 148px 28px;gap:14px;align-items:center}
+.ccrow--head{padding-bottom:8px;font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-muted)}
+.ccrow--head > :nth-child(2),.ccrow--head > :nth-child(3){text-align:right}
+.ccrow + .ccrow{padding-top:10px}
+.ccrow .cell{height:40px}
+.ccrow__del{
+  display:grid;place-items:center;width:28px;height:28px;padding:0;
+  border:none;background:none;color:var(--text-muted);border-radius:var(--radius);
+}
+.ccrow__del:hover{color:var(--danger);background:var(--bg-secondary)}
+.ccx__add{
+  display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+  background:none;border:none;padding:12px 0 2px;
+  color:var(--brand-deep);font-size:12px;font-weight:600;line-height:16px;
+}
+.ccx__add:hover{text-decoration:underline}
+.ccx__add--cat{font-size:14px;padding:18px 0 6px}
+.ccx__warn{margin-right:auto;max-width:46ch;font-size:11px;line-height:16px;font-weight:600;color:var(--danger)}
+.ccx__warn[hidden]{display:none}
+
 .jtable{width:100%;border-collapse:collapse;font-size:12px}
 .jtable th{text-align:left;padding:8px;background:var(--bg-secondary);color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
 .jtable td{padding:8px;border-bottom:1px solid var(--stroke);vertical-align:top}
@@ -432,7 +722,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   .card{grid-template-columns:minmax(0,1fr);gap:20px}
   .picker-row{gap:8px}
   .breakdown{padding:16px}
-  .bd-row,.bd-line,.bd-grand{grid-template-columns:minmax(0,1fr) 74px 116px 26px;gap:8px}
+  .bd-row,.bd-line,.bd-grand,.bd-sec__head{grid-template-columns:minmax(0,1fr) 62px 116px 22px;gap:8px}
   .bd-grand{font-size:18px}
 }
 
@@ -468,7 +758,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   .col-check{width:46px}
   .col-menu{width:52px}
   .checkbox,.row-menu{width:100%;min-height:44px}
-  .narration textarea{min-height:120px}
+  .narration textarea{min-height:72px}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -528,6 +818,9 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   </symbol>
   <symbol id="i-pencil" viewBox="0 0 14 14" fill="none">
     <path d="M9.6 1.6a1.4 1.4 0 0 1 2 2L4.4 10.8 1.5 11.6l.8-2.9L9.6 1.6Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-close" viewBox="0 0 24 24" fill="none">
+    <path d="M18.5 6L6.5 18M6.5 6L18.5 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>
 </defs></svg>
 
@@ -679,7 +972,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
           <p class="t-label is-off" id="cc-label-centre">Cost Centre</p>
         </div>
         <label class="control" id="cc-class-control">
-          <select class="control__select t-value" data-bind="costCentreClass"></select>
+          <select class="control__select t-value" id="cc-pick" data-bind="costCentreClass"></select>
         </label>
       </div>
 
@@ -695,9 +988,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 
       <div class="field">
         <p class="t-label">Cost Centre</p>
-        <label class="control">
-          <select class="control__select t-value" data-bind="vendorCostCentre"></select>
-        </label>
+        <label class="control" id="vendor-cc"></label>
       </div>
 
       <div class="field card__full">
@@ -740,8 +1031,6 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         </label>
         <p class="field__error">Select the destination state</p>
       </div>
-
-      <p class="hint card__full" id="supply-note"></p>
     </section>
 
     <!-- Item details -->
@@ -803,6 +1092,116 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   <div class="sheet__foot">
     <button type="button" class="btn btn--outline" id="journal-close">Close</button>
     <button type="button" class="btn btn--solid" id="journal-new">Create another bill</button>
+  </div>
+</dialog>
+
+<!-- The one question reverse charge asks that the bill cannot answer. It opens
+     the moment the charge becomes applicable; the ledger list is filled in JS. -->
+<dialog id="rcm-dialog" aria-labelledby="rcm-title">
+  <form method="dialog" class="pickdlg" id="rcm-form">
+    <div class="pickdlg__head">
+      <h2 class="pickdlg__ttl" id="rcm-title">Select Ledger for RCM Posting</h2>
+      <button type="button" class="pickdlg__x" id="rcm-x" aria-label="Close without choosing a ledger">
+        <span class="ico ico-24"><svg width="24" height="24"><use href="#i-close"/></svg></span>
+      </button>
+    </div>
+
+    <div class="pickdlg__note">
+      <b>We&rsquo;ll post a Journal Voucher for reverse charge</b>
+      <span>We Dr the ledger you select for the tax amount and Cr the matching Output GST
+        Payable (IGST/CGST/SGST). Choose the ledger to debit.</span>
+    </div>
+
+    <div class="pickdlg__group">
+      <label class="pickdlg__lbl" for="rcm-ledger"><span class="req">*</span> Ledger</label>
+      <span class="pickdlg__pick">
+        <select id="rcm-ledger" required autofocus></select>
+        <span class="ico ico-13 ico--muted"><svg width="13" height="13"><use href="#i-caret"/></svg></span>
+      </span>
+    </div>
+
+    <div class="pickdlg__remember">
+      <label class="pickdlg__check">
+        <input type="checkbox" id="rcm-remember">
+        <span class="checkbox__box"><svg width="10" height="10"><use href="#i-tick"/></svg></span>
+        Remember this ledger for future RCM entries
+      </label>
+      <span class="pickdlg__info">
+        <button type="button" class="pickdlg__i" aria-label="What remembering this ledger does">
+          <span class="ico ico-16 ico--brand"><svg width="16" height="16"><use href="#i-info"/></svg></span>
+        </button>
+        <span class="pickdlg__tip" role="tooltip">Applies to this vendor and tax type. Change it any
+          time by clicking edit.</span>
+      </span>
+    </div>
+
+    <button type="submit" class="btn btn--solid pickdlg__save" id="rcm-save">Save &amp; Continue</button>
+  </form>
+</dialog>
+
+<!-- The same question for GST that cannot be claimed: it stops being an input
+     credit and becomes an expense, and only the user knows which expense. -->
+<dialog id="itc-dialog" aria-labelledby="itc-title">
+  <form method="dialog" class="pickdlg" id="itc-form">
+    <div class="pickdlg__head">
+      <h2 class="pickdlg__ttl" id="itc-title">Map Ineligible GST to Expense</h2>
+      <button type="button" class="pickdlg__x" id="itc-x" aria-label="Close without choosing a ledger">
+        <span class="ico ico-24"><svg width="24" height="24"><use href="#i-close"/></svg></span>
+      </button>
+    </div>
+
+    <div class="pickdlg__note">
+      <b>We&rsquo;ll create a Journal Voucher to move ineligible GST to expense</b>
+      <span><b>Journal:</b> Dr the ledger you select (for the total GST amount) and Cr the
+        corresponding Input GST ledger(s) (IGST/CGST+SGST). This is posted in addition to the
+        purchase voucher. Choose the ledger to debit.</span>
+    </div>
+
+    <div class="pickdlg__group">
+      <label class="pickdlg__lbl" for="itc-ledger"><span class="req">*</span> Ledger</label>
+      <span class="pickdlg__pick">
+        <select id="itc-ledger" required autofocus></select>
+        <span class="ico ico-13 ico--muted"><svg width="13" height="13"><use href="#i-caret"/></svg></span>
+      </span>
+    </div>
+
+    <div class="pickdlg__remember">
+      <label class="pickdlg__check">
+        <input type="checkbox" id="itc-remember">
+        <span class="checkbox__box"><svg width="10" height="10"><use href="#i-tick"/></svg></span>
+        Remember this ledger for future ineligible ITC
+      </label>
+      <span class="pickdlg__info">
+        <button type="button" class="pickdlg__i" aria-label="What remembering this ledger does">
+          <span class="ico ico-16 ico--brand"><svg width="16" height="16"><use href="#i-info"/></svg></span>
+        </button>
+        <span class="pickdlg__tip" role="tooltip">Applies to this vendor. Change it any time by
+          clicking edit.</span>
+      </span>
+    </div>
+
+    <button type="submit" class="btn btn--solid pickdlg__save" id="itc-save">Save &amp; Continue</button>
+  </form>
+</dialog>
+
+<!-- Allocating one line across cost centres. Each category divides the whole
+     line on its own, so the body is a stack of independent 100% workings. -->
+<dialog id="cc-dialog" aria-labelledby="cc-title">
+  <div class="ccx">
+    <div class="ccx__head">
+      <h2 class="ccx__ttl" id="cc-title">Allocate Cost Centre</h2>
+      <span class="ccx__total" id="cc-total"></span>
+      <button type="button" class="pickdlg__x" id="cc-x" aria-label="Close without saving">
+        <span class="ico ico-24"><svg width="24" height="24"><use href="#i-close"/></svg></span>
+      </button>
+    </div>
+    <div class="ccx__body" id="cc-body"></div>
+    <div class="ccx__foot">
+      <p class="ccx__warn" id="cc-warn">Every category has to allocate exactly 100%, and every line
+        needs a cost centre.</p>
+      <button type="button" class="btn btn--outline" id="cc-cancel">Cancel</button>
+      <button type="button" class="btn btn--solid" id="cc-save">Save</button>
+    </div>
   </div>
 </dialog>
 
@@ -964,6 +1363,33 @@ const MASTERS = {
     {id:'led-purchase-capital',name:'Purchase — Capital Goods'}
   ],
 
+  /* Where a reverse-charge liability is credited. RCM is a GST concept only —
+     it never touches a TDS line — so these belong with the GST ledgers. */
+  rcmLedgers:[
+    {id:'led-rcm-gta',   name:'RCM Payable — Goods Transport Agency',    group:'Notified supplies — s.9(3)'},
+    {id:'led-rcm-legal', name:'RCM Payable — Legal / Advocate Services', group:'Notified supplies — s.9(3)'},
+    {id:'led-rcm-dir',   name:'RCM Payable — Director / Sitting Fees',   group:'Notified supplies — s.9(3)'},
+    {id:'led-rcm-motor', name:'RCM Payable — Renting of Motor Vehicle',  group:'Notified supplies — s.9(3)'},
+    {id:'led-rcm-93',    name:'RCM Payable — Other Notified Supplies',   group:'Notified supplies — s.9(3)'},
+    {id:'led-rcm-94',    name:'RCM Payable — Unregistered Supplier',     group:'Unregistered supplier — s.9(4)'},
+    {id:'led-rcm-import',name:'RCM Payable — Import of Services',        group:'Import — IGST s.5(3)'},
+    {id:'led-rcm-gen',   name:'GST Payable under Reverse Charge',        group:'Consolidated'}
+  ],
+
+  /* Where GST goes when it cannot be claimed. Credit blocked by s.17(5) is a
+     cost of the thing that blocked it, so those ledgers name the expense;
+     credit lost for any other reason is written off on its own. */
+  itcLedgers:[
+    {id:'led-itc-motor', name:'Motor Vehicle Expenses — GST Blocked',    group:'Blocked credit — s.17(5)'},
+    {id:'led-itc-welfare',name:'Staff Welfare — GST Blocked',            group:'Blocked credit — s.17(5)'},
+    {id:'led-itc-works', name:'Works Contract / Immovable Property — GST Blocked', group:'Blocked credit — s.17(5)'},
+    {id:'led-itc-gift',  name:'Gifts & Free Samples — GST Blocked',      group:'Blocked credit — s.17(5)'},
+    {id:'led-itc-1705',  name:'Blocked Credit — s.17(5)',                group:'Blocked credit — s.17(5)'},
+    {id:'led-itc-exempt',name:'GST on Exempt / Non-business Supply',     group:'Other reasons'},
+    {id:'led-itc-perso', name:'Personal Use — GST Expensed',             group:'Other reasons'},
+    {id:'led-itc-expense',name:'GST Expense — ITC not eligible',         group:'Consolidated'}
+  ],
+
   /* expense ledgers carry the nature of payment, which is what drives TDS */
   expenseLedgers:[
     {id:'led-install',  name:'Installation & Commissioning', group:'Contracted work',tax:'tax-18',tds:'194C',     sac:'998739'},
@@ -1114,8 +1540,8 @@ function toast(msg,kind=''){
    3. STATE — every value here is user-editable; nothing is derived-only
    ==========================================================================*/
 const blankItem = ()=>({id:uid(),sel:false,description:'',item:'',kind:'goods',hsn:'',godown:'',
-                        costCentre:'',qty:0,rate:0,discount:0,discountType:'pct',tax:'',amountOverride:null});
-const blankLedger = ()=>({id:uid(),sel:false,description:'',ledger:'',costCentre:'',tax:'',amount:0});
+                        costCentre:'',ccSplit:null,qty:0,rate:0,discount:0,discountType:'pct',tax:'',amountOverride:null});
+const blankLedger = ()=>({id:uid(),sel:false,description:'',ledger:'',costCentre:'',ccSplit:null,tax:'',amount:0});
 
 let state;
 
@@ -1123,10 +1549,11 @@ function freshState(){
   return {
     mode:'item', ccMode:'centre',
     branch:'', voucherType:'purchase', voucherNo:'', voucherDate:today(), billDate:'', dueDate:'',
-    supplierInvoiceNo:'', costCentreClass:'',
-    vendor:'', vendorCostCentre:'', billingAddress:'', gstTreatment:'', gstin:'',
+    supplierInvoiceNo:'', costCentreClass:'', billCostCentre:'',
+    vendor:'', vendorCostCentre:'', vendorCcSplit:null, billingAddress:'', gstTreatment:'', gstin:'',
     sourceState:'', destState:'',
-    purchaseLedger:'', reverseCharge:false, narration:'',
+    purchaseLedger:'', reverseCharge:false, rcmLedger:'', rcmLedgerVendor:'',
+    itcLedger:'', itcLedgerVendor:'', narration:'',
     items:[blankItem()], ledgers:[blankLedger()], stashedItems:null,
     taxLines:[], dismissedLines:[], adjustments:[],
     validated:false, document:null, allocated:false
@@ -1280,7 +1707,7 @@ function compute(){
   const subTotal = r2(itemsTaxable+ledgerTaxable);
 
   const gstTotal = r2(gstLines().reduce((s,t)=>s+num(t.amount),0));
-  const gstIneligible = r2(gstLines().filter(t=>t.itc==='ineligible').reduce((s,t)=>s+num(t.amount),0));
+  const gstIneligible = r2(gstLines().filter(itcBlocked).reduce((s,t)=>s+num(t.amount),0));
   const tdsTotal = r2(tdsLines().reduce((s,t)=>s+num(t.amount),0));
   const adjTotal = r2(state.adjustments.reduce((s,a)=>s+num(a.amount),0));
 
@@ -1304,6 +1731,8 @@ function compute(){
 const caret  = `<span class="ico ico-13 ico--muted"><svg width="13" height="13"><use href="#i-caret"/></svg></span>`;
 const dots   = `<span class="ico ico--brand"><svg width="4" height="16"><use href="#i-dots"/></svg></span>`;
 const pencil = `<span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>`;
+const plusIco  = `<span class="ico ico-12"><svg width="12" height="12"><use href="#i-plus"/></svg></span>`;
+const infoIco  = `<span class="ico ico-13"><svg width="13" height="13"><use href="#i-info"/></svg></span>`;
 function checkbox(checked,mixed){
   const st = mixed?'mixed':(checked?'true':'false');
   return `<button type="button" class="checkbox" role="checkbox" aria-checked="${st}">
@@ -1326,29 +1755,32 @@ function ledgerSelect(row){
 /* ---------------------------------------------------------------------------
    Item Mode <-> Accounting Mode.
    The two modes are two presentations of one voucher, so switching converts
-   rather than discards: item lines fold into purchase-ledger lines (grouped by
-   GST slab so the tax working is unchanged) and unfold back again.
+   rather than discards: every item line becomes a purchase-ledger line of its
+   own and unfolds back again.
+
+   One line per item, not one per GST slab. A line the user typed has to still
+   be there after the switch — the description they wrote, the cost centre they
+   picked, the price they have not filled in yet. Rolling them up by slab threw
+   all of that away and, for a bill nobody had priced yet, left the ledgers
+   table empty; the tax working is identical either way, because GST is summed
+   by rate across whatever lines exist.
    ------------------------------------------------------------------------ */
+function itemLabel(r){
+  return r.description || byId(MASTERS.items,r.item)?.name || (typeof r.item==='string'?r.item:'') || '';
+}
 function foldItemsIntoLedgers(){
   state.stashedItems = state.items;
-  const groups = new Map();
-  state.items.forEach(r=>{
-    const l = lineOf(r);
-    if(l.taxable<=0) return;
-    const g = groups.get(r.tax||'') || {amount:0,n:0,cc:new Set()};
-    g.amount = r2(g.amount+l.taxable); g.n++;
-    if(r.costCentre) g.cc.add(r.costCentre);
-    groups.set(r.tax||'', g);
-  });
   const led = byId(MASTERS.purchaseLedgers,state.purchaseLedger);
-  const folded = [...groups.entries()].map(([tax,g])=>({
-    ...blankLedger(), fromItems:true,
-    ledger: state.purchaseLedger,
-    description: `${led?led.name:'Purchase'} — ${g.n} item${g.n>1?'s':''}` +
-                 (tax?` @ ${byId(MASTERS.taxes,tax).name}`:''),
-    tax, amount:g.amount,
-    costCentre: g.cc.size===1 ? [...g.cc][0] : ''
-  }));
+  const folded = state.items
+    .filter(r=>itemLabel(r) || lineOf(r).taxable>0)     // anything the user has started
+    .map(r=>({
+      ...blankLedger(), fromItems:true,
+      ledger: state.purchaseLedger,
+      description: itemLabel(r) || (led?led.name:'Purchase'),
+      costCentre: r.costCentre, ccSplit: r.ccSplit,
+      tax: r.tax,
+      amount: lineOf(r).taxable
+    }));
   const kept = state.ledgers.filter(r=>r.ledger||r.description||num(r.amount));
   state.items = [];
   state.ledgers = [...folded, ...kept];
@@ -1381,11 +1813,63 @@ function setMode(next){
   render();
 }
 
+/* ---------------------------------------------------------------------------
+   COST CENTRES
+
+   Two ways to say where the money lands, and the toggle picks which:
+
+   · a cost centre *class* — a saved template that allocates every line the
+     same way, so the lines themselves stop asking; or
+   · cost centres chosen per line, with a bill-level default behind them.
+
+   A line does not have to land in one place. Cost centres are grouped into
+   categories (Departments, Projects), and — as in Tally — each category
+   allocates the *whole* line independently: ₹6,666 can be Engineering 50 /
+   Sales 50 by department and Project Atlas 100 by project at the same time.
+   That is why the split is validated per category and each has to reach
+   100%, rather than everything summing to 100% between them.
+   ------------------------------------------------------------------------ */
 const ccLocked = ()=>state.ccMode==='class';
 function ccPlaceholder(){
-  if(!ccLocked()) return 'Select Cost Centre';
+  if(!ccLocked()){
+    const bill = byId(MASTERS.costCentres,state.billCostCentre);
+    return bill ? bill.name+' (bill default)' : 'Select Cost Centre';
+  }
   const cls = byId(MASTERS.costCentreClasses,state.costCentreClass);
   return cls ? cls.name : 'Set by class';
+}
+
+const CC_SPLIT = '__cc-split';                    // the sentinel option value
+const ccCategories = ()=>[...new Set(MASTERS.costCentres.map(c=>c.group))];
+const ccInCategory = cat=>MASTERS.costCentres.filter(c=>c.group===cat);
+const blankCcRow = ()=>({id:uid(),centre:'',pct:0});
+const blankCcCat = cat=>({id:uid(),category:cat,rows:[blankCcRow()]});
+
+const ccCatTotal = c=>r2(c.rows.reduce((s,r)=>s+num(r.pct),0));
+const ccCatDone  = c=>Math.abs(ccCatTotal(c)-100)<0.005 && c.rows.every(r=>r.centre);
+const ccSplitDone = s=>!!s && s.categories.length>0 && s.categories.every(ccCatDone);
+const ccSplitCentres = s=>new Set(s.categories.flatMap(c=>c.rows.map(r=>r.centre).filter(Boolean)));
+
+function ccSplitLabel(s){
+  const n = ccSplitCentres(s).size;
+  return `Split — ${n} cost centre${n===1?'':'s'}`;
+}
+function ccSplitDetail(s){
+  return s.categories.map(c=>
+    `${c.category}: ${c.rows.filter(r=>r.centre).map(r=>
+      `${byId(MASTERS.costCentres,r.centre)?.name} ${num(r.pct)}%`).join(', ')||'—'}`).join(' · ');
+}
+
+/* One cost-centre picker, wherever it appears: the centres, then the way to
+   split across them. The same markup serves the table rows and the vendor
+   card — only the binding attribute differs. */
+function ccSelect({cls, attrs, disabled, placeholder, value, split}){
+  return `<select class="${cls}" ${attrs}${disabled?' disabled':''}${
+      split?` title="${esc(ccSplitDetail(split))}"`:''}>
+    ${split?`<option value="${CC_SPLIT}" selected>${esc(ccSplitLabel(split))}</option>`:''}
+    ${options2(MASTERS.costCentres, placeholder, split?CC_SPLIT:value)}
+    <option value="${CC_SPLIT}-open">${split?'Edit split…':'Split cost centres…'}</option>
+  </select>`;
 }
 
 function renderItems(){
@@ -1426,8 +1910,10 @@ function renderItems(){
         </div>
       </div>
       <div class="tcell col-med">
-        <label class="cell${ccLocked()?' is-disabled':''}">
-          <select class="cell__select t-cell" data-f="costCentre">${options2(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select></label>
+        <label class="cell${ccLocked()?' is-disabled':''}">${ccSelect({
+          cls:'cell__select t-cell', attrs:'data-f="costCentre"', disabled:ccLocked(),
+          placeholder:ccPlaceholder(), value:ccLocked()?'':row.costCentre,
+          split:ccLocked()?null:row.ccSplit})}</label>
       </div>
       <div class="tcell col-godown">
         <label class="cell${row.kind==='service'?' is-disabled':''}">
@@ -1485,8 +1971,10 @@ function renderLedgers(){
         <label class="cell">${ledgerSelect(row)}</label>
       </div>
       <div class="tcell col-med">
-        <label class="cell${ccLocked()?' is-disabled':''}">
-          <select class="cell__select t-cell" data-f="costCentre">${options(MASTERS.costCentres,ccPlaceholder(),ccLocked()?'':row.costCentre)}</select></label>
+        <label class="cell${ccLocked()?' is-disabled':''}">${ccSelect({
+          cls:'cell__select t-cell', attrs:'data-f="costCentre"', disabled:ccLocked(),
+          placeholder:ccPlaceholder(), value:ccLocked()?'':row.costCentre,
+          split:ccLocked()?null:row.ccSplit})}</label>
       </div>
       <div class="tcell col-tax">
         <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select></label>
@@ -1525,93 +2013,330 @@ function taxLedgerSelect(row){
   </select>`;
 }
 
+/* The RCM ledger the treatment itself points at. Only ever a preselection in
+   the dialog — where the treatment says nothing, neither do we, and the user
+   is asked outright rather than handed a generic ledger they did not choose. */
+function suggestedRcmLedger(){
+  if(state.gstTreatment==='overseas')     return 'led-rcm-import';
+  if(state.gstTreatment==='unregistered') return 'led-rcm-94';
+  return '';
+}
+function rcmLedgerName(){
+  return byId(MASTERS.rcmLedgers,state.rcmLedger)?.name || 'GST Payable under Reverse Charge';
+}
+
+/* Ledgers the user asked us to remember, by vendor. A real preference store
+   would be a master; here it lives for the life of the page. */
+const rcmMemory = {};
+let rcmPending = false;              // the charge turned on and nobody has been asked yet
+
+function openRcmDialog(){
+  const dlg = $('#rcm-dialog'); if(!dlg || dlg.open) return;
+  const sel = $('#rcm-ledger');
+  const pre = state.rcmLedger || suggestedRcmLedger();
+  sel.innerHTML = options2(MASTERS.rcmLedgers,'Select Ledger',pre);
+  sel.value = pre;
+  $('#rcm-remember').checked = !!rcmMemory[state.vendor];
+  $('#rcm-save').disabled = !sel.value;
+  dlg.showModal();
+}
+
+/* --- input tax credit ---------------------------------------------------
+   Three answers, not two. "Ineligible" is two different findings: credit the
+   law blocks outright under s.17(5), and credit lost for any other reason —
+   an exempt output, a non-business use. They read the same on the bill and
+   post the same way, but they are different claims to make, so the row asks
+   which one rather than folding both into "not eligible". */
+const ITC_OPTIONS = [
+  {id:'eligible',label:'Eligible for ITC',                  chip:'ITC eligible'},
+  {id:'s17',     label:'Ineligible — As per section 17 (5)',chip:'Ineligible — s.17(5)'},
+  {id:'other',   label:'Ineligible — Others',               chip:'Ineligible — other'}
+];
+const itcBlocked = t => !!t.itc && t.itc!=='eligible';
+const itcChip    = t => ITC_OPTIONS.find(o=>o.id===(t.itc||'eligible'))?.chip || 'ITC eligible';
+function itcLedgerName(){
+  return byId(MASTERS.itcLedgers,state.itcLedger)?.name || 'GST Expense — ITC not eligible';
+}
+/* s.17(5) names its own ledger; "other" covers too many reasons to guess one */
+function suggestedItcLedger(){
+  const reasons = new Set(gstLines().filter(itcBlocked).map(t=>t.itc));
+  return reasons.size===1 && reasons.has('s17') ? 'led-itc-1705' : '';
+}
+
+const itcMemory = {};
+let itcPending  = false;             // a line went ineligible and nobody has been asked yet
+let itcAskedFor = null;              // the vendor we already put the question to
+
+/* The expense ledger follows the same rule as the RCM one: it belongs to the
+   vendor, not the bill, and it is only asked for while something is actually
+   ineligible. Marking every line eligible again forgets both the ledger and
+   the fact that we asked, so the question returns with the next write-off.
+   This runs on every render, so it asks once and not once per keystroke —
+   dismissing the dialog leaves the decision outstanding, not repeating. */
+function syncItcLedger(){
+  if(!gstLines().some(itcBlocked)){
+    state.itcLedger=''; state.itcLedgerVendor=''; itcPending=false; itcAskedFor=null; return;
+  }
+  if(state.itcLedger && state.itcLedgerVendor===state.vendor) return;
+  const remembered = itcMemory[state.vendor];
+  if(remembered){ state.itcLedger = remembered; state.itcLedgerVendor = state.vendor; return; }
+  state.itcLedger = ''; state.itcLedgerVendor = '';
+  if(itcAskedFor !== state.vendor) itcPending = true;
+}
+
+function openItcDialog(){
+  const dlg = $('#itc-dialog'); if(!dlg || dlg.open) return;
+  const sel = $('#itc-ledger');
+  const pre = state.itcLedger || suggestedItcLedger();
+  sel.innerHTML = options2(MASTERS.itcLedgers,'Select Ledger',pre);
+  sel.value = pre;
+  $('#itc-remember').checked = !!itcMemory[state.vendor];
+  $('#itc-save').disabled = !sel.value;
+  itcPending = false; itcAskedFor = state.vendor;
+  dlg.showModal();
+}
+
+/* --- the allocation dialog ------------------------------------------------
+   Edits a copy, so Cancel really cancels. `slot` says where the answer goes
+   and how much there is to divide; the amount comes from the line itself, so
+   changing a quantity later re-divides it by the same percentages. */
+let ccDraft = null;
+
+function ccSlot(target){
+  if(target.kind==='vendor')
+    return {obj:state, key:'vendorCcSplit', plain:'vendorCostCentre', amount:compute().subTotal};
+  const row = state[target.kind]?.find(r=>r.id===target.id);
+  if(!row) return null;
+  return {obj:row, key:'ccSplit', plain:'costCentre',
+          amount: target.kind==='items' ? lineOf(row).taxable : num(row.amount)};
+}
+
+function openCcDialog(target){
+  const slot = ccSlot(target); if(!slot) return;
+  const existing = slot.obj[slot.key];
+  const seed = byId(MASTERS.costCentres, slot.obj[slot.plain]);
+  ccDraft = {
+    target, amount: r2(slot.amount),
+    categories: existing
+      ? existing.categories.map(c=>({id:uid(),category:c.category,rows:c.rows.map(r=>({...r,id:uid()}))}))
+      // a centre already chosen is the obvious first line of its own category
+      : [seed ? {id:uid(),category:seed.group,rows:[{id:uid(),centre:seed.id,pct:100}]}
+              : blankCcCat(ccCategories()[0])]
+  };
+  renderCcDialog();
+  $('#cc-dialog').showModal();
+  $('#cc-body [data-cc="centre"]')?.focus();     // not the close button
+}
+
+const ccShare = pct => ccDraft && ccDraft.amount ? r2(ccDraft.amount*num(pct)/100) : 0;
+const ccTick = `<span class="ico ico-12"><svg width="12" height="12"><use href="#i-tick"/></svg></span>`;
+
+/* The badge, the sibling figure and the Save state are the only things a
+   keystroke changes, so they are patched in place — re-rendering the body on
+   every character would take the caret with it. */
+function ccPatch(catEl, source){
+  const cat = ccDraft.categories.find(c=>c.id===catEl.dataset.cat);
+  const rowEl = source.closest('[data-ccrow]');
+  const row = cat.rows.find(r=>r.id===rowEl.dataset.ccrow);
+  const sib = rowEl.querySelector(source.dataset.cc==='pct' ? '[data-cc="amt"]' : '[data-cc="pct"]');
+  if(sib) sib.value = source.dataset.cc==='pct' ? inr.format(ccShare(row.pct)) : num(row.pct);
+
+  const total = ccCatTotal(cat), done = Math.abs(total-100)<0.005;
+  const badge = catEl.querySelector('.ccc__pct');
+  badge.className = 'ccc__pct'+(done?' is-done':total>100?' is-over':'');
+  badge.innerHTML = total+'%'+(done?ccTick:'');
+  ccFootState();
+}
+function ccFootState(){
+  const ok = ccSplitDone({categories:ccDraft.categories});
+  $('#cc-save').disabled = !ok;
+  $('#cc-warn').hidden = ok;
+}
+
+function renderCcDialog(){
+  const d = ccDraft; if(!d) return;
+  $('#cc-total').textContent = 'Total: '+money(d.amount);
+  const share = ccShare;
+  const taken = d.categories.map(c=>c.category);
+  // a full rebuild loses the caret, so put it back where it was
+  const act = document.activeElement;
+  const keep = act && act.dataset?.cc
+    ? {f:act.dataset.cc, row:act.closest('[data-ccrow]')?.dataset.ccrow,
+       cat:act.closest('[data-cat]')?.dataset.cat} : null;
+
+  $('#cc-body').innerHTML = d.categories.map(c=>{
+    const total = ccCatTotal(c);
+    const cls = Math.abs(total-100)<0.005 ? ' is-done' : total>100 ? ' is-over' : '';
+    return `<section class="ccc" data-cat="${c.id}">
+      <div class="ccc__head">
+        <span class="ccc__lbl">Category</span>
+        <span class="ccc__pick">
+          <select data-cc="category" aria-label="Cost category">
+            ${ccCategories().map(g=>`<option value="${esc(g)}"${g===c.category?' selected':''}${
+              taken.includes(g)&&g!==c.category?' disabled':''}>${esc(g)}</option>`).join('')}
+          </select>
+        </span>
+        <span class="ccc__pct${cls}">${total}%${cls===' is-done'?ccTick:''}</span>
+        <button type="button" class="ccc__drop" data-cc="del-cat" aria-label="Remove this category">
+          <span class="ico ico-14"><svg width="14" height="14"><use href="#i-dash"/></svg></span>
+        </button>
+      </div>
+
+      <div class="ccrow ccrow--head"><span>Cost Centre</span><span>%</span><span>Amount</span><span></span></div>
+      ${c.rows.map(r=>`<div class="ccrow" data-ccrow="${r.id}">
+        <label class="cell"><select class="cell__select t-cell" data-cc="centre">
+          ${options(ccInCategory(c.category),'Select Cost Centre',r.centre)}
+        </select></label>
+        <label class="cell cell-num"><input class="cell__input t-cell" data-cc="pct"
+               inputmode="decimal" value="${num(r.pct)}" aria-label="Share in percent"></label>
+        <label class="cell cell-num${d.amount?'':' is-disabled'}"><input class="cell__input t-cell" data-cc="amt"
+               inputmode="decimal" value="${inr.format(share(r.pct))}" aria-label="Share in rupees"></label>
+        <button type="button" class="ccrow__del" data-cc="del-row" aria-label="Remove this cost centre">
+          <span class="ico ico-14"><svg width="14" height="14"><use href="#i-dash"/></svg></span>
+        </button>
+      </div>`).join('')}
+
+      <button type="button" class="ccx__add" data-cc="add-row">${plusIco}Add cost centre</button>
+    </section>`;
+  }).join('') +
+  (d.categories.length < ccCategories().length
+    ? `<button type="button" class="ccx__add ccx__add--cat" data-cc="add-cat">${plusIco}Add New Category</button>`
+    : '');
+
+  ccFootState();
+  if(keep){
+    const el = $(`#cc-body [data-cat="${keep.cat}"] [data-ccrow="${keep.row}"] [data-cc="${keep.f}"]`)
+            || $(`#cc-body [data-cat="${keep.cat}"] [data-cc="${keep.f}"]`);
+    if(el){ el.focus(); el.select?.(); }
+  }
+}
+
+const ccFind = el=>{
+  const c = ccDraft.categories.find(x=>x.id===el.closest('[data-cat]').dataset.cat);
+  const rowEl = el.closest('[data-ccrow]');
+  return {cat:c, row: rowEl ? c.rows.find(r=>r.id===rowEl.dataset.ccrow) : null};
+};
+
+/* a section subtotal, signed by what it does to the Grand Total */
+function sectionAmt(n,deducts){
+  if(!n) return '—';
+  return ((deducts ? n>0 : n<0) ? '− ' : '') + money(Math.abs(n));
+}
+
 function renderBreakdown(calc){
-  const rule = '<div class="bd-rule"></div>';
-  const v = byId(MASTERS.vendors,state.vendor);
+  /* a subtotal the Grand Total does not take is stated but not emphasised —
+     under reverse charge the GST is real, it just is not owed to the vendor */
+  const secAmt = (id,n,deducts,excluded)=>
+    `<span class="bd-sec__amt${n?'':' is-zero'}${excluded?' is-excluded':''}" id="${id}">${sectionAmt(n,deducts)}</span>`;
 
   /* one editable ledger line: pick the ledger, the rate, the amount */
   const taxLine = row=>{
     const tds = row.type==='tds';
     const tip = tds ? ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"` : '';
     const meta = tds ? '' :
-      `<button type="button" class="chip${row.itc==='ineligible'?' chip--no':''}" data-f="itc"
-               title="Toggle input tax credit eligibility">
-         ${row.itc==='ineligible'?'Not eligible for ITC':'Eligible for ITC'} ${pencil}</button>`;
+      `<button type="button" class="chip${itcBlocked(row)?' chip--no':''}" data-f="itc"
+               title="${itcBlocked(row)?'Posts to '+esc(itcLedgerName()):'Set input tax credit eligibility'}">
+         ${itcChip(row)} ${pencil}</button>`;
     return `<div class="bd-line" data-kind="taxLines" data-id="${row.id}">
       <div class="bd-line__lead">
         <label class="cell"${tip}>${taxLedgerSelect(row)}</label>
         ${meta}
       </div>
-      <label class="cell cell-num"><input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate}">%</label>
+      <label class="cell cell-num cell-pct">
+        <input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate}"><span class="pct">%</span>
+      </label>
       <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
-      <button type="button" class="bd-del" data-act="del-line" aria-label="Remove line">&times;</button>
+      <button type="button" class="bd-del" data-act="del-line" aria-label="Remove ${esc(row.name)}">&times;</button>
     </div>`;
   };
 
-  let html = `<div class="bd-head">
-      <p class="t-label">Reverse Charges</p>
-      <select data-bind="reverseCharge" aria-label="Reverse charge applicability">
-        <option value="no"${state.reverseCharge?'':' selected'}>Not Applicable</option>
-        <option value="yes"${state.reverseCharge?' selected':''}>Applicable</option>
-      </select>
-      ${v?`<p class="hint">GST is charged on the taxable value; TDS is deducted from it (GST excluded).
-            PAN ${esc(v.pan||'not on file')} · deductee type: ${esc(v.deductee)}.</p>`:''}
-    </div>`;
-
-  html += `<div class="bd-row"><span>Sub Total</span><span></span><span id="bd-sub">${money(calc.subTotal)}</span><span></span></div>`;
-
   const gst = gstLines(), tds = tdsLines();
-  html += rule + `<div class="bd-group">GST</div>`;
-  html += gst.length ? gst.map(taxLine).join('')
-    : `<p class="bd-empty">${!gstApplies() ? 'This GST treatment does not attract GST on the purchase.'
-        : isIntraState()===null ? 'Set Source and Destination of Supply to compute GST.'
-        : 'Set a tax rate on a line item or ledger to compute GST.'}</p>`;
 
-  html += rule + `<div class="bd-group">TDS</div>`;
-  html += tds.length ? tds.map(taxLine).join('')
-    : `<p class="bd-empty">No TDS applicable — pick a vendor and an expense ledger with a nature of payment.</p>`;
+  let html = `<div class="bd-row"><span>Sub Total</span><span></span><span id="bd-sub">${money(calc.subTotal)}</span><span></span></div>`;
 
-  html += `<button type="button" class="btn btn--quiet" data-act="add-tax" style="height:30px">
-             <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>Add GST or TDS ledger</button>`;
+  /* GST — reverse charge is a GST-only mechanism, so its switch sits on this
+     heading rather than above the whole breakdown. Saying it is applicable is
+     the whole statement: the GST total greys out because it leaves the Grand
+     Total, and the ledger it posts to is settled in the dialog, so all the
+     heading carries beside the switch is the way back into that dialog. */
+  html += `<section class="bd-sec">
+      <div class="bd-sec__head">
+        <div>
+          <span class="bd-sec__ttl">GST</span>
+          <label class="bd-rc${state.reverseCharge?' is-on':''}">
+            <span class="bd-rc__label">Reverse charge</span>
+            <select data-bind="reverseCharge" aria-label="Reverse charge applicability">
+              <option value="no"${state.reverseCharge?'':' selected'}>Not applicable</option>
+              <option value="yes"${state.reverseCharge?' selected':''}>Applicable</option>
+            </select>
+          </label>
+          ${state.reverseCharge ? `<button type="button" class="bd-rcedit" data-act="rcm-pick"
+            data-field="rcmLedger" title="${esc(rcmLedgerName())}"
+            >${pencil}${state.rcmLedger?'Edit ledger':'Select ledger'}</button>` : ''}
+        </div>
+        ${secAmt('bd-gst-amt',calc.gstTotal,false,state.reverseCharge)}
+      </div>
+      ${gst.length ? gst.map(taxLine).join('')
+        : `<p class="bd-empty">${!gstApplies() ? 'This GST treatment does not attract GST on the purchase.'
+            : isIntraState()===null ? 'Set Source and Destination of Supply to compute GST.'
+            : 'Set a tax rate on a line item or ledger to compute GST.'}</p>`}
+      <button type="button" class="bd-add" data-act="add-gst">${plusIco}Add GST ledger</button>
+    </section>`;
 
-  html += rule + `<div class="bd-group">Adjustments</div>`;
-  html += state.adjustments.map(a=>`
-    <div class="bd-line" data-adj="${a.id}">
-      <label class="cell"><input class="cell__input t-cell" data-af="label" value="${esc(a.label)}" placeholder="Adjustment description"></label>
-      <span></span>
-      <label class="cell cell-num"><input class="cell__input t-cell" data-af="amount" inputmode="decimal" value="${a.amount||0}"></label>
-      <button type="button" class="bd-del" data-af="del" aria-label="Remove adjustment">&times;</button>
-    </div>`).join('');
-  html += `<button type="button" class="btn btn--quiet" data-act="add-adj" style="height:30px">
-             <span class="ico ico-18"><svg width="12" height="12"><use href="#i-plus"/></svg></span>Add Adjustment</button>`;
+  /* TDS — the vendor's PAN and deductee type drive every rate below, but they
+     are read off the vendor card rather than restated here */
+  html += `<section class="bd-sec">
+      <div class="bd-sec__head">
+        <div><span class="bd-sec__ttl">TDS</span></div>
+        ${secAmt('bd-tds-amt',calc.tdsTotal,true)}
+      </div>
+      ${tds.length ? tds.map(taxLine).join('')
+        : `<p class="bd-empty">No TDS applicable — pick a vendor and an expense ledger with a nature of payment.</p>`}
+      <button type="button" class="bd-add" data-act="add-tds">${plusIco}Add TDS ledger</button>
+    </section>`;
 
-  html += rule + `<div class="bd-grand"><span>Grand Total</span><span></span><span id="bd-grand">${money(calc.grand)}</span><span></span></div>`;
+  html += `<section class="bd-sec">
+      <div class="bd-sec__head">
+        <div><span class="bd-sec__ttl">Adjustments</span></div>
+        ${secAmt('bd-adj-amt',calc.adjTotal)}
+      </div>
+      ${state.adjustments.map(a=>`
+        <div class="bd-line" data-adj="${a.id}">
+          <label class="cell"><input class="cell__input t-cell" data-af="label" value="${esc(a.label)}" placeholder="What is this adjustment?"></label>
+          <span></span>
+          <label class="cell cell-num"><input class="cell__input t-cell" data-af="amount" inputmode="decimal"
+                 value="${a.amount?inr.format(num(a.amount)):''}" placeholder="0.00"></label>
+          <button type="button" class="bd-del" data-af="del" aria-label="Remove adjustment">&times;</button>
+        </div>`).join('')}
+      <button type="button" class="bd-add" data-act="add-adj">${plusIco}Add adjustment</button>
+    </section>`;
 
-  if(state.reverseCharge && calc.gstTotal)
-    html += `<p class="bd-note">Reverse charge — ${money(calc.gstTotal)} GST is payable by you, not to the vendor, and is excluded above.</p>`;
+  html += `<div class="bd-grand"><span>Grand Total</span><span></span><span id="bd-grand">${money(calc.grand)}</span><span></span></div>`;
+
+  /* the write-off names its ledger once one is chosen, and asks for one until
+     then — the only place in the sheet that decision is visible */
   if(calc.gstIneligible)
-    html += `<p class="bd-note">${money(calc.gstIneligible)} GST marked ineligible for ITC is charged to expense, not to the input credit ledger.</p>`;
+    html += `<p class="bd-note">${money(calc.gstIneligible)} GST is not claimable as input credit — ${
+      state.itcLedger ? 'it is charged to '+esc(itcLedgerName())+'.'
+                      : 'choose the expense ledger it is charged to.'}</p>`;
 
   $('#breakdown').innerHTML = html;
 }
 
-/* patch just the two totals, for edits made inside the breakdown itself
+/* patch just the figures, for edits made inside the breakdown itself
    (a full re-render there would tear the focused field out from under you) */
 function patchTotals(calc){
-  const sub = $('#bd-sub'), grand = $('#bd-grand');
-  if(sub)   sub.textContent   = money(calc.subTotal);
-  if(grand) grand.textContent = money(calc.grand);
-}
-
-function renderSupplyNote(){
-  const src = byId(MASTERS.states,state.sourceState);
-  const dst = byId(MASTERS.states,state.destState);
-  const el = $('#supply-note');
-  if(!src||!dst){ el.textContent=''; return; }
-  const intra = state.sourceState===state.destState;
-  const v = byId(MASTERS.vendors,state.vendor);
-  el.innerHTML = `${esc(src.plain)} → ${esc(dst.plain)} · <strong>${intra?'Intra-state — CGST + SGST':'Inter-state — IGST'}</strong>` +
-    (v?` · PAN ${esc(v.pan||'—')} · credit ${v.credit} days · FY purchases with this vendor ${money(v.fyGoods)}`:'');
+  const put = (id,text,zero)=>{
+    const el = $('#'+id); if(!el) return;
+    el.textContent = text;
+    if(zero!==undefined) el.classList.toggle('is-zero', zero);
+  };
+  put('bd-sub',   money(calc.subTotal));
+  put('bd-grand', money(calc.grand));
+  put('bd-gst-amt', sectionAmt(calc.gstTotal),      !calc.gstTotal);
+  $('#bd-gst-amt')?.classList.toggle('is-excluded', state.reverseCharge);
+  put('bd-tds-amt', sectionAmt(calc.tdsTotal,true), !calc.tdsTotal);
+  put('bd-adj-amt', sectionAmt(calc.adjTotal),      !calc.adjTotal);
 }
 
 function renderHeader(){
@@ -1630,8 +2355,32 @@ function renderHeader(){
   $('#cc-toggle').setAttribute('aria-checked', state.ccMode==='centre');
   $('#cc-label-class').classList.toggle('is-off', state.ccMode==='centre');
   $('#cc-label-centre').classList.toggle('is-off', state.ccMode==='class');
+  renderCcPick();                  // after the value loop above — these two own their own value
+  renderVendorCc();
   $('#block-items').hidden = state.mode!=='item';
   $$('.segmented button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===state.mode));
+}
+
+/* The toggle does not just enable one control or the other — it decides what
+   the control *is*. On Class it lists the saved templates; on Cost Centre it
+   lists the centres and stands as the bill's default. No split here: a split
+   belongs to a line with an amount to divide, not to the bill's default. */
+function renderCcPick(){
+  const sel = $('#cc-pick'); if(!sel || document.activeElement===sel) return;
+  const cls = ccLocked();
+  sel.dataset.bind = cls ? 'costCentreClass' : 'billCostCentre';
+  sel.setAttribute('aria-label', cls ? 'Cost centre class' : 'Cost centre for the whole bill');
+  sel.innerHTML = cls
+    ? options(MASTERS.costCentreClasses,'Select Cost Centre Class',state.costCentreClass)
+    : options2(MASTERS.costCentres,'Select Cost Centre',state.billCostCentre);
+  sel.value = (cls ? state.costCentreClass : state.billCostCentre) || '';
+}
+/* the vendor's own cost centre — the whole bill's worth, so it splits too */
+function renderVendorCc(){
+  const box = $('#vendor-cc'); if(!box || box.contains(document.activeElement)) return;
+  box.innerHTML = ccSelect({
+    cls:'control__select t-value', attrs:'data-bind="vendorCostCentre"',
+    placeholder:'Select Cost Centre', value:state.vendorCostCentre, split:state.vendorCcSplit});
 }
 
 /* flag each table that still has content scrolled off to the right */
@@ -1647,16 +2396,19 @@ document.addEventListener('scroll', e=>{
 }, true);
 
 function render(){
+  syncItcLedger();               // an ineligible line needs an expense ledger to land in
   const calc = compute();
   renderHeader();
   renderItems();
   renderLedgers();
   renderBreakdown(calc);
-  renderSupplyNote();
   checkDuplicate();
   markClipped();
   $('#btn-allocate').disabled = validate(false).length>0;
   if(state.validated) validate(true);
+  /* one at a time — whichever is still pending is asked when the other closes */
+  if(rcmPending){ rcmPending = false; openRcmDialog(); }
+  else if(itcPending) openItcDialog();
   return calc;
 }
 
@@ -1679,6 +2431,8 @@ function validate(paint){
   need('sourceState', !!state.sourceState, 'Select the source of supply');
   need('destState', !!state.destState, 'Select the destination of supply');
   if(state.mode==='item') need('purchaseLedger', !!state.purchaseLedger, 'Select the purchase ledger');
+  need('rcmLedger', !state.reverseCharge || !!state.rcmLedger, 'Choose the ledger the reverse charge posts to');
+  need('itcLedger', !gstLines().some(itcBlocked) || !!state.itcLedger, 'Choose the ledger ineligible GST is expensed to');
 
   const calc = compute();
   if(calc.subTotal<=0) errs.push({key:'__rows',msg:'Add at least one line with a value'});
@@ -1704,6 +2458,7 @@ function checkDuplicate(){
 document.addEventListener('input', e=>{
   const el = e.target, bind = el.dataset.bind;
   if(!bind || el.closest('.table')) return;
+  if(el.tagName==='SELECT') return;      // selects are settled by the change handler
   state[bind] = el.value;
   if(['supplierInvoiceNo','narration','billingAddress','gstin','voucherNo'].includes(bind)){
     checkDuplicate();
@@ -1724,6 +2479,10 @@ document.addEventListener('change', e=>{
     }
   }else if(bind==='reverseCharge'){
     state.reverseCharge = el.value==='yes';
+    syncRcmLedger();
+  }else if(bind==='vendorCostCentre'){
+    if(el.value===CC_SPLIT+'-open'){ openCcDialog({kind:'vendor'}); render(); return; }
+    if(el.value!==CC_SPLIT){ state.vendorCostCentre = el.value; state.vendorCcSplit = null; }
   }else{
     state[bind] = el.value;
     if(bind==='costCentreClass' && el.value) state.ccMode='class';   // picking a class applies it
@@ -1758,6 +2517,19 @@ function applyTreatment(){
   if(state.gstTreatment==='registered' && !state.gstin){
     state.gstin = byId(MASTERS.vendors,state.vendor)?.gstin || '';
   }
+  syncRcmLedger();
+}
+/* Reverse charge asks the one thing the bill cannot answer: the vendor never
+   charged this tax, so nothing on the document says which liability ledger it
+   posts to. When the charge turns on we ask — once, in a dialog — unless this
+   vendor already has a remembered answer. Switching it off forgets the ledger. */
+function syncRcmLedger(){
+  if(!state.reverseCharge){ state.rcmLedger=''; state.rcmLedgerVendor=''; rcmPending=false; return; }
+  if(state.rcmLedger && state.rcmLedgerVendor===state.vendor) return;   // answered, for this vendor
+  const remembered = rcmMemory[state.vendor];          // the answer is the vendor's, not the bill's
+  if(remembered){ state.rcmLedger = remembered; state.rcmLedgerVendor = state.vendor; return; }
+  state.rcmLedger = ''; state.rcmLedgerVendor = '';
+  rcmPending = true;                                   // ask as soon as this render lands
 }
 function syncLedgerToSupply(){
   const intra = isIntraState();
@@ -1838,6 +2610,15 @@ document.addEventListener('change', e=>{
     render(); return;
   }
 
+  /* the last option in a cost centre picker is not a cost centre */
+  if(f==='costCentre'){
+    if(e.target.value===CC_SPLIT+'-open'){ openCcDialog({kind, id:row.id}); render(); return; }
+    if(e.target.value===CC_SPLIT){ render(); return; }      // re-picked what it already shows
+    row.costCentre = e.target.value;
+    row.ccSplit = null;                                     // one answer at a time
+    render(); return;
+  }
+
   row[f] = e.target.value;
   if(kind==='taxLines') row.touched = true;
   if(f==='ledger'){
@@ -1873,9 +2654,20 @@ document.addEventListener('click', e=>{
     state.adjustments.push({id:uid(),label:'',amount:0});
     render(); return;
   }
-  if(btn.dataset.act==='add-tax'){
+  if(btn.dataset.act==='rcm-pick'){ openRcmDialog(); return; }
+  /* GST and TDS lines live in one list, but they are added from their own
+     sections — a ledger you add under GST starts as GST, and one you add
+     under TDS starts on a section you are not already deducting under. */
+  if(btn.dataset.act==='add-gst'){
     state.taxLines.push({id:uid(),key:uid(),type:'gst',auto:false,touched:true,
                          name:'Input Cess',rate:0,base:0,amount:0,itc:'eligible'});
+    render(); return;
+  }
+  if(btn.dataset.act==='add-tds'){
+    const used = new Set(tdsLines().map(t=>t.section));
+    const sec  = MASTERS.tdsSections.find(s=>!used.has(s.id)) || MASTERS.tdsSections[0];
+    state.taxLines.push({id:uid(),key:uid(),type:'tds',auto:false,touched:true,
+                         section:sec.id,name:sec.name,rate:sec.rate,base:0,amount:0,note:'',detail:''});
     render(); return;
   }
   if(btn.dataset.act==='del-line'){
@@ -1899,10 +2691,7 @@ document.addEventListener('click', e=>{
     if(ctx.row.kind==='service') ctx.row.godown='';
     render(); return;
   }
-  if(btn.dataset.f==='itc' && ctx?.row){
-    ctx.row.itc = ctx.row.itc==='ineligible'?'eligible':'ineligible';
-    render(); return;
-  }
+  if(btn.dataset.f==='itc' && ctx?.row){ openItcMenu(btn, ctx); return; }
   if(btn.dataset.f==='clearOverride' && ctx?.row){
     ctx.row.amountOverride = null;
     render(); return;
@@ -1941,6 +2730,56 @@ document.addEventListener('click', e=>{
 
 /* --- row menu popup ------------------------------------------------------ */
 function closeMenu(){ $('.menu')?.remove(); }
+/* The ITC call, asked as the three answers it actually has. It commits on Save
+   rather than on selection: an ineligible answer drags a second decision along
+   with it — the ledger the GST is expensed to — and that is worth confirming
+   in one step rather than firing a modal off a stray click. */
+function openItcMenu(anchor, ctx){
+  closeMenu();
+  let choice = ctx.row.itc || 'eligible';
+  const menu = document.createElement('div');
+  menu.className = 'menu menu--itc';
+  const paint = ()=>{
+    menu.innerHTML =
+      ITC_OPTIONS.map(o=>`<label class="itcopt">
+          <input type="radio" name="itc-choice" value="${o.id}"${o.id===choice?' checked':''}>
+          <span class="itcopt__dot"></span>${esc(o.label)}
+        </label>`).join('') +
+      (choice==='eligible' ? '' : `<div class="itcled">
+          <span>Posts to</span>
+          <button type="button" data-a="ledger">${state.itcLedger?esc(itcLedgerName()):'Choose a ledger'}</button>
+        </div>`) +
+      `<div class="menu__foot">
+         <button type="button" data-a="cancel">Cancel</button>
+         <button type="button" data-a="save" class="is-save">Save</button>
+       </div>`;
+  };
+  paint();
+  document.body.append(menu);
+  const r = anchor.getBoundingClientRect();
+  menu.style.top  = (window.scrollY + r.bottom + 6)+'px';
+  menu.style.left = (window.scrollX + Math.min(r.left, document.documentElement.clientWidth - menu.offsetWidth - 12))+'px';
+
+  menu.addEventListener('change', ev=>{
+    if(ev.target.name!=='itc-choice') return;
+    choice = ev.target.value;
+    paint();                                  // the ledger line appears with the answer
+  });
+  menu.addEventListener('click', ev=>{
+    const a = ev.target.closest('button')?.dataset.a;
+    if(!a) return;
+    if(a==='cancel'){ closeMenu(); return; }
+    /* not `touched` — the engine carries no ITC call of its own, so the amount
+       must keep following the items even after the credit is written off */
+    ctx.row.itc = choice;
+    closeMenu();
+    render();                                 // syncs the ledger, and asks for one if needed
+    if(a==='ledger') openItcDialog();         // asked for outright, so open it either way
+  });
+  setTimeout(()=>document.addEventListener('click',onAway,{once:true}));
+  function onAway(ev){ if(menu.isConnected && !menu.contains(ev.target)) closeMenu(); }
+}
+
 function openRowMenu(anchor, ctx){
   closeMenu();
   const kind = ctx.tr.dataset.kind;
@@ -1967,7 +2806,9 @@ function openRowMenu(anchor, ctx){
     closeMenu(); render();
   });
   setTimeout(()=>document.addEventListener('click',onAway,{once:true}));
-  function onAway(ev){ if(!menu.contains(ev.target)) closeMenu(); }
+  /* the menu this handler was armed for may already be gone, and a click-away
+     from a closed menu must not take down whichever one is open now */
+  function onAway(ev){ if(menu.isConnected && !menu.contains(ev.target)) closeMenu(); }
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeMenu(); });
 
@@ -2030,6 +2871,7 @@ function applyExtraction(file){
   state.gstTreatment      = v.treatment;
   state.sourceState       = v.state;
   state.destState         = b.state;
+  syncRcmLedger();                              // keep the RCM ledger with the treatment
 
   state.mode    = 'item';                       // the sample bill carries stock items
   state.items   = SAMPLE.items.map(r=>({...blankItem(),...r}));
@@ -2140,8 +2982,8 @@ function nextVoucherNo(){
 
 function journalEntries(calc){
   const lines = [];
-  const ineligible = gstLines().filter(t=>t.itc==='ineligible');
-  const eligible   = gstLines().filter(t=>t.itc!=='ineligible');
+  const ineligible = gstLines().filter(itcBlocked);
+  const eligible   = gstLines().filter(t=>!itcBlocked(t));
 
   if(state.mode==='item' && calc.itemsTaxable)
     lines.push({account:byId(MASTERS.purchaseLedgers,state.purchaseLedger)?.name||'Purchase',dr:calc.itemsTaxable,cr:0});
@@ -2153,9 +2995,10 @@ function journalEntries(calc){
 
   if(!state.reverseCharge){
     eligible.forEach(t=>num(t.amount) && lines.push({account:t.name,dr:num(t.amount),cr:0}));
-    // ITC that cannot be claimed is a cost, not an asset
+    // ITC that cannot be claimed is a cost, not an asset — it lands in the
+    // expense ledger chosen when the line was marked ineligible
     const inelTotal = r2(ineligible.reduce((s,t)=>s+num(t.amount),0));
-    if(inelTotal) lines.push({account:'GST Expense — ITC not eligible',dr:inelTotal,cr:0});
+    if(inelTotal) lines.push({account:itcLedgerName(),dr:inelTotal,cr:0});
   }
   state.adjustments.forEach(a=>{
     const amt = num(a.amount); if(!amt) return;
@@ -2169,7 +3012,7 @@ function journalEntries(calc){
 
   if(state.reverseCharge && calc.gstTotal){
     gstLines().forEach(t=>num(t.amount) && lines.push({account:t.name+' (RCM)',dr:num(t.amount),cr:0}));
-    lines.push({account:'GST Payable under Reverse Charge',dr:0,cr:calc.gstTotal});
+    lines.push({account:rcmLedgerName(),dr:0,cr:calc.gstTotal});
   }
   return lines;
 }
@@ -2200,6 +3043,7 @@ $('#btn-allocate').addEventListener('click',()=>{
       <dt>Due date</dt><dd>${fmtDate(state.dueDate)}</dd>
       <dt>Supply</dt><dd>${esc(byId(MASTERS.states,state.sourceState).plain)} → ${esc(byId(MASTERS.states,state.destState).plain)} · ${calc.intra?'CGST + SGST':'IGST'}</dd>
       <dt>GST treatment</dt><dd>${esc(byId(MASTERS.gstTreatments,state.gstTreatment).name)}${state.reverseCharge?' · reverse charge':''}</dd>
+      ${state.reverseCharge&&calc.gstTotal?`<dt>Reverse charge</dt><dd>${money(calc.gstTotal)} to ${esc(rcmLedgerName())}</dd>`:''}
       ${calc.tdsTotal?`<dt>TDS deducted</dt><dd>${money(calc.tdsTotal)} (${tdsLines().filter(t=>t.amount>0).map(t=>t.section).join(', ')})</dd>`:''}
       ${calc.gstIneligible?`<dt>ITC not eligible</dt><dd>${money(calc.gstIneligible)}</dd>`:''}
     </dl>
@@ -2220,6 +3064,93 @@ $('#btn-allocate').addEventListener('click',()=>{
 
 $('#journal-close').addEventListener('click',()=>$('#journal-dialog').close());
 $('#journal-new').addEventListener('click',()=>{ $('#journal-dialog').close(); reset(); });
+
+/* --- the RCM ledger dialog ------------------------------------------------
+   Dismissing it leaves the ledger unset, which validation already refuses to
+   allocate on — the panel keeps asking rather than the dialog trapping you. */
+$('#rcm-x').addEventListener('click',()=>$('#rcm-dialog').close());
+$('#rcm-ledger').addEventListener('change',e=>{ $('#rcm-save').disabled = !e.target.value; });
+$('#rcm-form').addEventListener('submit',()=>{        // method="dialog" closes it for us
+  const id = $('#rcm-ledger').value; if(!id) return;
+  state.rcmLedger = id;
+  state.rcmLedgerVendor = state.vendor;
+  if($('#rcm-remember').checked) rcmMemory[state.vendor] = id;
+  else delete rcmMemory[state.vendor];
+  render();
+  toast('Reverse charge posts to '+rcmLedgerName(),'ok');
+});
+
+$('#itc-x').addEventListener('click',()=>$('#itc-dialog').close());
+$('#itc-ledger').addEventListener('change',e=>{ $('#itc-save').disabled = !e.target.value; });
+$('#itc-form').addEventListener('submit',()=>{
+  const id = $('#itc-ledger').value; if(!id) return;
+  state.itcLedger = id;
+  state.itcLedgerVendor = state.vendor;
+  if($('#itc-remember').checked) itcMemory[state.vendor] = id;
+  else delete itcMemory[state.vendor];
+  render();
+  toast('Ineligible GST posts to '+itcLedgerName(),'ok');
+});
+
+/* closing either dialog re-renders, so a decision still waiting behind it —
+   both can come due on the same edit — gets its turn rather than being lost */
+$('#rcm-dialog').addEventListener('close',()=>render());
+$('#itc-dialog').addEventListener('close',()=>render());
+
+/* --- the cost centre allocation dialog ------------------------------------ */
+$('#cc-x').addEventListener('click',()=>$('#cc-dialog').close());
+$('#cc-cancel').addEventListener('click',()=>$('#cc-dialog').close());
+$('#cc-dialog').addEventListener('close',()=>{ ccDraft = null; render(); });
+
+$('#cc-save').addEventListener('click',()=>{
+  const d = ccDraft; if(!d || !ccSplitDone({categories:d.categories})) return;
+  const slot = ccSlot(d.target); if(!slot) return;
+  slot.obj[slot.key]   = {categories:d.categories};
+  slot.obj[slot.plain] = '';                    // the split is the answer now
+  $('#cc-dialog').close();
+  toast('Allocated across '+ccSplitCentres({categories:d.categories}).size+' cost centres','ok');
+});
+
+$('#cc-body').addEventListener('input',e=>{
+  const f = e.target.dataset.cc; if(f!=='pct' && f!=='amt') return;
+  const {row} = ccFind(e.target);
+  // the two columns are one number seen twice — whichever you type in leads
+  row.pct = f==='pct' ? num(e.target.value)
+                      : (ccDraft.amount ? r2(num(e.target.value)/ccDraft.amount*100) : 0);
+  ccPatch(e.target.closest('[data-cat]'), e.target);
+});
+
+$('#cc-body').addEventListener('change',e=>{
+  const f = e.target.dataset.cc; if(f!=='centre' && f!=='category') return;
+  const {cat,row} = ccFind(e.target);
+  if(f==='centre'){ row.centre = e.target.value; }
+  else{
+    cat.category = e.target.value;              // the centres below no longer apply
+    cat.rows = [blankCcRow()];
+  }
+  renderCcDialog();
+});
+
+$('#cc-body').addEventListener('click',e=>{
+  const f = e.target.closest('button')?.dataset.cc; if(!f) return;
+  const d = ccDraft;
+  if(f==='add-cat'){
+    const free = ccCategories().find(g=>!d.categories.some(c=>c.category===g));
+    if(free) d.categories.push(blankCcCat(free));
+  }else{
+    const {cat,row} = ccFind(e.target);
+    if(f==='add-row') cat.rows.push(blankCcRow());
+    if(f==='del-row'){
+      cat.rows = cat.rows.filter(r=>r!==row);
+      if(!cat.rows.length) cat.rows = [blankCcRow()];
+    }
+    if(f==='del-cat'){
+      d.categories = d.categories.filter(c=>c!==cat);
+      if(!d.categories.length) d.categories = [blankCcCat(ccCategories()[0])];
+    }
+  }
+  renderCcDialog();
+});
 $('#btn-discard').addEventListener('click',()=>{ if(confirm('Discard this bill? All entered data will be lost.')) reset(); });
 
 function reset(){
@@ -2277,8 +3208,6 @@ function boot(){
   $('[data-bind="branch"]').innerHTML           = options(MASTERS.branches,'Select Location','');
   $('[data-bind="voucherType"]').innerHTML      = options(MASTERS.voucherTypes,'Select Voucher Type','purchase');
   $('[data-bind="vendor"]').innerHTML           = options2(MASTERS.vendors,'Select Vendor','');
-  $('[data-bind="vendorCostCentre"]').innerHTML = options2(MASTERS.costCentres,'Select Cost Centre','');
-  $('[data-bind="costCentreClass"]').innerHTML  = options(MASTERS.costCentreClasses,'Select Cost Centre Class','');
   $('[data-bind="purchaseLedger"]').innerHTML   = options(MASTERS.purchaseLedgers,'Select Ledger','');
   $('[data-bind="gstTreatment"]').innerHTML     = options(MASTERS.gstTreatments,'Select GST Treatment','');
   $('[data-bind="sourceState"]').innerHTML      = options(MASTERS.states,'Select Source of Supply','');
