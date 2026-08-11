@@ -318,16 +318,18 @@ input[readonly]{cursor:default}
 .cell-center .cell__input{text-align:center}
 .tcell.is-invalid .cell{border-color:var(--danger)}
 
-/* goods/service toggle and HSN sit side by side under the item picker */
-.itemmeta{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
+/* goods/service toggle, HSN and the match mark share one line under the item
+   picker — three fixed-minimum pieces in a 242px column, so every px of
+   padding and gap here is budgeted against that width, not just chosen to taste. */
+.itemmeta{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
 .kindtoggle{
-  flex:none;padding:5px 12px;border:none;border-radius:var(--radius);
+  flex:none;padding:4px 8px;border:none;border-radius:var(--radius);
   background:var(--brand);color:#fff;font-size:12px;font-weight:600;line-height:18px;
 }
 .kindtoggle[data-kind="service"]{background:#0f7b8a}
-.hsn{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);min-width:0;white-space:nowrap}
+.hsn{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);min-width:0;white-space:nowrap}
 .hsn__input{
-  width:100%;min-width:44px;max-width:130px;border:none;border-bottom:1px dashed transparent;
+  flex:none;width:auto;min-width:28px;max-width:56px;field-sizing:content;border:none;border-bottom:1px dashed transparent;
   background:none;outline:none;color:var(--text);font-size:12px;padding:1px 0;
 }
 .hsn__input:hover{border-bottom-color:var(--brand-soft)}
@@ -557,22 +559,28 @@ input[readonly]{cursor:default}
 .bd-del:hover{color:var(--danger);opacity:1}
 .bd-del:focus-visible{opacity:1;outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:3px}
 
-/* Inside the breakdown the fields stay quiet — no box until you touch one —
-   and carry no horizontal padding, so every label starts on the same left
-   edge as "Sub Total" and every figure ends on the same right edge as the
-   Grand Total. The hover/focus chrome bleeds outward from a pseudo-element
-   so showing it never shifts a number. */
+/* Inside the breakdown the fields carry no horizontal padding, so every label
+   starts on the same left edge as "Sub Total" and every figure ends on the
+   same right edge as the Grand Total. The box bleeds outward from a
+   pseudo-element so showing it never shifts a number. Only cells that hold an
+   actual input/select get the box — a static value (like a tax rate) never
+   borrows the affordance of an editable one. The border is visible at rest,
+   not just on hover: hover-only affordances are unreadable to anyone who
+   can't hover (touch, keyboard, screen readers). */
 .breakdown .cell{
   position:relative;height:32px;padding:6px 0;
   border-color:transparent;background:transparent;
 }
 .breakdown .cell::before{
   content:"";position:absolute;inset:0 -6px;border-radius:var(--radius);
-  transition:background .12s ease,box-shadow .12s ease;pointer-events:none;
+  transition:background .12s ease,box-shadow .12s ease,border-color .12s ease;pointer-events:none;
 }
-.breakdown .cell:hover::before{background:var(--bg-secondary)}
-.breakdown .cell:focus-within::before{
-  background:var(--surface);box-shadow:inset 0 0 0 1px var(--brand-soft);
+.breakdown .cell:has(.cell__input,.cell__select)::before{
+  border:1px solid var(--brand-soft);background:var(--surface);
+}
+.breakdown .cell:has(.cell__input,.cell__select):hover::before{background:var(--bg-secondary)}
+.breakdown .cell:has(.cell__input,.cell__select):focus-within::before{
+  background:var(--surface);box-shadow:inset 0 0 0 1px var(--brand-deep);border-color:var(--brand-deep);
 }
 .breakdown .cell > *{position:relative}
 .breakdown .cell__input,.breakdown .cell__select{color:var(--text)}
@@ -2357,14 +2365,17 @@ function checkbox(checked,mixed){
    expense ledger (charges on top of an item invoice). */
 const ledgerNameOf = id =>
   byId(MASTERS.purchaseLedgers,id)?.name || byId(MASTERS.expenseLedgers,id)?.name || '';
-function ledgerSelect(row){
-  const opt = (o)=>`<option value="${o.id}"${o.id===row.ledger?' selected':''}>${esc(o.name)}</option>`;
-  return `<select class="cell__select t-cell" data-f="ledger">
-    <option value=""${row.ledger?'':' selected'} disabled>Select Ledger</option>
+/* Purchase + expense ledgers, grouped — the one pool every ledger picker in
+   the sheet (item rows, adjustments) chooses from. */
+function ledgerOptions(selected){
+  const opt = (o)=>`<option value="${o.id}"${o.id===selected?' selected':''}>${esc(o.name)}</option>`;
+  return `<option value=""${selected?'':' selected'} disabled>Select Ledger</option>
     <optgroup label="Purchase">${MASTERS.purchaseLedgers.map(opt).join('')}</optgroup>
     ${[...new Set(MASTERS.expenseLedgers.map(l=>l.group))].map(g=>
-      `<optgroup label="${esc(g)}">${MASTERS.expenseLedgers.filter(l=>l.group===g).map(opt).join('')}</optgroup>`).join('')}
-  </select>`;
+      `<optgroup label="${esc(g)}">${MASTERS.expenseLedgers.filter(l=>l.group===g).map(opt).join('')}</optgroup>`).join('')}`;
+}
+function ledgerSelect(row){
+  return `<select class="cell__select t-cell" data-f="ledger">${ledgerOptions(row.ledger)}</select>`;
 }
 
 /* ---------------------------------------------------------------------------
@@ -2518,7 +2529,7 @@ function renderItems(){
         <div class="itemmeta">
           <button type="button" class="kindtoggle" data-f="kind" data-kind="${row.kind}"
                   title="Switch between goods and service">${row.kind==='service'?'Service':'Goods'}</button>
-          <span class="hsn">HSN/SAC:
+          <span class="hsn">HSN/SAC
             <input class="hsn__input" data-f="hsn" value="${esc(row.hsn)}" placeholder="—" aria-label="HSN or SAC code" readonly>
             <button type="button" class="pencil" data-act="unlock" aria-label="Edit HSN or SAC code">${pencil}</button>
           </span>
@@ -2848,7 +2859,8 @@ function renderBreakdown(calc){
   const secAmt = (id,n,deducts,excluded)=>
     `<span class="bd-sec__amt${n?'':' is-zero'}${excluded?' is-excluded':''}" id="${id}">${sectionAmt(n,deducts)}</span>`;
 
-  /* one editable ledger line: pick the ledger, the rate, the amount */
+  /* one ledger line: pick the ledger, edit the amount — the rate is set by
+     the ledger/section chosen and is shown, not edited */
   const taxLine = row=>{
     const tds = row.type==='tds';
     const tip = tds ? ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"` : '';
@@ -2861,9 +2873,7 @@ function renderBreakdown(calc){
         <label class="cell"${tip}>${taxLedgerSelect(row)}</label>
         ${meta}
       </div>
-      <label class="cell cell-num cell-pct">
-        <input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate}"><span class="pct">%</span>
-      </label>
+      <span class="cell cell-num cell-pct t-cell">${row.rate}<span class="pct">%</span></span>
       <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
       <button type="button" class="bd-del" data-act="del-line" aria-label="Remove ${esc(row.name)}">&times;</button>
     </div>`;
@@ -2921,7 +2931,7 @@ function renderBreakdown(calc){
       </div>
       ${state.adjustments.map(a=>`
         <div class="bd-line" data-adj="${a.id}">
-          <label class="cell"><input class="cell__input t-cell" data-af="label" value="${esc(a.label)}" placeholder="What is this adjustment?"></label>
+          <label class="cell"><select class="cell__select t-cell" data-af="ledger">${ledgerOptions(a.ledger)}</select></label>
           <span></span>
           <label class="cell cell-num"><input class="cell__input t-cell" data-af="amount" inputmode="decimal"
                  value="${a.amount?inr.format(num(a.amount)):''}" placeholder="0.00"></label>
@@ -3275,6 +3285,14 @@ document.addEventListener('input', e=>{
   if(af==='amount') patchTotals(compute());
 });
 
+document.addEventListener('change', e=>{
+  if(e.target.dataset.af!=='ledger') return;
+  const wrap = e.target.closest('[data-adj]');
+  const adj = state.adjustments.find(a=>a.id===wrap.dataset.adj);
+  if(!adj) return;
+  adj.ledger = e.target.value;
+});
+
 /* --- clicks -------------------------------------------------------------- */
 document.addEventListener('click', e=>{
   const btn = e.target.closest('button'); if(!btn) return;
@@ -3285,7 +3303,7 @@ document.addEventListener('click', e=>{
     render(); return;
   }
   if(btn.dataset.act==='add-adj'){
-    state.adjustments.push({id:uid(),label:'',amount:0});
+    state.adjustments.push({id:uid(),ledger:'',amount:0});
     render(); return;
   }
   if(btn.dataset.act==='rcm-pick'){ openRcmDialog(); return; }
@@ -3855,7 +3873,7 @@ function journalEntries(calc){
   }
   state.adjustments.forEach(a=>{
     const amt = num(a.amount); if(!amt) return;
-    lines.push({account:a.label||'Adjustment',dr:amt>0?amt:0,cr:amt<0?-amt:0});
+    lines.push({account:ledgerNameOf(a.ledger)||'Adjustment',dr:amt>0?amt:0,cr:amt<0?-amt:0});
   });
 
   tdsLines().forEach(t=>num(t.amount) &&
