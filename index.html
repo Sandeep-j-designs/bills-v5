@@ -24,9 +24,9 @@
 
   --text:#1e1e1e;
   --text-muted:#707070;
-  --danger:#fd1717;
-  --success:#128a53;
-  --warning:#a86400;
+  --danger:#c11212;     /* 6.2:1 on white — AA for 11-12px error text and danger buttons */
+  --success:#0f6e41;    /* 6.3:1 on white, 5.6:1 on the pill tint — AA for normal text */
+  --warning:#8a5300;    /* 6.3:1 on white, 5.6:1 on the warn pill tint — AA everywhere */
 
   --font:'Open Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --radius:6px;
@@ -83,6 +83,7 @@ input,select,textarea{font:inherit}
   display:inline-flex;align-items:center;justify-content:center;gap:10px;
   height:34px;padding:8px 16px;border-radius:var(--radius);border:none;
   font-size:14px;line-height:20px;letter-spacing:-.16px;font-weight:600;white-space:nowrap;
+  transition:background .12s ease,border-color .12s ease,color .12s ease;
 }
 .btn--outline{background:var(--surface);border:1px solid var(--brand-soft);color:var(--brand-deep)}
 .btn--outline:hover{background:var(--bg-secondary)}
@@ -91,7 +92,8 @@ input,select,textarea{font:inherit}
 .btn--solid:disabled{opacity:.4;cursor:not-allowed}
 .btn--quiet{background:transparent;color:var(--brand-deep);padding-inline:0;align-self:flex-start}
 .btn--quiet:hover{text-decoration:underline}
-.btn--danger{background:transparent;color:var(--danger);border:1px solid currentColor;height:28px;padding:4px 12px;font-size:12px}
+.btn--danger{background:transparent;color:var(--danger);border:1px solid currentColor;height:32px;padding:6px 12px;font-size:12px}
+.btn--danger:hover{background:#fdeeee}   /* the red tint gives the destructive target a surface to aim at */
 .link{background:none;border:none;padding:0;color:var(--brand-deep);font-size:12px;text-decoration:underline;font-weight:600}
 
 /* ---------------------------------------------------------------- topbar */
@@ -153,7 +155,7 @@ input,select,textarea{font:inherit}
 .inv__title{text-align:right;font-size:13px;font-weight:700;letter-spacing:.14em;color:#555}
 .inv__parties{display:flex;gap:20px;padding:12px 0;border-bottom:1px solid #ddd}
 .inv__parties>div{flex:1}
-.inv__k{color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.inv__k{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}   /* #888 was ~3.5:1; the muted token is 4.8:1 */
 .inv table{width:100%;border-collapse:collapse;margin-top:12px;font-size:10.5px}
 .inv th{background:#f3f4f8;text-align:left;padding:6px;border:1px solid #ddd;font-size:10px}
 .inv td{padding:6px;border:1px solid #e5e5e5;vertical-align:top}
@@ -196,10 +198,13 @@ input,select,textarea{font:inherit}
 
 /* ------------------------------------------------------------- segmented */
 .segmented{display:inline-flex;align-self:flex-start;border-radius:var(--radius)}
-.segmented button{padding:4px 16px;background:var(--surface);border:1px solid var(--brand-soft);font-size:14px;line-height:22px;font-weight:600;color:var(--text-muted)}
+.segmented button{padding:4px 16px;background:var(--surface);border:1px solid var(--brand-soft);font-size:14px;line-height:22px;font-weight:600;color:var(--text-muted);transition:background .12s ease,color .12s ease}
 .segmented button:first-child{border-radius:var(--radius) 0 0 var(--radius)}
 .segmented button:last-child{border-left:none;border-radius:0 var(--radius) var(--radius) 0}
-.segmented button[aria-pressed="true"]{background:var(--bg-secondary);color:var(--brand-deep)}
+.segmented button:hover:not([aria-pressed="true"]){background:var(--bg-secondary)}
+.segmented button:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
+/* the pressed side is filled, so which mode is live reads without hunting */
+.segmented button[aria-pressed="true"]{background:var(--interactive);color:var(--brand-deep)}
 
 /* ------------------------------------------------------------- form card */
 .card{padding:20px;border-radius:var(--radius);background:var(--bg-primary);
@@ -217,12 +222,12 @@ input,select,textarea{font:inherit}
   padding:8px 16px;border:1px solid var(--brand-soft);border-radius:var(--radius);
   background:var(--surface);filter:var(--field-shadow);text-align:left;
 }
-.control:focus-within{border-color:var(--brand-deep)}
+.control:focus-within{border-color:var(--brand-deep);box-shadow:0 0 0 2px var(--brand-soft)}
 .control > .t-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .control__input,.control__select{flex:1;min-width:0;appearance:none;border:none;background:none;outline:none;padding:0;color:var(--text-muted);text-overflow:ellipsis}
 /* the select spans the whole box and paints its own chevron, so a click on the
    chevron opens the list instead of landing on a decorative sibling */
-.control__select,.cell__select{
+.control__select{
   cursor:pointer;padding-right:18px;
   background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
 }
@@ -299,7 +304,14 @@ input[readonly]{cursor:default}
 .col-qty   {width:115px}
 .col-num   {width:167px}
 .col-tax   {width:167px}
-.col-item  {width:262px}
+/* The item name is the line's identifier, and it was the one column too narrow
+   to hold it: real names ("Cable Management Tray, Powder Coated 1200mm") ran
+   109px past the field and ellipsed, which turns the identifier into a guess.
+   Widened to fit the names actually in the book, with the row of meta beneath
+   it — goods/service, HSN, match mark — getting the slack as air rather than
+   sitting at 221px of its 241. The table already scrolls horizontally, so the
+   cost is scroll distance, not a squeezed neighbour. */
+.col-item  {width:340px}
 .col-godown{width:220px}
 .col-med   {width:223px}
 .col-desc  {width:230px}
@@ -309,18 +321,23 @@ input[readonly]{cursor:default}
   display:flex;align-items:center;gap:8px;width:100%;height:34px;padding:6px 15px;
   border:1px solid var(--brand-soft);border-radius:var(--radius);background:var(--surface);text-align:left;
 }
-.cell:focus-within{border-color:var(--brand-deep)}
+.cell:focus-within{border-color:var(--brand-deep);box-shadow:0 0 0 2px var(--brand-soft)}
 .cell > .t-cell{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cell__input,.cell__select{flex:1;min-width:0;appearance:none;border:none;background:none;outline:none;padding:0;color:var(--text-muted);text-overflow:ellipsis}
+/* comes after the reset above so the chevron survives it — same as .control__select */
+.cell__select{
+  cursor:pointer;padding-right:18px;
+  background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
+}
 .cell__input::placeholder{color:var(--text-muted);opacity:1}
 .cell.is-disabled{opacity:.55;pointer-events:none}
 .cell-num,.cell-num .cell__input{text-align:right}
-.cell-center .cell__input{text-align:center}
 .tcell.is-invalid .cell{border-color:var(--danger)}
 
 /* goods/service toggle, HSN and the match mark share one line under the item
-   picker — three fixed-minimum pieces in a 242px column, so every px of
-   padding and gap here is budgeted against that width, not just chosen to taste. */
+   picker — three fixed-minimum pieces on one row, sized so all three still fit
+   at the narrowest the column has ever been (242px of content), which is why
+   the padding and gap here are budgeted rather than chosen to taste. */
 .itemmeta{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
 .kindtoggle{
   flex:none;padding:4px 8px;border:none;border-radius:var(--radius);
@@ -369,12 +386,12 @@ input[readonly]{cursor:default}
   padding:4px 10px;border-radius:var(--radius);border:none;
   background:#f1f2f6;color:var(--text);font-size:11px;font-weight:600;line-height:16px;
 }
-.chip--no{background:#ffeaea;color:#8c1111}
+.chip--no{background:#faf1ef;color:#95493f}
 
 /* split field — value + unit/type affordance */
 .split{display:flex;align-items:center;height:34px;width:100%}
 .split__value{flex:1;min-width:0;height:34px;padding:5px 10px;text-align:right;border:1px solid var(--brand-soft);border-right:none;border-radius:var(--radius) 0 0 var(--radius);background:var(--surface);outline:none;color:var(--text-muted)}
-.split__value:focus{border-color:var(--brand-deep)}
+.split__value:focus{border-color:var(--brand-deep);box-shadow:0 0 0 2px var(--brand-soft)}
 .split__addon{display:flex;align-items:center;justify-content:center;gap:3px;height:34px;min-width:28px;padding:0 6px;background:var(--surface);font-size:11px;color:var(--text-muted);border:1px solid var(--brand-soft);border-radius:0 var(--radius) var(--radius) 0}
 .split__addon--btn:hover{background:var(--bg-secondary)}
 
@@ -472,21 +489,62 @@ input[readonly]{cursor:default}
    Grand Total. Every row of every section shares one grid, so the money
    column reads as a single column from the first figure to the last,
    whatever sits in the label column. */
+/* Padding measured off what you actually see, which is not the content box.
+   On the left that is the ledger field's box, which bleeds --bleed out past
+   its cell, so the left padding carries that bleed on top of --sp-4 and the
+   box lands --sp-4 from the panel. On the right it is the delete cross, which
+   is always on screen and is the last thing in the row: the right padding is
+   the cross's own box, the gap that keeps it off the amount box, and the same
+   --sp-4 the ledger box gets on the left. So the two outermost drawn things —
+   ledger box and cross — sit --sp-4 from their edges, and the sheet reads
+   square even though the two padding values differ. */
 .breakdown{
   display:flex;flex-direction:column;
-  padding:28px 28px 24px;border-radius:var(--radius);background:var(--bg-primary);
+  padding:var(--sp-4)
+          calc(var(--sp-4) + var(--sp-2) + var(--del))
+          var(--sp-4)
+          calc(var(--sp-4) + var(--bleed));
+  border-radius:var(--radius);background:var(--bg-primary);
+
+  /* Every gap inside the sheet comes off this 8px scale, so the vertical
+     rhythm is a scale rather than a pile of per-element margins:
+       sp-1  a thing and its own footnote (a line and its ITC call)
+       sp-2  reserved for tighter pairs
+       sp-3  one line to the next, and a heading to the lines it names
+       sp-4  one family of lines to the next, across a rule
+     --bleed is the other half of it: the hover/focus box on an editable cell
+     bleeds this far past the cell on both sides, and it is also what reads as
+     that field's inner padding. Anything that has to line up with the *box*
+     rather than the cell (the ITC chip, the money column's right edge) is
+     offset by it, so it is named once here instead of typed in as 12.
+     --del is the delete cross's box. It lives in the right padding rather than
+     in a column, so that padding is measured out of it. */
+  --sp-1:8px; --sp-2:12px; --sp-3:16px; --sp-4:24px;
+  --bleed:12px; --del:16px;
 }
-/* The gap has to clear the hover/focus chrome, which bleeds 6px past each
-   cell on both sides — at 12px two neighbouring surfaces overlapped. */
-.bd-row,.bd-line,.bd-grand,.bd-sec__head{
-  display:grid;grid-template-columns:minmax(0,1fr) 80px 168px 24px;gap:20px;align-items:center;
+/* The gap has to clear the hover/focus chrome, which bleeds --bleed past each
+   cell on both sides — below 28px neighbouring surfaces start crowding.
+   Every row in the sheet is this one grid: label, rate, money. That includes
+   the section headings and the adjustment rows, so a heading's total and a
+   typed figure land in the same column as everything else.
+
+   Three columns, not four. The delete cross used to hold a fourth, and a
+   column plus its gap is 52px the money column never got back — which is why
+   every figure in the sheet stopped 80px short of the panel's right edge while
+   the labels started 24px from its left. It is a hover affordance, not
+   content, so it is out of flow now and sits in the panel's own right padding
+   (see .bd-del), and the money column runs to the edge of the content box. */
+.bd-row,.bd-line__row,.bd-grand,.bd-sec__head,.bd-line[data-adj]{
+  display:grid;grid-template-columns:minmax(0,1fr) 80px 168px;column-gap:28px;align-items:center;
 }
-.bd-row{padding:2px 0 16px;font-size:14px;color:var(--text-muted)}
+.bd-line__row,.bd-line[data-adj]{position:relative}
+.bd-row{padding:0 0 var(--sp-3);font-size:14px;color:var(--text-muted)}
 .bd-row > :nth-child(3){
   text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
   color:var(--text);font-weight:600;
 }
-.bd-line{padding:4px 0}
+.bd-line{display:flex;flex-direction:column;padding:0;margin-top:var(--sp-3)}
+.bd-line__row > .cell:first-child,.bd-line > .cell:first-child{max-width:440px}
 
 /* --- a section --------------------------------------------------------
    A hairline and a heading are all the separation a family of lines needs,
@@ -495,13 +553,20 @@ input[readonly]{cursor:default}
    with the lines it names rather than floating between two families. The
    subtotal sits in the money column, so the sections can be added up
    without the eye ever leaving that column. */
-.bd-sec{display:flex;flex-direction:column;margin-top:20px;border-top:1px solid var(--hairline)}
-.bd-sec__head{padding:18px 0 10px}
-.bd-sec__head > :first-child{grid-column:1 / 3;display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-width:0}
-.bd-sec__ttl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.bd-sec{display:flex;flex-direction:column;margin-top:var(--sp-4);border-top:1px solid var(--hairline)}
+/* The heading sits on one baseline, not one centre line: the section name,
+   the reverse-charge switch and the total are three different type sizes and
+   weights, so centring them leaves three different letter positions on what
+   should read as a single line. Baseline puts the letters on the line and
+   lets the boxes fall where they will. */
+.bd-sec__head{padding:var(--sp-3) 0 0;align-items:baseline}
+.bd-sec__head > :first-child{grid-column:1 / 3;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;min-width:0}
+.bd-sec__ttl{font-size:14px;font-weight:400;color:var(--text-muted)}
+/* one size with the section name it sits opposite, and with the Sub Total
+   above it — the weight is what separates a total from a label, not the size */
 .bd-sec__amt{
   grid-column:3;text-align:right;white-space:nowrap;
-  font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;
+  font-size:14px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;
 }
 /* nothing there, or there but deliberately outside the Grand Total */
 .bd-sec__amt.is-zero,.bd-sec__amt.is-excluded{font-weight:400;color:var(--text-muted)}
@@ -515,10 +580,10 @@ input[readonly]{cursor:default}
   text-transform:none;letter-spacing:0;transition:background .12s ease;
 }
 .bd-rc:hover{background:var(--bg-secondary)}
-.bd-rc__label{font-size:11px;font-weight:600;color:var(--text-muted)}
+.bd-rc__label{font-size:14px;font-weight:600;color:var(--text)}
 .bd-rc select{
   appearance:none;border:none;background:none;outline:none;padding:0 15px 0 0;cursor:pointer;
-  font-family:var(--font);font-weight:600;color:var(--text);font-size:11px;line-height:18px;
+  font-family:var(--font);font-weight:400;color:var(--text-muted);font-size:14px;line-height:20px;
   field-sizing:content;               /* so the chevron hugs the chosen value */
   background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
 }
@@ -530,49 +595,97 @@ input[readonly]{cursor:default}
    hairline — otherwise it reads as the first thing in the section below. */
 .bd-add{
   display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
-  background:none;border:none;padding:14px 0 4px;
+  background:none;border:none;padding:var(--sp-3) 0 0;
   color:var(--brand-deep);font-size:12px;font-weight:600;line-height:16px;
 }
 .bd-add .ico{opacity:.8}
 .bd-add:hover{text-decoration:underline}
 .bd-add:focus-visible{outline:2px solid var(--brand-soft);outline-offset:3px;border-radius:3px}
 
-/* The ledger picker and its ITC toggle share one line, so every tax row is
-   the same height as Sub Total and the money column reads as a column. */
-.bd-line__lead{display:flex;align-items:center;gap:16px;min-width:0;max-width:440px}
-.bd-line__lead > .cell{flex:1 1 auto;min-width:0}
-.bd-line__lead .chip{flex:none}
-/* Where a row carries an annotation, cap the picker so the chip reads as a
-   note on that ledger rather than drifting to the far edge of the column.
-   Rows without one keep the full width, so no ledger name is ever clipped. */
-.bd-line__lead:has(.chip) > .cell{flex:0 1 206px}
-.bd-line > .cell:first-child{max-width:440px}
+/* The ITC call sits on its own row under the ledger/rate/amount line — a note
+   on that ledger, not a fourth thing competing with it for space in the same
+   row. Once the credit is blocked, the ledger it posts to reads as part of
+   that same statement (one chip, one pencil, one click into the popover that
+   already asks both questions) rather than a second pill stranded across an
+   otherwise-empty row — a decision needs one edit affordance, not two. */
+/* The chip is a footnote on the ledger above it, so it starts on that
+   field's own left edge — the edge of the box you can see, not the edge of
+   the text inside it, hence the pull of --bleed.
 
-/* Removing a line is destructive and rarely wanted, so it stays out of the
-   composition until the row is aimed at — but never out of reach of the
-   keyboard, which brings it back with its focus ring. */
-.bd-del{
-  background:none;border:none;padding:0;color:var(--text-muted);opacity:0;
-  font-size:16px;line-height:1;justify-self:center;transition:color .12s ease,opacity .12s ease;
+   It runs the full width of the row rather than of the ledger column. Nothing
+   else occupies this line — the rate, the amount and the delete cross all
+   belong to the row above — and the blocked chip carries a ledger name of
+   unknown length, so confining it to the ledger column only meant eliding a
+   name into "· p…" with 300px of empty row beside it. It still sizes to its
+   own text; the span is headroom, not width. At the narrowest pane the
+   longest ledger in the book needs the last column too. */
+.bd-line__meta{
+  grid-column:1 / -1;margin-top:var(--sp-1);
+  margin-inline:calc(var(--bleed) * -1);
 }
-.bd-line:hover .bd-del{opacity:.5}
+.bd-line__meta .chip{flex:none}
+/* The chip is one line. It reads as a sentence — this credit is blocked, and
+   here is where it goes — and a sentence that breaks across two lines inside
+   a tinted box stops looking like a footnote on the row above and starts
+   looking like a second block of content. So when the two clauses cannot both
+   fit, the ledger name is what gives: the eligibility call is the decision and
+   is never abbreviated, while the ledger is a name the popover and the tooltip
+   both carry in full. */
+.chip__label{white-space:nowrap;flex:none}
+.chip__sep{margin:0 1px;opacity:.5}
+.chip__posts{
+  font-weight:400;opacity:.8;white-space:nowrap;
+  flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Removing a line is destructive and rarely wanted, so the cross is quiet —
+   but it is on screen at rest, not summoned by hover. A control you cannot see
+   until you happen to be over the row is a control that does not exist for
+   anyone reading the sheet rather than pointing at it, and it leaves a hole in
+   the composition where a column of crosses should be. So it sits at a low
+   contrast that lifts as the row is aimed at and turns to danger under the
+   pointer, rather than appearing from nothing.
+
+   Out of the grid entirely: it rides in the panel's right padding, so it costs
+   the money column nothing, with --sp-2 clear of the amount box and --sp-4
+   clear of the panel edge — the same --sp-4 the ledger box gets on the left.
+   Its height is the field's, not the row's: a row carrying an ITC tag is 72px
+   tall, and centring on that would float the cross into the gap between the
+   ledger and its tag rather than sitting on the line it deletes. */
+.bd-del{
+  position:absolute;top:0;width:var(--del);height:32px;
+  right:calc((var(--sp-2) + var(--del)) * -1);
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:none;padding:0;color:var(--text-muted);opacity:.55;
+  font-size:16px;line-height:1;transition:color .12s ease,opacity .12s ease;
+}
+.bd-line:hover .bd-del{opacity:.85}
 .bd-del:hover{color:var(--danger);opacity:1}
 .bd-del:focus-visible{opacity:1;outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:3px}
 
 /* Inside the breakdown the fields carry no horizontal padding, so every label
    starts on the same left edge as "Sub Total" and every figure ends on the
    same right edge as the Grand Total. The box bleeds outward from a
-   pseudo-element so showing it never shifts a number. Only cells that hold an
-   actual input/select get the box — a static value (like a tax rate) never
-   borrows the affordance of an editable one. The border is visible at rest,
-   not just on hover: hover-only affordances are unreadable to anyone who
-   can't hover (touch, keyboard, screen readers). */
+   pseudo-element so showing it never shifts a number — the bleed is also
+   what reads as the field's inner padding, so it's sized to match the 12px
+   the rest of the app gives an input, not squeezed down to clear the hover
+   chrome. Only cells that hold an actual input/select get the box — a static
+   value (like a tax rate) never borrows the affordance of an editable one.
+   The border is visible at rest, not just on hover: hover-only affordances
+   are unreadable to anyone who can't hover (touch, keyboard, screen
+   readers). */
+/* No border on the cell itself, not even a transparent one. The box you see
+   is the ::before, and a 1px transparent border here would inset the cell's
+   content box inside it — putting every typed figure 1px left of the totals
+   it lines up with, and the box's own drawn edge 1px left of them too. The
+   invalid state therefore colours the ::before, which is the border that is
+   actually on screen. */
 .breakdown .cell{
   position:relative;height:32px;padding:6px 0;
-  border-color:transparent;background:transparent;
+  border:0;background:transparent;
 }
 .breakdown .cell::before{
-  content:"";position:absolute;inset:0 -6px;border-radius:var(--radius);
+  content:"";position:absolute;inset:0 calc(var(--bleed) * -1);border-radius:var(--radius);
   transition:background .12s ease,box-shadow .12s ease,border-color .12s ease;pointer-events:none;
 }
 .breakdown .cell:has(.cell__input,.cell__select)::before{
@@ -582,44 +695,81 @@ input[readonly]{cursor:default}
 .breakdown .cell:has(.cell__input,.cell__select):focus-within::before{
   background:var(--surface);box-shadow:inset 0 0 0 1px var(--brand-deep);border-color:var(--brand-deep);
 }
+/* the breakdown ring lives on the cell's own ::before (bleeding -6px so
+   showing it never shifts a number) — the generic outer halo would stack a
+   second, mismatched ring on top, so it is suppressed here */
+.breakdown .cell:focus-within{box-shadow:none}
 .breakdown .cell > *{position:relative}
 .breakdown .cell__input,.breakdown .cell__select{color:var(--text)}
-.breakdown .cell.is-invalid{border-color:var(--danger);border-style:solid}
-/* a select carries a 1px inner inset Chrome will not give up through padding;
-   pulling it back puts every ledger name on the same left edge as "Sub Total" */
-.breakdown .cell__select{margin-inline-start:-1px}
+.breakdown .cell.is-invalid::before{border-color:var(--danger)}
 
 /* The money column is sized by the Grand Total, not by the figures typed into
    it. So the editable box is narrower than the column it sits in and hangs on
-   its right edge: every figure still ends on the same line, but the box keeps
-   clear of the rate beside it instead of running up against it. */
+   its right edge, keeping clear of the rate beside it.
+
+   One right margin for the whole column, --bleed in from the column edge, and
+   it is the figures that sit on it: the digits typed into an amount box end on
+   the same line as the last digit of the Sub Total, the section totals and the
+   Grand Total. What you read down the column is one edge.
+
+   The box's border is the one thing outside that line, by exactly the --bleed
+   it takes as inner padding — a bordered field cannot put both its border and
+   its text where a bare figure sits, and of the two it is the text that has to
+   be right. So the box keeps its padding, its border lands on the column edge
+   --bleed beyond the margin, and it gives up its right-hand bleed so that is
+   all the overhang there is: the padding, drawn. The bleed it would have spent
+   on the right goes to the left, where there is nothing to line up against. */
 .breakdown .cell-num:not(.cell-pct){max-width:124px;margin-left:auto}
+.breakdown .cell-num:not(.cell-pct)::before{inset:0 0 0 calc(var(--bleed) * -2)}
+.breakdown .cell-num:not(.cell-pct) .cell__input{padding-right:var(--bleed)}
+.bd-sec__amt,.bd-row > :nth-child(3),.bd-grand > :nth-child(3){padding-right:var(--bleed)}
 
 /* A rate is one token — the figure and its unit — not two columns with a gap
-   between them, so the input sizes to its own digits and the sign follows it. */
-.breakdown .cell-pct{justify-content:flex-end;gap:1px}
-.breakdown .cell-pct .cell__input{flex:0 1 auto;width:auto;min-width:14px;max-width:52px;field-sizing:content}
+   between them, so the sign stays welded to the figure. The token is centred
+   in a fixed column of its own: right-aligning it pushed it up against the
+   money box and left the label side of the row gap-toothed.
+
+   Centring the token alone would still stagger the column, because 0.1% is
+   wider than 9% and each row would centre its own width. So the figure gets a
+   fixed box and is set right within it, wide enough for the longest rate in
+   the book (0.25%), with tabular figures so digits of different value are
+   still the same width. The token is therefore the same width on every row,
+   the sign lands on one vertical, and the figures grow leftward off the
+   decimal:  9% / 2% / 0.1% read down as a column, not a zigzag. */
+.breakdown .cell-pct{justify-content:center;align-items:center;gap:1px;height:32px;padding:0}
+.breakdown .cell-pct .pct__val{
+  flex:none;width:4ch;text-align:right;font-variant-numeric:tabular-nums;
+}
+.breakdown .cell-pct .cell__input{flex:0 1 auto;width:4ch;min-width:0;max-width:none;text-align:right;font-variant-numeric:tabular-nums}
 .breakdown .cell-pct .pct{flex:none;color:var(--text-muted)}
 
 /* The ITC call is an edit, not a caption — so it carries a surface you can
    aim at, and turns red only when the credit is actually being given up. Its
    pencil stays quiet until you reach the chip: at rest the row should read as
-   a statement of the ledger, not as a row of pending edits. */
-/* it stands beside the ledger's own hover surface, so it is the same height —
-   two tinted boxes of different sizes side by side read as a misalignment */
-.bd-line__lead .chip{
-  height:32px;padding:0 11px;
+   a statement of the ledger, not as a row of pending edits — so the eligible
+   state stays content-width, small and quiet. Blocked is the same shape, just
+   longer: it always carries the "posts to X" clause. Both are content-width
+   (max-content rather than shrink-to-fit — that is where engines disagree,
+   and it was drifting the two boxes apart) and both are the same 32px as the
+   field above them. One line, always: the ledger name only ellipses once the
+   chip has already taken the full width of the row. */
+/* one height for both states, set rather than derived — the tag is a fixed
+   object in the row's rhythm, and how long its label happens to be is not
+   allowed to change it */
+.bd-line__meta .chip{
+  height:32px;padding:0 var(--bleed);
   background:var(--bg-secondary);color:var(--text-muted);font-weight:600;
   border:1px solid transparent;
   transition:background .12s ease,border-color .12s ease,color .12s ease;
 }
-.bd-line__lead .chip .ico{color:var(--text-muted);opacity:.55;transition:color .12s ease,opacity .12s ease}
-.bd-line__lead .chip:hover{border-color:var(--brand-soft);color:var(--text)}
-.bd-line__lead .chip:hover .ico{color:var(--brand-deep);opacity:1}
-.bd-line__lead .chip:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
-.bd-line__lead .chip--no{background:#fdeeee;color:#8c1111}
-.bd-line__lead .chip--no:hover{border-color:#f0b8b8;color:#8c1111}
-.bd-line__lead .chip--no:hover .ico{color:#8c1111}
+.bd-line__meta .chip .ico{color:var(--text-muted);opacity:.55;transition:color .12s ease,opacity .12s ease}
+.bd-line__meta .chip:hover{border-color:var(--brand-soft);color:var(--text)}
+.bd-line__meta .chip:hover .ico{color:var(--brand-deep);opacity:1}
+.bd-line__meta .chip:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
+.bd-line__meta .chip--no{flex-wrap:nowrap;width:max-content;max-width:100%;background:#faf1ef;color:#95493f}
+.bd-line__meta .chip .ico{flex:none}
+.bd-line__meta .chip--no:hover{border-color:#e2c6bf;color:#95493f}
+.bd-line__meta .chip--no:hover .ico{color:#95493f}
 
 /* The liability itself is not restated in the sheet — it is the GST total,
    which greys out because it leaves the Grand Total. All that sits beside the
@@ -633,13 +783,13 @@ input[readonly]{cursor:default}
 
 /* the sheet is closed with a full rule rather than a section hairline */
 .bd-grand{
-  align-items:baseline;margin-top:24px;padding-top:22px;border-top:1px solid var(--stroke);
+  align-items:baseline;margin-top:var(--sp-4);padding-top:var(--sp-4);border-top:1px solid var(--stroke);
   font-size:20px;line-height:26px;font-weight:600;
 }
 .bd-grand > :first-child{color:var(--text-muted)}
 .bd-grand > :nth-child(3){text-align:right;color:var(--brand-deep);font-variant-numeric:tabular-nums}
-.bd-note{font-size:11px;line-height:15px;color:var(--warning);padding-top:8px}
-.bd-empty{font-size:12px;color:var(--text-muted);padding:8px 0 4px}
+.bd-note{font-size:11px;line-height:15px;color:var(--warning);padding-top:var(--sp-1)}
+.bd-empty{font-size:12px;color:var(--text-muted);padding:var(--sp-3) 0 0}
 
 /* ---------------------------------------------------------------- dialog */
 dialog{border:none;border-radius:10px;padding:0;max-width:min(680px,92vw);width:100%;box-shadow:0 20px 60px rgba(20,20,40,.28)}
@@ -783,8 +933,8 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 /* ----------------------------------------------------------------- toast */
 .toasts{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:8px}
 .toast{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--text);color:#fff;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:rise .2s ease}
-.toast--err{background:#8c1111}
-.toast--ok{background:#0f6b43}
+.toast--err{background:var(--danger)}
+.toast--ok{background:var(--success)}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}}
 
 /* ------------------------------------------------------------ responsive
@@ -810,8 +960,12 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 @container form (max-width:600px){
   .card{grid-template-columns:minmax(0,1fr);gap:20px}
   .picker-row{gap:8px}
-  .breakdown{padding:16px}
-  .bd-row,.bd-line,.bd-grand,.bd-sec__head{grid-template-columns:minmax(0,1fr) 62px 116px 22px;gap:8px}
+  .breakdown{
+    --bleed:6px;
+    padding:var(--sp-3) calc(var(--sp-3) + var(--sp-1) + var(--del)) var(--sp-3) calc(var(--sp-3) + var(--bleed));
+  }
+  .bd-row,.bd-line__row,.bd-grand,.bd-sec__head,.bd-line[data-adj]{grid-template-columns:minmax(0,1fr) 62px 116px;column-gap:16px}
+  .bd-del{right:calc((var(--sp-1) + var(--del)) * -1)}
   .bd-grand{font-size:18px}
 }
 /* The card follows the form column, not the viewport — the splitter can make
@@ -998,7 +1152,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   <section class="form">
 
     <div class="banner banner--warn form__narrow" id="dupe-banner" hidden>
-      <span class="ico ico-13" style="color:#a86400"><svg width="15.27" height="15.27"><use href="#i-info"/></svg></span>
+      <span class="ico ico-13" style="color:var(--warning)"><svg width="15.27" height="15.27"><use href="#i-info"/></svg></span>
       <div class="banner__body">
         <p class="banner__title">Possible duplicate</p>
         <p id="dupe-text"></p>
@@ -1179,16 +1333,18 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
       </button>
     </section>
 
-    <!-- Narration -->
+    <!-- Breakdown: sub total, the GST and TDS ledgers, adjustments, total -->
+    <section class="breakdown" id="breakdown"></section>
+
+    <!-- Narration closes the bill: it is a note about what has been entered
+         above, so it reads after the figures rather than interrupting them
+         on the way to the Grand Total. -->
     <section class="block">
       <h2 class="t-section">Narration</h2>
       <div class="narration">
         <textarea data-bind="narration" placeholder="Enter Narration"></textarea>
       </div>
     </section>
-
-    <!-- Breakdown: sub total, the GST and TDS ledgers, adjustments, total -->
-    <section class="breakdown" id="breakdown"></section>
 
   </section>
 </main>
@@ -2551,7 +2707,7 @@ function renderItems(){
         <span class="split__addon">${esc(master?master.unit:'—')}</span></div>
       </div>
       <div class="tcell col-num">
-        <label class="cell cell-center"><input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate||0}"></label>
+        <label class="cell cell-num"><input class="cell__input t-cell" data-f="rate" inputmode="decimal" value="${row.rate||0}"></label>
       </div>
       <div class="tcell col-num">
         <div class="split"><input class="split__value t-cell" data-f="discount" inputmode="decimal" value="${row.discount||0}">
@@ -2860,28 +3016,38 @@ function renderBreakdown(calc){
     `<span class="bd-sec__amt${n?'':' is-zero'}${excluded?' is-excluded':''}" id="${id}">${sectionAmt(n,deducts)}</span>`;
 
   /* one ledger line: pick the ledger, edit the amount — the rate is set by
-     the ledger/section chosen and is shown, not edited */
+     the ledger/section chosen and is shown, not edited. GST lines carry a
+     second row underneath for the ITC call. Once that call has actually
+     blocked the credit, the ledger it posts to reads as part of the same
+     chip rather than a second one — it is one decision (the popover this
+     opens already asks both halves of it), so it gets one surface and one
+     pencil, not two pills stranded across an otherwise-empty row. */
   const taxLine = row=>{
     const tds = row.type==='tds';
+    const blocked = !tds && itcBlocked(row);
     const tip = tds ? ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"` : '';
-    const meta = tds ? '' :
-      `<button type="button" class="chip${itcBlocked(row)?' chip--no':''}" data-f="itc"
-               title="${itcBlocked(row)?'Posts to '+esc(itcLedgerName()):'Set input tax credit eligibility'}">
-         ${itcChip(row)} ${pencil}</button>`;
+    const meta = tds ? '' : `
+      <div class="bd-line__meta">
+        <button type="button" class="chip${blocked?' chip--no':''}" data-f="itc"
+                title="${blocked?esc((state.itcLedger?'Posts to '+itcLedgerName()+'. ':'')+'Edit ITC eligibility and the ledger it posts to'):'Set input tax credit eligibility'}">
+          <span class="chip__label">${itcChip(row)}</span>${blocked ? `<span class="chip__posts"><span class="chip__sep">·</span> posts to ${
+            state.itcLedger?esc(itcLedgerName()):'ledger not chosen'}</span>` : ''} ${pencil}
+        </button>
+      </div>`;
     return `<div class="bd-line" data-kind="taxLines" data-id="${row.id}">
-      <div class="bd-line__lead">
+      <div class="bd-line__row">
         <label class="cell"${tip}>${taxLedgerSelect(row)}</label>
+        <span class="cell cell-num cell-pct t-cell"><span class="pct__val">${row.rate}</span><span class="pct">%</span></span>
+        <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
+        <button type="button" class="bd-del" data-act="del-line" aria-label="Remove ${esc(row.name)}">&times;</button>
         ${meta}
       </div>
-      <span class="cell cell-num cell-pct t-cell">${row.rate}<span class="pct">%</span></span>
-      <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
-      <button type="button" class="bd-del" data-act="del-line" aria-label="Remove ${esc(row.name)}">&times;</button>
     </div>`;
   };
 
   const gst = gstLines(), tds = tdsLines();
 
-  let html = `<div class="bd-row"><span>Sub Total</span><span></span><span id="bd-sub">${money(calc.subTotal)}</span><span></span></div>`;
+  let html = `<div class="bd-row"><span>Sub Total</span><span></span><span id="bd-sub">${money(calc.subTotal)}</span></div>`;
 
   /* GST — reverse charge is a GST-only mechanism, so its switch sits on this
      heading rather than above the whole breakdown. Saying it is applicable is
@@ -2940,7 +3106,7 @@ function renderBreakdown(calc){
       <button type="button" class="bd-add" data-act="add-adj">${plusIco}Add adjustment</button>
     </section>`;
 
-  html += `<div class="bd-grand"><span>Grand Total</span><span></span><span id="bd-grand">${money(calc.grand)}</span><span></span></div>`;
+  html += `<div class="bd-grand"><span>Grand Total</span><span></span><span id="bd-grand">${money(calc.grand)}</span></div>`;
 
   /* the write-off names its ledger once one is chosen, and asks for one until
      then — the only place in the sheet that decision is visible */
