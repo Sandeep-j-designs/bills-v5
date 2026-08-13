@@ -206,6 +206,16 @@ input,select,textarea{font:inherit}
 /* the pressed side is filled, so which mode is live reads without hunting */
 .segmented button[aria-pressed="true"]{background:var(--interactive);color:var(--brand-deep)}
 
+/* The mode switch and the field configuration open the same thing — what the
+   sheet below is made of — so they share its row. Held to the card's width
+   rather than the form's, because the card is what the configuration edits. */
+.modebar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.fcbtn{display:inline-flex;align-items:center;gap:8px;padding:6px 2px;
+  background:none;border:none;border-radius:var(--radius);
+  font-size:14px;line-height:22px;font-weight:600;color:var(--text-muted)}
+.fcbtn:hover{color:var(--brand-deep)}
+.fcbtn:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
+
 /* ------------------------------------------------------------- form card */
 .card{padding:20px;border-radius:var(--radius);background:var(--bg-primary);
       display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 30px}
@@ -921,6 +931,183 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 .ccx__warn{margin-right:auto;max-width:46ch;font-size:11px;line-height:16px;font-weight:600;color:var(--danger)}
 .ccx__warn[hidden]{display:none}
 
+/* --- field configuration -----------------------------------------------
+   Which optional groups the voucher carries. This is a setting, not bill
+   data: it decides what the sheet is made of, and the answer outlives the
+   bill being entered. Groups on the left because there are four of them and
+   only one is ever being read — a single scroll of thirty switches would
+   make the reader do the grouping the nav does for free. */
+#fc-dialog{max-width:min(880px,94vw);border:1px solid var(--stroke);border-radius:var(--radius);
+  box-shadow:0 4px 12px rgba(0,0,0,.09)}
+.fcd{display:flex;flex-direction:column;max-height:86vh}
+.fcd__head{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;
+  padding:24px 28px 20px;border-bottom:1px solid var(--stroke);
+}
+.fcd__ttl{font-size:20px;line-height:28px;font-weight:600;color:var(--text)}
+.fcd__sub{grid-column:1;font-size:12px;line-height:18px;color:var(--text-muted)}
+.fcd__head .pickdlg__x{grid-column:2;grid-row:1/span 2;align-self:start}
+.fcd__body{display:grid;grid-template-columns:216px minmax(0,1fr);min-height:0}
+.fcd__nav{display:flex;flex-direction:column;gap:4px;padding:20px 16px;border-right:1px solid var(--stroke)}
+.fcd__nav button{
+  padding:10px 14px;border:none;border-radius:var(--radius);background:none;text-align:left;
+  font-size:14px;line-height:20px;font-weight:600;color:var(--text-muted);
+  transition:background .12s ease,color .12s ease;
+}
+.fcd__nav button:hover{background:var(--bg-primary)}
+.fcd__nav button[aria-selected="true"]{background:var(--interactive);color:var(--brand-deep)}
+.fcd__nav button:focus-visible{outline:2px solid var(--brand-soft);outline-offset:-2px}
+/* the count earns its place: it is what the nav cannot say with a label alone */
+.fcd__n{float:right;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;opacity:.7}
+.fcd__panel{padding:16px 24px 20px;overflow:auto;min-height:340px}
+
+.fcrow{display:flex;align-items:center;gap:16px;padding:13px 16px}
+.fcrow__lbl{flex:1;min-width:0;font-size:14px;line-height:20px;color:var(--text)}
+/* a field that is only mandatory in the company of another says so here,
+   where the field is being chosen, rather than at the moment it is refused */
+.fcrow__note{display:block;margin-top:3px;font-size:12px;line-height:17px;color:var(--text-muted)}
+.fcrow + .fcrow{border-top:1px solid var(--hairline)}
+/* the group's own switch governs the rows beneath it, so it is given the
+   tinted band rather than another line in the list */
+.fcrow--master{background:var(--interactive);border-radius:var(--radius);margin-bottom:4px}
+.fcrow--master .fcrow__lbl{font-weight:700}
+/* the switch's off track is the same tint as the band it sits on, which would
+   leave a group switched off reading as a stray knob — darken it back to a track */
+.fcrow--master .switch:not([aria-checked="true"]){background:var(--brand-soft)}
+.fcrow--master + .fcrow{border-top:none}
+/* a group switched off keeps its answers visible but stops taking new ones —
+   turning the group back on has to bring back what was set, not a blank slate */
+.fcrow.is-off{opacity:.4}
+.fcrow.is-off .switch{pointer-events:none}
+.fcd__foot{
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+  padding:16px 28px 20px;border-top:1px solid var(--stroke);
+}
+.fcd__reset{
+  margin-right:auto;padding:0;background:none;border:none;
+  font-size:14px;line-height:20px;font-weight:600;color:var(--danger);
+}
+.fcd__reset:hover{text-decoration:underline}
+/* --- additional details -------------------------------------------------
+   The groups are optional, and most bills that have them switched on still
+   leave them empty. Thirty fields laid into the sheet for a value that is
+   usually blank pushes the eight that decide the posting off the screen —
+   so the sheet keeps one line saying the groups are there, and the entering
+   happens in a dialog that is only open while it is being used. */
+.addl{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 20px;border:1px solid var(--brand-soft);border-radius:var(--radius);
+  background:var(--surface);
+}
+.addl[hidden]{display:none}
+.addl__ttl{font-size:14px;line-height:20px;font-weight:700;color:var(--text-muted)}
+.addl__sub{margin-top:2px;font-size:12px;line-height:17px;color:var(--text-muted)}
+.addl__btn{
+  display:inline-flex;align-items:center;gap:8px;flex:none;padding:6px 2px;
+  background:none;border:none;border-radius:var(--radius);
+  font-size:14px;line-height:20px;font-weight:600;color:var(--brand-deep);
+}
+.addl__btn:hover{text-decoration:underline}
+.addl__btn:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
+
+/* --- the additional fields dialog ---------------------------------------
+   Same two-column shape as Field Configuration, and deliberately so: the
+   left rail is the same list of groups, minus the ones switched off. What
+   changes is that these are the fields themselves rather than switches. */
+#af-dialog{max-width:min(920px,94vw);border:1px solid var(--stroke);border-radius:var(--radius);
+  box-shadow:0 4px 12px rgba(0,0,0,.09)}
+.afd{display:flex;flex-direction:column;max-height:88vh}
+.afd__head{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;
+  padding:24px 28px 20px;border-bottom:1px solid var(--stroke);
+}
+.afd__ttl{font-size:20px;line-height:28px;font-weight:600;color:var(--text)}
+.afd__sub{grid-column:1;font-size:12px;line-height:18px;color:var(--text-muted)}
+.afd__head .pickdlg__x{grid-column:2;grid-row:1/span 2;align-self:start}
+.afd__body{display:grid;grid-template-columns:216px minmax(0,1fr);min-height:0}
+.afd__nav{display:flex;flex-direction:column;gap:4px;padding:20px 16px;border-right:1px solid var(--stroke)}
+.afd__nav button{
+  padding:10px 14px;border:none;border-radius:var(--radius);background:none;text-align:left;
+  font-size:14px;line-height:20px;font-weight:600;color:var(--text-muted);
+  transition:background .12s ease,color .12s ease;
+}
+.afd__nav button:hover{background:var(--bg-primary)}
+.afd__nav button[aria-selected="true"]{background:var(--interactive);color:var(--brand-deep)}
+.afd__nav button:focus-visible{outline:2px solid var(--brand-soft);outline-offset:-2px}
+.afd__panel{padding:20px 24px 24px;overflow:auto;min-height:380px}
+
+/* what the bill already says, so the consignee is entered against it rather
+   than from memory — read-only by construction, hence chips and not fields */
+.fyb{border:1px solid var(--stroke);border-radius:var(--radius);background:var(--bg-primary);margin-bottom:22px}
+.fyb__head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px}
+.fyb__ttl{font-size:14px;line-height:20px;font-weight:600;color:var(--text)}
+.fyb__toggle{
+  display:inline-flex;align-items:center;gap:8px;padding:0;background:none;border:none;
+  font-size:14px;line-height:20px;font-weight:400;color:var(--text-muted);
+}
+.fyb__toggle:hover{color:var(--text)}
+.fyb__toggle:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:var(--radius)}
+/* the chevron points at what pressing it does: up to fold the card away,
+   down to bring it back */
+.fyb__toggle .ico{transition:transform .15s ease}
+.fyb__toggle[aria-expanded="true"] .ico{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){.fyb__toggle .ico{transition:none}}
+.fyb__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 16px 16px}
+.fyb__grid[hidden]{display:none}
+.fyb__chip{
+  display:flex;align-items:baseline;gap:6px;min-width:0;
+  padding:9px 14px;border:1px solid var(--interactive);border-radius:var(--radius);
+  background:var(--surface);font-size:12px;line-height:18px;color:var(--brand-deep);
+}
+.fyb__chip b{flex:1;min-width:0;font-weight:600;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fyb__chip b.is-missing{color:var(--danger)}
+
+.afg{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:16px}
+.afg__ttl{font-size:16px;line-height:22px;font-weight:600;color:var(--text)}
+.afg__switch{display:inline-flex;align-items:center;gap:12px;font-size:14px;color:var(--text-muted)}
+.afd__fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px;align-items:start}
+.afd__fields.is-off{opacity:.4;pointer-events:none}
+.afd__fields .field--wide{grid-column:1/-1}
+/* the sheet's fields space themselves out to keep their controls on one line
+   across a row; here a row can be uneven — only one of a pair carries a
+   "mandatory when…" note — so they stack from the top and the note hangs
+   below rather than pushing its neighbour's control down to meet it */
+.afd__fields .field{justify-content:flex-start;gap:6px}
+.afd__fields .field > .t-label{margin-bottom:2px}
+.afd__fields .control{height:44px}
+.afd__fields textarea{
+  width:100%;min-height:96px;resize:vertical;padding:10px 14px;
+  border:1px solid var(--brand-soft);border-radius:var(--radius);background:var(--surface);
+  font-size:14px;line-height:20px;color:var(--text-muted);outline:none;
+}
+.afd__fields textarea:focus{border-color:var(--brand-deep);box-shadow:0 0 0 2px var(--brand-soft)}
+.afd__fields textarea::placeholder{color:var(--text-muted);opacity:1}
+.field__note{font-size:11px;line-height:15px;color:var(--text-muted)}
+.field.is-invalid .field__note{display:none}    /* the error says the same thing, louder */
+.afd__foot{
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+  padding:16px 28px 20px;border-top:1px solid var(--stroke);
+}
+.afd__warn{margin-right:auto;max-width:52ch;font-size:11px;line-height:16px;font-weight:600;color:var(--danger)}
+.afd__warn[hidden]{display:none}
+
+/* the nav is a column these dialogs can no longer spare — the groups fall
+   back to running one after another down the panel */
+@media (max-width:620px){
+  .fcd__body,.afd__body{grid-template-columns:minmax(0,1fr)}
+  .fcd__nav,.afd__nav{flex-direction:row;flex-wrap:wrap;border-right:none;
+    border-bottom:1px solid var(--stroke);padding:12px 16px}
+  .fcd__nav button,.afd__nav button{padding:8px 12px;font-size:13px}
+  .fcd__n{display:none}
+  .fcd__panel,.afd__panel{min-height:0}
+  .fyb__grid{grid-template-columns:minmax(0,1fr)}
+  .afd__fields{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:820px){
+  .fyb__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 .jtable{width:100%;border-collapse:collapse;font-size:12px}
 .jtable th{text-align:left;padding:8px;background:var(--bg-secondary);color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
 .jtable td{padding:8px;border-bottom:1px solid var(--stroke);vertical-align:top}
@@ -1086,6 +1273,10 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   <symbol id="i-close" viewBox="0 0 24 24" fill="none">
     <path d="M18.5 6L6.5 18M6.5 6L18.5 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none">
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
 </defs></svg>
 
 <header class="topbar">
@@ -1159,9 +1350,15 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
       </div>
     </div>
 
-    <div class="segmented" role="group" aria-label="Entry mode">
-      <button type="button" data-mode="item" aria-pressed="true">Item Mode</button>
-      <button type="button" data-mode="accounting" aria-pressed="false">Accounting Mode</button>
+    <div class="modebar form__narrow">
+      <div class="segmented" role="group" aria-label="Entry mode">
+        <button type="button" data-mode="item" aria-pressed="true">Item Mode</button>
+        <button type="button" data-mode="accounting" aria-pressed="false">Accounting Mode</button>
+      </div>
+      <button type="button" class="fcbtn" id="btn-field-config">
+        <span class="ico ico-16"><svg width="16" height="16"><use href="#i-gear"/></svg></span>
+        Field Configuration
+      </button>
     </div>
 
     <!-- Voucher & vendor -->
@@ -1295,6 +1492,19 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         </label>
         <p class="field__error">Select the destination state</p>
       </div>
+    </section>
+
+    <!-- What Field Configuration has turned on, stated in one line. The
+         fields themselves are entered in the Additional Fields dialog. -->
+    <section class="addl form__narrow" id="addl" hidden>
+      <div>
+        <h2 class="addl__ttl">Additional Details</h2>
+        <p class="addl__sub" id="addl-sub"></p>
+      </div>
+      <button type="button" class="addl__btn" id="btn-add-details">
+        <span class="ico ico-12"><svg width="12" height="12"><use href="#i-plus"/></svg></span>
+        <span id="addl-btn-text">Add Details</span>
+      </button>
     </section>
 
     <!-- Item details -->
@@ -1471,6 +1681,54 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   </div>
 </dialog>
 
+<!-- Which optional groups the voucher carries. Everything in here is a
+     setting rather than an entry, so it commits on Save and nothing the
+     switches touch leaves the draft until then. -->
+<dialog id="fc-dialog" aria-labelledby="fc-title">
+  <div class="fcd">
+    <div class="fcd__head">
+      <h2 class="fcd__ttl" id="fc-title">Field Configuration</h2>
+      <p class="fcd__sub">Configure optional voucher fields.</p>
+      <button type="button" class="pickdlg__x" id="fc-x" aria-label="Close without saving">
+        <span class="ico ico-24"><svg width="24" height="24"><use href="#i-close"/></svg></span>
+      </button>
+    </div>
+    <div class="fcd__body">
+      <div class="fcd__nav" id="fc-nav" role="tablist" aria-orientation="vertical" aria-label="Field groups"></div>
+      <div class="fcd__panel" id="fc-panel" role="tabpanel" tabindex="0"></div>
+    </div>
+    <div class="fcd__foot">
+      <button type="button" class="fcd__reset" id="fc-reset">Reset to Default</button>
+      <button type="button" class="btn btn--outline" id="fc-cancel">Cancel</button>
+      <button type="button" class="btn btn--solid" id="fc-save" disabled>Save</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Entering the optional groups. Draft-based like everything else that has a
+     Save: the switch that disables a group lives here too, because deciding
+     you do not need a group is a thing you work out while filling it in. -->
+<dialog id="af-dialog" aria-labelledby="af-title">
+  <div class="afd">
+    <div class="afd__head">
+      <h2 class="afd__ttl" id="af-title">Additional Fields</h2>
+      <p class="afd__sub" id="af-sub"></p>
+      <button type="button" class="pickdlg__x" id="af-x" aria-label="Close without saving">
+        <span class="ico ico-24"><svg width="24" height="24"><use href="#i-close"/></svg></span>
+      </button>
+    </div>
+    <div class="afd__body">
+      <div class="afd__nav" id="af-nav" role="tablist" aria-orientation="vertical" aria-label="Field groups"></div>
+      <div class="afd__panel" id="af-panel" role="tabpanel" tabindex="0"></div>
+    </div>
+    <div class="afd__foot">
+      <p class="afd__warn" id="af-warn" hidden></p>
+      <button type="button" class="btn btn--outline" id="af-cancel">Cancel</button>
+      <button type="button" class="btn btn--solid" id="af-save">Save</button>
+    </div>
+  </div>
+</dialog>
+
 <div class="toasts" id="toasts"></div>
 
 <script>
@@ -1494,13 +1752,40 @@ const STATES = [
 const MASTERS = {
   states:STATES,
 
+  /* the two lookups the optional groups need and nothing else does — a
+     consignee can sit outside India, and an import states the port it
+     cleared through */
+  countries:[
+    {id:'IN',name:'India'},{id:'AE',name:'United Arab Emirates'},{id:'AU',name:'Australia'},
+    {id:'CN',name:'China'},{id:'DE',name:'Germany'},{id:'HK',name:'Hong Kong'},
+    {id:'JP',name:'Japan'},{id:'KR',name:'South Korea'},{id:'MY',name:'Malaysia'},
+    {id:'NL',name:'Netherlands'},{id:'SG',name:'Singapore'},{id:'GB',name:'United Kingdom'},
+    {id:'US',name:'United States'},{id:'VN',name:'Vietnam'}
+  ],
+
+  ports:[
+    {id:'INNSA1',name:'INNSA1 — Nhava Sheva (Sea)'},{id:'INMUN1',name:'INMUN1 — Mundra (Sea)'},
+    {id:'INMAA1',name:'INMAA1 — Chennai (Sea)'},    {id:'INCOK1',name:'INCOK1 — Cochin (Sea)'},
+    {id:'INBOM4',name:'INBOM4 — Mumbai (Air)'},     {id:'INDEL4',name:'INDEL4 — Delhi (Air)'},
+    {id:'INMAA4',name:'INMAA4 — Chennai (Air)'},    {id:'INBLR4',name:'INBLR4 — Bengaluru (Air)'},
+    {id:'INHYD4',name:'INHYD4 — Hyderabad (Air)'}
+  ],
+
+  /* address and pincode are here for the consignee picker: a ship-to on a
+     purchase is one of our own locations, so choosing it fills the rest */
   branches:[
-    {id:'br-ka',name:'Karbon Business — Karnataka (29)',   gstin:'29AAFCK1234M1Z5',state:'KA'},
-    {id:'br-mh',name:'Karbon Business — Maharashtra (27)', gstin:'27AAFCK1234M1Z1',state:'MH'},
-    {id:'br-tn',name:'Karbon Business — Tamil Nadu (33)',  gstin:'33AAFCK1234M1ZB',state:'TN'},
-    {id:'br-dl',name:'Karbon Business — Delhi (07)',       gstin:'07AAFCK1234M1ZH',state:'DL'},
-    {id:'br-gj',name:'Karbon Business — Gujarat (24)',     gstin:'24AAFCK1234M1ZO',state:'GJ'},
-    {id:'br-tg',name:'Karbon Business — Telangana (36)',   gstin:'36AAFCK1234M1Z4',state:'TG'}
+    {id:'br-ka',name:'Karbon Business — Karnataka (29)',   gstin:'29AAFCK1234M1Z5',state:'KA',
+     address:'Ground Floor, 27th Main, HSR Layout Sector 2, Bengaluru',pin:'560102'},
+    {id:'br-mh',name:'Karbon Business — Maharashtra (27)', gstin:'27AAFCK1234M1Z1',state:'MH',
+     address:'Unit 402, Trade Centre, Bandra Kurla Complex, Mumbai',pin:'400051'},
+    {id:'br-tn',name:'Karbon Business — Tamil Nadu (33)',  gstin:'33AAFCK1234M1ZB',state:'TN',
+     address:'2nd Floor, Rajiv Gandhi Salai, Perungudi, Chennai',pin:'600096'},
+    {id:'br-dl',name:'Karbon Business — Delhi (07)',       gstin:'07AAFCK1234M1ZH',state:'DL',
+     address:'A-14, Okhla Industrial Area Phase II, New Delhi',pin:'110020'},
+    {id:'br-gj',name:'Karbon Business — Gujarat (24)',     gstin:'24AAFCK1234M1ZO',state:'GJ',
+     address:'Block C, Sarkhej-Gandhinagar Highway, Ahmedabad',pin:'380054'},
+    {id:'br-tg',name:'Karbon Business — Telangana (36)',   gstin:'36AAFCK1234M1Z4',state:'TG',
+     address:'Level 5, Raheja Mindspace, HITEC City, Hyderabad',pin:'500081'}
   ],
 
   voucherTypes:[
@@ -1944,6 +2229,88 @@ function toast(msg,kind=''){
 }
 
 /* ============================================================================
+   2a. OPTIONAL FIELD GROUPS
+   --------------------------------------------------------------------------
+   Four groups of voucher fields that most bills have no use for. A goods
+   purchase collected at the counter names no consignee, clears no port and
+   quotes no order — printing those thirty fields on every bill would bury
+   the eight that decide the posting.
+
+   So they are configuration rather than layout: Field Configuration says
+   which groups this company enters, and the sheet is built from the answer.
+   Only Consignee is on out of the box, because a ship-to that differs from
+   the bill-to is the one of the four that turns up on ordinary purchases.
+
+   The config is deliberately not part of `state` — it belongs to the company,
+   not to the bill, so discarding a bill or starting the next one leaves it
+   standing. What gets *typed* into the fields is bill data and lives in
+   `state.extra`, keyed by field id.
+   ==========================================================================*/
+/* `req` names the field that makes this one mandatory: a date that has to be
+   stated once its document number is. Nothing here is required on its own —
+   these are optional groups — so the requirement is always conditional, and
+   it is enforced where the fields are entered rather than on the sheet. */
+const FIELD_GROUPS = [
+  {id:'consignee', name:'Consignee Details', on:true, fields:[
+    {id:'consigneeName',    name:'Consignee (Ship To)',   type:'select', list:'branches', ph:'Select Consignee (Ship To)', wide:true},
+    {id:'consigneeAddress', name:'Address',               type:'textarea', ph:'Enter Address', wide:true},
+    {id:'consigneeState',   name:'Consignee State',       type:'select', list:'states',    ph:'Select State'},
+    {id:'consigneeCountry', name:'Consignee Country',     type:'select', list:'countries', ph:'Select Country'},
+    {id:'consigneePincode', name:'Pincode',               type:'text',   ph:'Enter Pincode', mode:'numeric'},
+    {id:'consigneeGstin',   name:'Consignee (GSTIN/UIN)', type:'text',   ph:'Enter GSTIN/UIN'},
+    {id:'placeOfSupply',    name:'Place of Supply',       type:'select', list:'states',    ph:'Select Place of Supply', wide:true}
+  ]},
+  {id:'import', name:'Import Details', on:false, fields:[
+    {id:'placeOfReceipt',  name:'Place of Receipt by Shipper',      type:'text',   ph:'Enter place of receipt', wide:true},
+    {id:'vesselFlightNo',  name:'Vessel / Flight / Vehicle No',     type:'text',   ph:'Enter vessel / flight / vehicle no', wide:true},
+    {id:'portOfLoading',   name:'Port of Loading',                  type:'text',   ph:'Enter port of loading'},
+    {id:'portOfDischarge', name:'Port of Discharge',                type:'text',   ph:'Enter port of discharge'},
+    {id:'countryTo',       name:'Country To',                       type:'select', list:'countries', ph:'Select Country', wide:true},
+    {id:'boeNo',           name:'Bill of Entry / Shipping Bill No', type:'text',   ph:'Enter bill of entry / shipping bill no', wide:true},
+    {id:'boeDate',         name:'Bill of Entry / Shipping Bill Date',type:'date',  ph:'Select Date',
+     note:'Mandatory when Bill No. is filled.', req:'boeNo'},
+    {id:'portCode',        name:'Port Code',                        type:'select', list:'ports', ph:'Select Port Code',
+     note:'Mandatory when Bill No. is filled. Uses ICEGATE 6-character port codes.', req:'boeNo'}
+  ]},
+  {id:'receipt', name:'Receipt Details', on:false, fields:[
+    {id:'receiptNoteNo',   name:'Receipt Note No(s)',              type:'text', ph:'Enter receipt note no(s)'},
+    {id:'receiptNoteDate', name:'Note Date',                       type:'date', ph:'Select Date',
+     note:'Mandatory when Note No. is filled.', req:'receiptNoteNo'},
+    {id:'grnNo',           name:'Receipt / Dispatch Doc No (GRN)', type:'text', ph:'Enter receipt / dispatch doc no', wide:true},
+    {id:'dispatchedThrough',name:'Dispatched Through',             type:'text', ph:'Enter dispatch mode'},
+    {id:'dispatchDest',    name:'Destination',                     type:'text', ph:'Enter destination'},
+    {id:'carrier',         name:'Carrier Name / Agent',            type:'text', ph:'Enter carrier name / agent', wide:true},
+    {id:'ladingNo',        name:'Bill of Lading / LR-RR No',       type:'text', ph:'Enter bill of lading / LR-RR no'},
+    {id:'ladingDate',      name:'Bill of Lading Date',             type:'date', ph:'Select Date',
+     note:'Mandatory when Lading No. is filled.', req:'ladingNo'}
+  ]},
+  {id:'order', name:'Order Details', on:false, fields:[
+    {id:'orderNo',      name:'Order No(s)',              type:'text', ph:'Enter order no(s)'},
+    {id:'orderDate',    name:'Order Date',               type:'date', ph:'Select Date',
+     note:'Mandatory when Order No. is filled.', req:'orderNo'},
+    {id:'paymentTerms', name:'Mode / Terms of Payment',  type:'text', ph:'Enter mode / terms of payment', wide:true},
+    {id:'otherRefs',    name:'Other References',         type:'text', ph:'Enter other references', wide:true},
+    {id:'deliveryTerms',name:'Terms of Delivery',        type:'text', ph:'Enter terms of delivery', wide:true}
+  ]}
+];
+const fieldById = id=>FIELD_GROUPS.flatMap(g=>g.fields).find(f=>f.id===id);
+
+/* A group is off, or it is on with some subset of its fields. Both switches
+   matter: turning the group off hides it whole without forgetting which
+   fields were chosen inside it. */
+const fcDefaults = ()=>Object.fromEntries(FIELD_GROUPS.map(g=>[g.id,
+  {on:g.on, fields:Object.fromEntries(g.fields.map(f=>[f.id,true]))}]));
+const fcClone = c=>JSON.parse(JSON.stringify(c));
+const fcSame  = (a,b)=>JSON.stringify(a)===JSON.stringify(b);
+let fieldConfig = fcDefaults();
+
+/* what the sheet draws — a group with every field switched off is nothing to
+   draw, so it does not get a heading of its own either */
+const fcLive = (cfg=fieldConfig)=>FIELD_GROUPS
+  .filter(g=>cfg[g.id].on && g.fields.some(f=>cfg[g.id].fields[f.id]))
+  .map(g=>({id:g.id, name:g.name, fields:g.fields.filter(f=>cfg[g.id].fields[f.id])}));
+
+/* ============================================================================
    3. STATE — every value here is user-editable; nothing is derived-only
    ==========================================================================*/
 /* `match` is what §4a made of the line — null on a row typed by hand, because
@@ -1964,6 +2331,7 @@ function freshState(){
     sourceState:'', destState:'',
     purchaseLedger:'', reverseCharge:false, rcmLedger:'', rcmLedgerVendor:'',
     itcLedger:'', itcLedgerVendor:'', narration:'',
+    extra:{},                        // whatever the optional groups are showing
     items:[blankItem()], ledgers:[blankLedger()], stashedItems:null,
     taxLines:[], dismissedLines:[], adjustments:[],
     validated:false, document:null, allocated:false
@@ -3134,7 +3502,26 @@ function patchTotals(calc){
   put('bd-adj-amt', sectionAmt(calc.adjTotal),      !calc.adjTotal);
 }
 
+/* --- additional details ---------------------------------------------------
+   One line standing in for however many optional groups are switched on. It
+   says what is available and, once anything has been entered, how much —
+   otherwise the sheet would give no sign that a filled group exists at all. */
+function extraFilled(){
+  const live = new Set(fcLive().flatMap(g=>g.fields.map(f=>f.id)));
+  return [...live].filter(id=>String(state.extra[id]??'').trim()!=='').length;
+}
+function renderAddl(){
+  const groups = fcLive().length, filled = extraFilled();
+  $('#addl').hidden = groups===0;
+  if(!groups) return;
+  $('#addl-sub').textContent =
+    `${groups} section${groups===1?'':'s'} available` +
+    (filled ? ` · ${filled} field${filled===1?'':'s'} filled` : '');
+  $('#addl-btn-text').textContent = filled ? 'Edit Details' : 'Add Details';
+}
+
 function renderHeader(){
+  renderAddl();
   $$('[data-bind]').forEach(el=>{
     const k = el.dataset.bind;
     if(el.type==='date'){ el.value = state[k]||''; return; }
@@ -4196,6 +4583,300 @@ $('#cc-body').addEventListener('click',e=>{
   }
   renderCcDialog();
 });
+/* --- field configuration --------------------------------------------------
+   A setting, so it commits on Save and not before: every switch here edits a
+   draft, and Cancel — or Esc, or the X — throws the draft away. Save stays
+   disabled until the draft differs from what is already in force, which is
+   also what makes Reset to Default legible: press it on a default sheet and
+   Save stays down, because nothing changed. */
+let fcDraft = null, fcTab = FIELD_GROUPS[0].id;
+
+const fcSwitch = (on,label,attrs)=>`<button type="button" class="switch" role="switch"
+  aria-checked="${on?'true':'false'}" aria-label="${esc(label)}" ${attrs}></button>`;
+const fcCount = g=>{
+  const c = fcDraft[g.id];
+  return c.on ? `${g.fields.filter(f=>c.fields[f.id]).length}/${g.fields.length}` : 'Off';
+};
+
+function openFieldConfig(){
+  fcDraft = fcClone(fieldConfig);
+  renderFcDialog();
+  $('#fc-dialog').showModal();
+  /* left to itself the dialog focuses the close button, which is the one
+     control here that does nothing — start on the group being read instead */
+  $(`#fc-nav [data-fc-tab="${fcTab}"]`).focus();
+}
+
+function renderFcDialog(){
+  $('#fc-nav').innerHTML = FIELD_GROUPS.map(g=>
+    `<button type="button" role="tab" data-fc-tab="${g.id}" aria-selected="${g.id===fcTab}">
+       ${esc(g.name)}<span class="fcd__n">${fcCount(g)}</span></button>`).join('');
+
+  const g = FIELD_GROUPS.find(x=>x.id===fcTab), c = fcDraft[g.id];
+  $('#fc-panel').innerHTML =
+    `<div class="fcrow fcrow--master">
+       <span class="fcrow__lbl">${esc(g.name)}</span>
+       ${fcSwitch(c.on, `Show ${g.name} on the bill`, 'data-fc="group"')}
+     </div>` +
+    g.fields.map(f=>`<div class="fcrow${c.on?'':' is-off'}">
+       <span class="fcrow__lbl">${esc(f.name)}${
+         f.note?`<span class="fcrow__note">${esc(f.note)}</span>`:''}</span>
+       ${fcSwitch(c.fields[f.id], f.name, `data-fc="field" data-fid="${f.id}"`)}
+     </div>`).join('');
+
+  fcSyncFoot();
+}
+/* the counts and the Save button are the only things a single switch changes
+   outside its own row, so flipping one patches rather than redraws — a redraw
+   would take the focus off the switch that was just pressed */
+function fcSyncFoot(){
+  FIELD_GROUPS.forEach(g=>{
+    const el = $(`#fc-nav [data-fc-tab="${g.id}"] .fcd__n`);
+    if(el) el.textContent = fcCount(g);
+  });
+  $('#fc-save').disabled = fcSame(fcDraft, fieldConfig);
+}
+
+$('#btn-field-config').addEventListener('click', openFieldConfig);
+
+$('#fc-nav').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-fc-tab]'); if(!btn) return;
+  fcTab = btn.dataset.fcTab;
+  renderFcDialog();
+  $(`#fc-nav [data-fc-tab="${fcTab}"]`).focus();
+});
+
+$('#fc-panel').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-fc]'); if(!btn) return;
+  const c = fcDraft[fcTab];
+  if(btn.dataset.fc==='group'){
+    c.on = !c.on;
+    // the fields keep their answers; the group just stops asking them
+    $$('#fc-panel .fcrow:not(.fcrow--master)').forEach(r=>r.classList.toggle('is-off', !c.on));
+  }else{
+    c.fields[btn.dataset.fid] = !c.fields[btn.dataset.fid];
+  }
+  btn.setAttribute('aria-checked',
+    (btn.dataset.fc==='group' ? c.on : c.fields[btn.dataset.fid]) ? 'true' : 'false');
+  fcSyncFoot();
+});
+
+$('#fc-reset').addEventListener('click',()=>{ fcDraft = fcDefaults(); renderFcDialog(); });
+$('#fc-cancel').addEventListener('click',()=>$('#fc-dialog').close());
+$('#fc-x').addEventListener('click',()=>$('#fc-dialog').close());
+$('#fc-dialog').addEventListener('close',()=>{ fcDraft = null; render(); });
+
+$('#fc-save').addEventListener('click',()=>{
+  fieldConfig = fcClone(fcDraft);
+  /* a field that is no longer on the sheet stops being part of the bill.
+     Keeping the value would post something nobody can see, and bring it back
+     unannounced the next time the group is switched on. */
+  const live = new Set(fcLive().flatMap(g=>g.fields.map(f=>f.id)));
+  Object.keys(state.extra).forEach(k=>{ if(!live.has(k)) delete state.extra[k]; });
+  render();                    // the close event renders too, but it is queued —
+  $('#fc-dialog').close();     // this is the edit, so the sheet changes with it
+
+  const n = fcLive().length;
+  toast(n ? `Field configuration saved — ${n} optional group${n===1?'':'s'} on the bill`
+          : 'Field configuration saved — no optional groups on the bill', 'ok');
+});
+
+/* --- the additional fields dialog -----------------------------------------
+   Everything the optional groups collect, entered in one place and committed
+   in one step. The draft carries the values *and* the on/off state of each
+   group, because working through a group is when you find out you do not
+   need it — and switching it off there should behave exactly like switching
+   it off in Field Configuration, Cancel included. */
+let afDraft = null, afTab = null, afOpen = true;   // afOpen: the From Your Bill card
+
+function openAdditional(){
+  const live = fcLive();
+  if(!live.length) return;
+  afDraft = {values:{...state.extra}, cfg:fcClone(fieldConfig)};
+  if(!live.some(g=>g.id===afTab)) afTab = live[0].id;
+  $('#af-sub').textContent = byId(MASTERS.voucherTypes,state.voucherType)?.name || 'Purchase';
+  renderAfDialog();
+  $('#af-dialog').showModal();
+  $(`#af-nav [data-af-tab="${afTab}"]`)?.focus();
+}
+
+/* the bill's own answers, as chips — the consignee is judged against them
+   (is the ship-to the billing address or not?) and cannot be edited here */
+function fromYourBill(){
+  const chip = (label,value)=>`<span class="fyb__chip">${esc(label)}:
+    <b class="${value?'':'is-missing'}">${esc(value||'N/A')}</b></span>`;
+  const st = id=>byId(MASTERS.states,id)?.plain || '';
+  return `<div class="fyb">
+    <div class="fyb__head">
+      <span class="fyb__ttl">From Your Bill</span>
+      <button type="button" class="fyb__toggle" id="fyb-toggle" aria-expanded="${afOpen}"
+              aria-controls="fyb-grid">${afOpen?'Collapse':'Expand'}
+        <span class="ico ico-13 ico--muted"><svg width="13" height="13"><use href="#i-caret"/></svg></span>
+      </button>
+    </div>
+    <div class="fyb__grid" id="fyb-grid"${afOpen?'':' hidden'}>
+      ${chip('Vendor / Customer', byId(MASTERS.vendors,state.vendor)?.name)}
+      ${chip('Billing Address', state.billingAddress)}
+      ${chip('GST Treatment', byId(MASTERS.gstTreatments,state.gstTreatment)?.name)}
+      ${chip('GSTIN', state.gstin)}
+      ${chip('Source of Supply', st(state.sourceState))}
+      ${chip('Destination of Supply', st(state.destState))}
+    </div>
+  </div>`;
+}
+
+function afControl(f){
+  const v = afDraft.values[f.id] ?? '';
+  if(f.type==='date') return `<label class="control">
+      <span class="t-value" data-xfd="${f.id}" data-placeholder="${esc(f.ph)}">${v?esc(fmtDate(v)):esc(f.ph)}</span>
+      <span class="ico ico-12 ico--muted"><svg width="10.5" height="11.5"><use href="#i-calendar"/></svg></span>
+      <input type="date" class="control__date" data-xf="${f.id}" value="${esc(v)}" aria-label="${esc(f.name)}">
+    </label>`;
+  if(f.type==='select') return `<label class="control">
+      <select class="control__select t-value" data-xf="${f.id}" aria-label="${esc(f.name)}">
+        ${options(MASTERS[f.list], f.ph, v)}</select>
+    </label>`;
+  if(f.type==='textarea')
+    return `<textarea data-xf="${f.id}" placeholder="${esc(f.ph)}" aria-label="${esc(f.name)}">${esc(v)}</textarea>`;
+  return `<label class="control">
+      <input class="control__input t-value" type="text" data-xf="${f.id}" value="${esc(v)}"
+             placeholder="${esc(f.ph)}"${f.mode?` inputmode="${f.mode}"`:''}>
+    </label>`;
+}
+
+function renderAfDialog(){
+  const live = fcLive(afDraft.cfg);
+  /* a group switched off in this dialog leaves the rail, so the tab has to
+     move somewhere — but only once the switch is saved, or the panel would
+     vanish under the hand that switched it */
+  const nav = live.some(g=>g.id===afTab) ? live : [...live, FIELD_GROUPS.find(g=>g.id===afTab)];
+  $('#af-nav').innerHTML = nav.map(g=>
+    `<button type="button" role="tab" data-af-tab="${g.id}" aria-selected="${g.id===afTab}">
+       ${esc(g.name)}</button>`).join('');
+  renderAfPanel();
+}
+
+function renderAfPanel(){
+  const g = FIELD_GROUPS.find(x=>x.id===afTab), c = afDraft.cfg[g.id];
+  const fields = g.fields.filter(f=>c.fields[f.id]);
+  $('#af-panel').innerHTML = fromYourBill() + `
+    <div class="afg">
+      <h3 class="afg__ttl">${esc(g.name)}</h3>
+      <span class="afg__switch">${c.on?'Disable all':'Enable all'}
+        <button type="button" class="switch" role="switch" aria-checked="${c.on}" id="af-group"
+                aria-label="${c.on?'Disable':'Enable'} ${esc(g.name)}"></button></span>
+    </div>
+    <div class="afd__fields${c.on?'':' is-off'}">
+      ${fields.map(f=>`<div class="field${f.wide?' field--wide':''}" data-xfield="${f.id}">
+        <p class="t-label">${esc(f.name)}</p>
+        ${afControl(f)}
+        ${f.note?`<p class="field__note">${esc(f.note)}</p>`:''}
+        <p class="field__error"></p>
+      </div>`).join('')}
+    </div>`;
+  afCheck();
+}
+
+/* `req` fields are mandatory only in the company of the field that names
+   them. Checked here rather than in validate(): these fields are not on the
+   sheet, so there is nowhere out there to paint the error. */
+function afProblems(){
+  return fcLive(afDraft.cfg).flatMap(g=>g.fields.filter(f=>f.req &&
+      String(afDraft.values[f.req]??'').trim()!=='' &&
+      String(afDraft.values[f.id]??'').trim()==='')
+    .map(f=>({group:g, field:f, trigger:fieldById(f.req)})));
+}
+function afCheck(){
+  const bad = afProblems();
+  const here = new Set(bad.filter(p=>p.group.id===afTab).map(p=>p.field.id));
+  $$('#af-panel [data-xfield]').forEach(el=>{
+    const f = fieldById(el.dataset.xfield);
+    const on = here.has(f.id);
+    el.classList.toggle('is-invalid', on);
+    if(on) el.querySelector('.field__error').textContent = `Required once ${f.req && fieldById(f.req).name} is filled.`;
+  });
+  const warn = $('#af-warn');
+  warn.hidden = !bad.length;
+  if(bad.length){
+    const off = bad.filter(p=>p.group.id!==afTab);
+    warn.textContent = off.length && off.length===bad.length
+      ? `${bad.length} field${bad.length===1?'':'s'} still needed under ${[...new Set(off.map(p=>p.group.name))].join(', ')}.`
+      : `${bad.length} field${bad.length===1?'':'s'} still needed before this can be saved.`;
+  }
+  $('#af-save').disabled = bad.length>0;
+}
+
+$('#btn-add-details').addEventListener('click', openAdditional);
+
+$('#af-nav').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-af-tab]'); if(!btn) return;
+  afTab = btn.dataset.afTab;
+  renderAfDialog();
+  $(`#af-nav [data-af-tab="${afTab}"]`).focus();
+});
+
+$('#af-panel').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  if(btn.id==='fyb-toggle'){ afOpen = !afOpen; renderAfPanel(); $('#fyb-toggle').focus(); return; }
+  if(btn.id==='af-group'){
+    const c = afDraft.cfg[afTab];
+    c.on = !c.on;
+    renderAfPanel();
+    $('#af-group').focus();
+  }
+});
+
+$('#af-panel').addEventListener('input', e=>{
+  const id = e.target.dataset.xf; if(!id) return;
+  afDraft.values[id] = e.target.value;
+  afCheck();
+});
+$('#af-panel').addEventListener('change', e=>{
+  const id = e.target.dataset.xf; if(!id) return;
+  afDraft.values[id] = e.target.value;
+  if(e.target.type==='date'){
+    const disp = $(`#af-panel [data-xfd="${id}"]`);
+    disp.textContent = e.target.value ? fmtDate(e.target.value) : disp.dataset.placeholder;
+  }
+  /* the ship-to on a purchase is one of our own locations, so naming it
+     answers the five fields under it — overwriting only what is still blank */
+  if(id==='consigneeName'){
+    const b = byId(MASTERS.branches, e.target.value);
+    if(b){
+      const fill = (k,v)=>{ if(!String(afDraft.values[k]??'').trim()) afDraft.values[k] = v; };
+      fill('consigneeAddress', b.address);
+      fill('consigneeState',   b.state);
+      fill('consigneeCountry', 'IN');
+      fill('consigneePincode', b.pin);
+      fill('consigneeGstin',   b.gstin);
+      fill('placeOfSupply',    b.state);
+      renderAfPanel();
+      return;
+    }
+  }
+  afCheck();
+});
+
+$('#af-cancel').addEventListener('click',()=>$('#af-dialog').close());
+$('#af-x').addEventListener('click',()=>$('#af-dialog').close());
+$('#af-dialog').addEventListener('close',()=>{ afDraft = null; render(); });
+
+$('#af-save').addEventListener('click',()=>{
+  if(afProblems().length) return;
+  fieldConfig = fcClone(afDraft.cfg);
+  state.extra = {...afDraft.values};
+  // a group or field switched off here drops its value, exactly as it does in
+  // Field Configuration — nothing invisible rides along on the posting
+  const live = new Set(fcLive().flatMap(g=>g.fields.map(f=>f.id)));
+  Object.keys(state.extra).forEach(k=>{
+    if(!live.has(k) || String(state.extra[k]).trim()==='') delete state.extra[k];
+  });
+  render();
+  $('#af-dialog').close();
+  const n = extraFilled();
+  toast(n ? `${n} additional field${n===1?'':'s'} saved` : 'Additional fields cleared','ok');
+});
+
 $('#btn-discard').addEventListener('click',()=>{ if(confirm('Discard this bill? All entered data will be lost.')) reset(); });
 
 function reset(){
