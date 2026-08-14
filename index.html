@@ -492,314 +492,295 @@ input[readonly]{cursor:default}
 .narration textarea:focus{border-color:var(--brand-deep)}
 
 /* ------------------------------------------------------------- breakdown
-   Full width, and the place where the GST and TDS ledgers are chosen.
+   Sub total, the GST and withholding ledgers, adjustments, Grand Total.
 
-   Sub Total, then one section per tax family — each with its own heading, its
-   own running subtotal and its own add action — then Adjustments, then the
-   Grand Total. Every row of every section shares one grid, so the money
-   column reads as a single column from the first figure to the last,
-   whatever sits in the label column. */
-/* Padding measured off what you actually see, which is not the content box.
-   On the left that is the ledger field's box, which bleeds --bleed out past
-   its cell, so the left padding carries that bleed on top of --sp-4 and the
-   box lands --sp-4 from the panel. On the right it is the delete cross, which
-   is always on screen and is the last thing in the row: the right padding is
-   the cross's own box, the gap that keeps it off the amount box, and the same
-   --sp-4 the ledger box gets on the left. So the two outermost drawn things —
-   ledger box and cross — sit --sp-4 from their edges, and the sheet reads
-   square even though the two padding values differ. */
+   Built to the component in Karbon — AI Accountant: 23720:26032 (empty),
+   23720:26325 (filled), 23720:26653 (hover). Every number in this block is
+   read off that frame rather than derived from a scale of our own — a 433px
+   panel on a 1px interactive-surface border with 16px of padding, one flex
+   column at a 12px gap, a drawn rule between each block, and a section's own
+   lines grouped under it at 8px. 433 less the border and the padding is the
+   component's 399px content measure, which is what every fixed width below
+   is sized against. */
 .breakdown{
-  display:flex;flex-direction:column;
-  padding:var(--sp-4)
-          calc(var(--sp-4) + var(--sp-2) + var(--del))
-          var(--sp-4)
-          calc(var(--sp-4) + var(--bleed));
+  width:100%;max-width:433px;margin-left:auto;
+  display:flex;flex-direction:column;gap:12px;
+  padding:16px;border:1px solid var(--interactive);
   border-radius:var(--radius);background:var(--bg-primary);
-
-  /* Every gap inside the sheet comes off this 8px scale, so the vertical
-     rhythm is a scale rather than a pile of per-element margins:
-       sp-1  a thing and its own footnote (a line and its ITC call)
-       sp-2  reserved for tighter pairs
-       sp-3  one line to the next, and a heading to the lines it names
-       sp-4  one family of lines to the next, across a rule
-     --bleed is the other half of it: the hover/focus box on an editable cell
-     bleeds this far past the cell on both sides, and it is also what reads as
-     that field's inner padding. Anything that has to line up with the *box*
-     rather than the cell (the ITC chip, the money column's right edge) is
-     offset by it, so it is named once here instead of typed in as 12.
-     --del is the delete cross's box. It lives in the right padding rather than
-     in a column, so that padding is measured out of it. */
-  --sp-1:8px; --sp-2:12px; --sp-3:16px; --sp-4:24px;
-  --bleed:12px; --del:16px;
 }
-/* The gap has to clear the hover/focus chrome, which bleeds --bleed past each
-   cell on both sides — below 28px neighbouring surfaces start crowding.
-   Every row in the sheet is this one grid: label, rate, money. That includes
-   the section headings and the adjustment rows, so a heading's total and a
-   typed figure land in the same column as everything else.
 
-   Three columns, not four. The delete cross used to hold a fourth, and a
-   column plus its gap is 52px the money column never got back — which is why
-   every figure in the sheet stopped 80px short of the panel's right edge while
-   the labels started 24px from its left. It is a hover affordance, not
-   content, so it is out of flow now and sits in the panel's own right padding
-   (see .bd-del), and the money column runs to the edge of the content box. */
-.bd-row,.bd-line__row,.bd-grand,.bd-sec__head,.bd-line[data-adj]{
-  display:grid;grid-template-columns:minmax(0,1fr) 80px 168px;column-gap:28px;align-items:center;
-}
-.bd-line__row,.bd-line[data-adj]{position:relative}
-.bd-row{padding:0 0 var(--sp-3);font-size:14px;color:var(--text-muted)}
-.bd-row > :nth-child(3){
-  text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
-  color:var(--text);font-weight:600;
-}
-.bd-line{display:flex;flex-direction:column;padding:0;margin-top:var(--sp-3)}
-.bd-line__row > .cell:first-child,.bd-line > .cell:first-child{max-width:440px}
+/* The rule between two blocks, drawn at the content measure. It is its own
+   element rather than a border on the block above or below it, because it
+   separates two families of equal standing and belongs to neither. */
+.bd-rule{flex:none;height:1px;border-top:1px solid var(--stroke);border-radius:8px}
 
-/* --- a section --------------------------------------------------------
-   A hairline and a heading are all the separation a family of lines needs,
-   so the whole weight of the separation is carried by space: a wide gap
-   above the rule, a narrower one below the heading, so each heading sits
-   with the lines it names rather than floating between two families. The
-   subtotal sits in the money column, so the sections can be added up
-   without the eye ever leaving that column. */
-.bd-sec{display:flex;flex-direction:column;margin-top:var(--sp-4);border-top:1px solid var(--hairline)}
-/* The heading sits on one baseline, not one centre line: the section name,
-   the reverse-charge switch and the total are three different type sizes and
-   weights, so centring them leaves three different letter positions on what
-   should read as a single line. Baseline puts the letters on the line and
-   lets the boxes fall where they will. */
-.bd-sec__head{padding:var(--sp-3) 0 0;align-items:baseline}
-.bd-sec__head > :first-child{grid-column:1 / 3;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;min-width:0}
-.bd-sec__ttl{font-size:14px;font-weight:400;color:var(--text-muted)}
-/* one size with the section name it sits opposite, and with the Sub Total
-   above it — the weight is what separates a total from a label, not the size */
-.bd-sec__amt{
-  grid-column:3;text-align:right;white-space:nowrap;
-  font-size:14px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;
-}
-/* nothing there, or there but deliberately outside the Grand Total */
-.bd-sec__amt.is-zero,.bd-sec__amt.is-excluded{font-weight:400;color:var(--text-muted)}
+/* --- a block-level row -------------------------------------------------
+   A label on the left, its figure on the right, and a 16px slot after the
+   figure. The slot is held open on Sub total and Grand Total, which have
+   nothing to put in it, so all five figures in the sheet end on one vertical
+   and the marks that fold the three sections run down another. */
+.bd-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bd-row__lead{display:flex;align-items:center;gap:8px;min-width:0}
+.bd-row__amt{flex:none;display:flex;align-items:center;gap:12px}
 
-/* Reverse charge rides on the GST heading — it is a GST mechanism and nothing
-   else. At rest it reads as a stated value, not a link: the blue in this panel
-   is spent on the actions and the Grand Total. It only takes on the liability
-   colour once it is switched on, because then it changes who owes the tax. */
+.bd-lbl{font-size:14px;line-height:20px;font-weight:400;color:var(--text);white-space:nowrap}
+.bd-lbl--sub{font-weight:500}                  /* the one label set in medium */
+.bd-lbl--grand{font-size:16px;line-height:22px;letter-spacing:-.18px;font-weight:600}
+
+/* The money column. Four contributors at one size, the answer a step up and
+   in the brand ink — it is the only figure on the sheet that is not a part of
+   something else. Tabular figures so a digit typed into a line does not shift
+   the ones beside it; the column's right edge is held by the layout. */
+.bd-fig{
+  font-size:14px;line-height:20px;letter-spacing:-.16px;font-weight:600;
+  color:var(--text);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+.bd-fig--grand{font-size:16px;line-height:22px;letter-spacing:-.18px;color:var(--brand-deep)}
+/* A subtotal the Grand Total does not take: under reverse charge the GST is
+   real, it just is not owed to the vendor. */
+.bd-fig.is-excluded{font-weight:400;color:var(--text-muted)}
+
+/* --- the 16px slot and what sits in it ---------------------------------
+   The chevron that folds a section, or the plus that gives an empty one its
+   first line. A section with no lines has nothing to fold, so the slot
+   carries the only thing you can do to it instead — same box, same size, in
+   the brand ink because it is being asked for rather than offered. */
+.bd-slot{flex:none;width:16px;height:16px}
+.bd-tog{
+  flex:none;width:16px;height:16px;padding:0;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);transition:color .12s ease,opacity .12s ease;
+}
+.bd-tog:hover{color:var(--brand-deep)}
+.bd-tog:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:3px}
+/* The plus is the same grey as the chevron it stands in for and the bin it
+   stands beside — the component draws all three marks in icon-secondary, and a
+   plus in the brand ink would be the loudest thing in a sheet whose subject is
+   the figures. It takes the brand colour under the pointer, like everything
+   else in the row that does something. */
+.bd-tog--add{color:var(--text-muted)}
+
+/* --- reverse charge ----------------------------------------------------
+   It rides on the GST row: RCM is a GST mechanism and nothing else. A tinted
+   pill carrying a question and its answer as one object — the question in the
+   sheet's own ink, the answer and its chevron in the brand's.
+
+   "RCM", not "Reverse charge": the GST row is the one line in the sheet where
+   three things compete for width, and the abbreviation is the one an Indian
+   accountant writes on the bill itself. The full term stays as the pill's
+   title and as the select's accessible name. */
 .bd-rc{
-  display:inline-flex;align-items:center;gap:7px;padding:2px 8px;border-radius:var(--radius);
-  text-transform:none;letter-spacing:0;transition:background .12s ease;
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  padding:2px 8px;border-radius:var(--radius);background:var(--interactive);
 }
-.bd-rc:hover{background:var(--bg-secondary)}
-.bd-rc__label{font-size:14px;font-weight:600;color:var(--text)}
+.bd-rc__label{font-size:12px;line-height:16px;font-weight:400;color:var(--text)}
+.bd-rc__val{position:relative;display:inline-flex;align-items:center;gap:4px}
 .bd-rc select{
-  appearance:none;border:none;background:none;outline:none;padding:0 15px 0 0;cursor:pointer;
-  font-family:var(--font);font-weight:400;color:var(--text-muted);font-size:14px;line-height:20px;
-  field-sizing:content;               /* so the chevron hugs the chosen value */
-  background-image:var(--chevron);background-repeat:no-repeat;background-position:right center;
+  appearance:none;border:none;background:none;outline:none;padding:0;cursor:pointer;
+  font-family:var(--font);font-size:12px;line-height:16px;font-weight:400;
+  color:var(--brand-deep);field-sizing:content;   /* so the chevron hugs the value */
 }
-.bd-rc:has(select:focus-visible){background:var(--bg-secondary);box-shadow:0 0 0 2px var(--brand-soft)}
-.bd-rc.is-on select{color:var(--warning)}
+.bd-rc .bd-chev-sm{color:var(--brand-deep);pointer-events:none}
+.bd-rc:has(select:focus-visible){box-shadow:0 0 0 2px var(--brand-soft)}
 
-/* each section adds its own kind of ledger, so the action names what it adds.
-   It closes its section, so it keeps clear air beneath it before the next
-   hairline — otherwise it reads as the first thing in the section below. */
-.bd-add{
-  display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
-  background:none;border:none;padding:var(--sp-3) 0 0;
-  color:var(--brand-deep);font-size:12px;font-weight:600;line-height:16px;
+/* The one thing reverse charge asks that the bill cannot answer: which ledger
+   the liability is credited to. The component draws the state after that
+   question is settled, so this is set at the pill's own size and follows it
+   rather than taking a line of its own. */
+.bd-rcedit{
+  flex:none;display:inline-flex;align-items:center;gap:4px;
+  padding:2px 6px;border:none;background:none;border-radius:var(--radius);
+  color:var(--brand-deep);font-size:12px;line-height:16px;font-weight:600;
 }
-.bd-add .ico{opacity:.8}
-.bd-add:hover{text-decoration:underline}
-.bd-add:focus-visible{outline:2px solid var(--brand-soft);outline-offset:3px;border-radius:3px}
+.bd-rcedit:hover{background:var(--interactive)}
+.bd-rcedit.is-invalid{color:var(--danger)}
 
-/* The ITC call sits on its own row under the ledger/rate/amount line — a note
-   on that ledger, not a fourth thing competing with it for space in the same
-   row. Once the credit is blocked, the ledger it posts to reads as part of
-   that same statement (one chip, one pencil, one click into the popover that
-   already asks both questions) rather than a second pill stranded across an
-   otherwise-empty row — a decision needs one edit affordance, not two. */
-/* The chip is a footnote on the ledger above it, so it starts on that
-   field's own left edge — the edge of the box you can see, not the edge of
-   the text inside it, hence the pull of --bleed.
-
-   It runs the full width of the row rather than of the ledger column. Nothing
-   else occupies this line — the rate, the amount and the delete cross all
-   belong to the row above — and the blocked chip carries a ledger name of
-   unknown length, so confining it to the ledger column only meant eliding a
-   name into "· p…" with 300px of empty row beside it. It still sizes to its
-   own text; the span is headroom, not width. At the narrowest pane the
-   longest ledger in the book needs the last column too. */
-.bd-line__meta{
-  grid-column:1 / -1;margin-top:var(--sp-1);
-  margin-inline:calc(var(--bleed) * -1);
+/* --- what the bill withholds ------------------------------------------
+   Three exclusive answers, all three worth reading at rest, so radios rather
+   than a select — and they stand where a section name would, because which
+   one the bill bears IS this section's name. A 14px ring on a 1.4px stroke
+   with a 7px centre, 4px from ring to word and 14px from one answer to the
+   next. Only TDS is computed: the vendor's PAN and deductee type drive every
+   rate under it. TCS and the other heads are hand-added — they are printed on
+   the vendor's invoice and nothing in our masters can predict them. */
+.bd-modes{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.bd-mode{
+  position:relative;display:inline-flex;align-items:center;gap:4px;cursor:pointer;
+  font-size:12px;line-height:16px;font-weight:500;letter-spacing:-.12px;
+  color:var(--text-muted);transition:color .12s ease;
 }
-.bd-line__meta .chip{flex:none}
-/* The chip is one line. It reads as a sentence — this credit is blocked, and
-   here is where it goes — and a sentence that breaks across two lines inside
-   a tinted box stops looking like a footnote on the row above and starts
-   looking like a second block of content. So when the two clauses cannot both
-   fit, the ledger name is what gives: the eligibility call is the decision and
-   is never abbreviated, while the ledger is a name the popover and the tooltip
-   both carry in full. */
-.chip__label{white-space:nowrap;flex:none}
+.bd-mode.is-on{color:var(--brand-deep)}
+/* only the unchosen darken under the pointer: letting hover pull the chosen
+   one off the brand ink would read as the section un-choosing itself */
+.bd-mode:not(.is-on):hover{color:var(--text)}
+.bd-mode input{position:absolute;width:1px;height:1px;opacity:0}
+/* A drawn ring with a drawn centre, not a thick border faking one, so the
+   mark does not thicken as it is chosen. 7px is half the ring's inner width,
+   which is what centres it on the 2.1px the component gives it. */
+.bd-mode__dot{
+  position:relative;flex:none;width:14px;height:14px;border-radius:70px;
+  border:1.4px solid var(--text-muted);background:var(--surface);
+  transition:border-color .12s ease;
+}
+.bd-mode__dot::after{
+  content:"";position:absolute;left:2.1px;top:2.1px;width:7px;height:7px;
+  border-radius:70px;background:var(--brand-deep);
+  transform:scale(0);transition:transform .12s ease;
+}
+.bd-mode:hover .bd-mode__dot{border-color:var(--brand-soft)}
+.bd-mode input:checked + .bd-mode__dot{border-color:var(--brand-deep)}
+.bd-mode input:checked + .bd-mode__dot::after{transform:scale(1)}
+.bd-mode input:focus-visible + .bd-mode__dot{box-shadow:0 0 0 3px var(--brand-soft)}
+
+/* --- a section and its lines ------------------------------------------
+   A section head and the lines under it are one block at an 8px gap, which is
+   what tells a family's own rows from the 12px that separates one family from
+   the next. Collapsing hides the lines but never the total: a section you
+   have shut is still part of the bill. */
+.bd-sec{display:flex;flex-direction:column;gap:8px}
+.bd-sec__body{display:flex;flex-direction:column;gap:8px}
+.bd-sec__body[hidden]{display:none}
+
+/* A line is three things set against the row — the ledger, the rate it
+   carries, what it came to — with the bin that removes it and, on the last
+   line of a section, the plus that adds another. Both ends are fixed and the
+   middle is spaced between them: the ledger starts on the section name's own
+   left edge, the plus lands on the chevron's vertical, and the rate falls
+   where the room left over puts it. */
+.bd-line{display:flex;flex-direction:column;gap:6px}
+.bd-line__row{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  min-height:28px;
+}
+.bd-line__lead{flex:none;display:flex;align-items:center;gap:8px;min-width:0}
+.bd-line__money{flex:none;width:121px;display:flex;align-items:center;justify-content:flex-end;gap:12px}
+/* The amount and its bin do not shrink. The money group is the component's
+   fixed 121, and the box that appears around a figure is wider than the figure
+   — so it grows out of the group's left side, which is empty, rather than
+   squeezing the digits it was drawn to make readable. */
+.bd-line__amt{flex:none;display:flex;align-items:center;gap:8px}
+/* The rate is set by the ledger the line posts to — shown, not typed — so it
+   is the one thing in the row with no field around it. */
+.bd-line__rate{
+  flex:none;padding:6px 0;white-space:nowrap;font-variant-numeric:tabular-nums;
+  font-size:12px;line-height:16px;letter-spacing:-.12px;color:var(--text-muted);
+}
+
+/* --- the fields -------------------------------------------------------
+   A field in this sheet is not drawn until it is reached. At rest it is its
+   value and nothing else, which is what puts the ledger names on the same
+   left edge as the section names above them. Reaching one — by pointer or by
+   tab — gives it the box: white, a 1px focus-tinted edge, and the 8px of
+   padding the component gives it, which is what carries the value 8px in as
+   the box appears.
+
+   The edge is an inset shadow rather than a border, because the component
+   draws its stroke inside the box: a real border would add 2px to a field the
+   frame measures at 24 and push every line off the 28px row it sits on. */
+.bd-fld{
+  display:flex;align-items:center;gap:12px;
+  padding:6px 0;border:none;border-radius:var(--radius);background:transparent;
+  font-size:12px;line-height:16px;letter-spacing:-.12px;color:var(--text-muted);
+  text-align:left;transition:box-shadow .12s ease,background .12s ease;
+}
+.bd-fld:hover{padding:4px 8px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--brand-soft)}
+.bd-fld:focus-within{padding:4px 8px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--brand-deep)}
+/* Invalid is the one state that draws at rest. Every other field has given up
+   its outline, so a field that keeps one is saying something by having it. */
+.bd-fld.is-invalid{padding:4px 8px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--danger)}
+/* The control is held to its own line box. Left to the engine an empty input
+   measures a pixel taller than a filled one, which put the Adjustments block
+   one pixel off the 56 the frame gives it — and a row that changes height as
+   it is typed into is a row that moves the four below it. */
+.bd-fld__input,.bd-fld__select{
+  flex:1;min-width:0;appearance:none;border:none;background:none;outline:none;padding:0;
+  font:inherit;letter-spacing:inherit;color:inherit;height:16px;
+  white-space:nowrap;text-overflow:ellipsis;
+}
+.bd-fld__select{cursor:pointer}
+.bd-fld__input::placeholder{color:var(--text-muted);opacity:1}
+/* The ledger field is a fixed 108, and 124 once it has the padding — so a
+   ledger longer than the box ellipses rather than pushing the rate and the
+   figure off their columns. */
+.bd-fld--ledger{flex:none;width:108px}
+.bd-fld--ledger:hover,.bd-fld--ledger:focus-within,.bd-fld--ledger.is-invalid{width:124px}
+/* The amount hugs its own figure, so the box that appears around it is the
+   width of what is in it and its right edge stays where the bin holds it. */
+.bd-fld--num{flex:none}
+.bd-fld--num .bd-fld__input{
+  field-sizing:content;width:auto;min-width:4ch;max-width:none;
+  text-align:right;font-variant-numeric:tabular-nums;
+}
+@supports not (field-sizing:content){
+  .bd-fld--num .bd-fld__input{width:73px}      /* the component's own figure width */
+}
+
+/* The field's own chevron, placed rather than drawn on the select's
+   background, so it keeps the 16px box and the 12px gap the component gives
+   it instead of hanging off the right edge of a background image. */
+.bd-chev{
+  flex:none;width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);pointer-events:none;
+}
+.bd-chev-sm{
+  flex:none;width:12px;height:12px;display:inline-flex;align-items:center;justify-content:center;
+}
+.bd-tog svg,.bd-del svg,.bd-chev svg,.bd-chev-sm svg,.bd-itc svg{display:block}
+
+/* The bin belongs to its own row, so it is on every row. The plus does not:
+   adding is one act on the section, not a choice you make per line, so it
+   appears once — on the last line, where the next one will land — and holds
+   its slot open on every other row, which is what keeps that column straight.
+   A cross would be dismissal; these rows are not dismissed, they are deleted
+   out of the posting. */
+.bd-del{
+  flex:none;width:12px;height:12px;padding:0;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);transition:color .12s ease;
+}
+.bd-del:hover{color:var(--danger)}
+.bd-del:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:3px}
+
+/* Eligible is the answer nearly every GST line gives, so it is not written
+   out — it is a pencil beside the ledger, and the tooltip is where the current
+   call is read. The component draws a settled sheet and has no slot for it, so
+   it follows the field rather than taking a column: the ledger boxes still
+   start on one vertical, which is the column that has to hold. */
+.bd-itc{
+  flex:none;width:16px;height:16px;padding:0;border:none;background:none;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);opacity:.5;transition:opacity .12s ease,color .12s ease;
+}
+.bd-line:hover .bd-itc{opacity:.8}
+.bd-itc:hover{opacity:1;color:var(--brand-deep)}
+.bd-itc:focus-visible{opacity:1;outline:2px solid var(--brand-soft);outline-offset:1px}
+
+/* A blocked ITC call is a finding, and findings are stated — so it takes a
+   line of its own under the ledger rather than a fourth thing competing for
+   room in the row, with the ledger it posts to in the same chip: one decision,
+   one surface, one pencil. It is red because the credit is actually being
+   given up. One line always: the ledger name is what gives when the two
+   clauses cannot both fit, because the eligibility call is the decision. */
+.bd-line__meta{display:flex;min-width:0}
+.bd-line__meta .chip{
+  flex:0 1 auto;min-width:0;height:24px;padding:0 8px;gap:4px;
+  font-size:12px;line-height:16px;letter-spacing:-.12px;font-weight:600;
+  background:#faf1ef;color:#95493f;border:1px solid transparent;border-radius:var(--radius);
+  transition:border-color .12s ease;
+}
+.bd-line__meta .chip:hover{border-color:#e2c6bf}
+.bd-line__meta .chip:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
+.bd-line__meta .chip svg{display:block;flex:none}
+.chip__label{flex:none;white-space:nowrap}
 .chip__sep{margin:0 1px;opacity:.5}
 .chip__posts{
-  font-weight:400;opacity:.8;white-space:nowrap;
-  flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-weight:400;opacity:.85;
 }
 
-/* Removing a line is destructive and rarely wanted, so the cross is quiet —
-   but it is on screen at rest, not summoned by hover. A control you cannot see
-   until you happen to be over the row is a control that does not exist for
-   anyone reading the sheet rather than pointing at it, and it leaves a hole in
-   the composition where a column of crosses should be. So it sits at a low
-   contrast that lifts as the row is aimed at and turns to danger under the
-   pointer, rather than appearing from nothing.
-
-   Out of the grid entirely: it rides in the panel's right padding, so it costs
-   the money column nothing, with --sp-2 clear of the amount box and --sp-4
-   clear of the panel edge — the same --sp-4 the ledger box gets on the left.
-   Its height is the field's, not the row's: a row carrying an ITC tag is 72px
-   tall, and centring on that would float the cross into the gap between the
-   ledger and its tag rather than sitting on the line it deletes. */
-.bd-del{
-  position:absolute;top:0;width:var(--del);height:32px;
-  right:calc((var(--sp-2) + var(--del)) * -1);
-  display:flex;align-items:center;justify-content:center;
-  background:none;border:none;padding:0;color:var(--text-muted);opacity:.55;
-  font-size:16px;line-height:1;transition:color .12s ease,opacity .12s ease;
-}
-.bd-line:hover .bd-del{opacity:.85}
-.bd-del:hover{color:var(--danger);opacity:1}
-.bd-del:focus-visible{opacity:1;outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:3px}
-
-/* Inside the breakdown the fields carry no horizontal padding, so every label
-   starts on the same left edge as "Sub Total" and every figure ends on the
-   same right edge as the Grand Total. The box bleeds outward from a
-   pseudo-element so showing it never shifts a number — the bleed is also
-   what reads as the field's inner padding, so it's sized to match the 12px
-   the rest of the app gives an input, not squeezed down to clear the hover
-   chrome. Only cells that hold an actual input/select get the box — a static
-   value (like a tax rate) never borrows the affordance of an editable one.
-   The border is visible at rest, not just on hover: hover-only affordances
-   are unreadable to anyone who can't hover (touch, keyboard, screen
-   readers). */
-/* No border on the cell itself, not even a transparent one. The box you see
-   is the ::before, and a 1px transparent border here would inset the cell's
-   content box inside it — putting every typed figure 1px left of the totals
-   it lines up with, and the box's own drawn edge 1px left of them too. The
-   invalid state therefore colours the ::before, which is the border that is
-   actually on screen. */
-.breakdown .cell{
-  position:relative;height:32px;padding:6px 0;
-  border:0;background:transparent;
-}
-.breakdown .cell::before{
-  content:"";position:absolute;inset:0 calc(var(--bleed) * -1);border-radius:var(--radius);
-  transition:background .12s ease,box-shadow .12s ease,border-color .12s ease;pointer-events:none;
-}
-.breakdown .cell:has(.cell__input,.cell__select)::before{
-  border:1px solid var(--brand-soft);background:var(--surface);
-}
-.breakdown .cell:has(.cell__input,.cell__select):hover::before{background:var(--bg-secondary)}
-.breakdown .cell:has(.cell__input,.cell__select):focus-within::before{
-  background:var(--surface);box-shadow:inset 0 0 0 1px var(--brand-deep);border-color:var(--brand-deep);
-}
-/* the breakdown ring lives on the cell's own ::before (bleeding -6px so
-   showing it never shifts a number) — the generic outer halo would stack a
-   second, mismatched ring on top, so it is suppressed here */
-.breakdown .cell:focus-within{box-shadow:none}
-.breakdown .cell > *{position:relative}
-.breakdown .cell__input,.breakdown .cell__select{color:var(--text)}
-.breakdown .cell.is-invalid::before{border-color:var(--danger)}
-
-/* The money column is sized by the Grand Total, not by the figures typed into
-   it. So the editable box is narrower than the column it sits in and hangs on
-   its right edge, keeping clear of the rate beside it.
-
-   One right margin for the whole column, --bleed in from the column edge, and
-   it is the figures that sit on it: the digits typed into an amount box end on
-   the same line as the last digit of the Sub Total, the section totals and the
-   Grand Total. What you read down the column is one edge.
-
-   The box's border is the one thing outside that line, by exactly the --bleed
-   it takes as inner padding — a bordered field cannot put both its border and
-   its text where a bare figure sits, and of the two it is the text that has to
-   be right. So the box keeps its padding, its border lands on the column edge
-   --bleed beyond the margin, and it gives up its right-hand bleed so that is
-   all the overhang there is: the padding, drawn. The bleed it would have spent
-   on the right goes to the left, where there is nothing to line up against. */
-.breakdown .cell-num:not(.cell-pct){max-width:124px;margin-left:auto}
-.breakdown .cell-num:not(.cell-pct)::before{inset:0 0 0 calc(var(--bleed) * -2)}
-.breakdown .cell-num:not(.cell-pct) .cell__input{padding-right:var(--bleed)}
-.bd-sec__amt,.bd-row > :nth-child(3),.bd-grand > :nth-child(3){padding-right:var(--bleed)}
-
-/* A rate is one token — the figure and its unit — not two columns with a gap
-   between them, so the sign stays welded to the figure. The token is centred
-   in a fixed column of its own: right-aligning it pushed it up against the
-   money box and left the label side of the row gap-toothed.
-
-   Centring the token alone would still stagger the column, because 0.1% is
-   wider than 9% and each row would centre its own width. So the figure gets a
-   fixed box and is set right within it, wide enough for the longest rate in
-   the book (0.25%), with tabular figures so digits of different value are
-   still the same width. The token is therefore the same width on every row,
-   the sign lands on one vertical, and the figures grow leftward off the
-   decimal:  9% / 2% / 0.1% read down as a column, not a zigzag. */
-.breakdown .cell-pct{justify-content:center;align-items:center;gap:1px;height:32px;padding:0}
-.breakdown .cell-pct .pct__val{
-  flex:none;width:4ch;text-align:right;font-variant-numeric:tabular-nums;
-}
-.breakdown .cell-pct .cell__input{flex:0 1 auto;width:4ch;min-width:0;max-width:none;text-align:right;font-variant-numeric:tabular-nums}
-.breakdown .cell-pct .pct{flex:none;color:var(--text-muted)}
-
-/* The ITC call is an edit, not a caption — so it carries a surface you can
-   aim at, and turns red only when the credit is actually being given up. Its
-   pencil stays quiet until you reach the chip: at rest the row should read as
-   a statement of the ledger, not as a row of pending edits — so the eligible
-   state stays content-width, small and quiet. Blocked is the same shape, just
-   longer: it always carries the "posts to X" clause. Both are content-width
-   (max-content rather than shrink-to-fit — that is where engines disagree,
-   and it was drifting the two boxes apart) and both are the same 32px as the
-   field above them. One line, always: the ledger name only ellipses once the
-   chip has already taken the full width of the row. */
-/* one height for both states, set rather than derived — the tag is a fixed
-   object in the row's rhythm, and how long its label happens to be is not
-   allowed to change it */
-.bd-line__meta .chip{
-  height:32px;padding:0 var(--bleed);
-  background:var(--bg-secondary);color:var(--text-muted);font-weight:600;
-  border:1px solid transparent;
-  transition:background .12s ease,border-color .12s ease,color .12s ease;
-}
-.bd-line__meta .chip .ico{color:var(--text-muted);opacity:.55;transition:color .12s ease,opacity .12s ease}
-.bd-line__meta .chip:hover{border-color:var(--brand-soft);color:var(--text)}
-.bd-line__meta .chip:hover .ico{color:var(--brand-deep);opacity:1}
-.bd-line__meta .chip:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
-.bd-line__meta .chip--no{flex-wrap:nowrap;width:max-content;max-width:100%;background:#faf1ef;color:#95493f}
-.bd-line__meta .chip .ico{flex:none}
-.bd-line__meta .chip--no:hover{border-color:#e2c6bf;color:#95493f}
-.bd-line__meta .chip--no:hover .ico{color:#95493f}
-
-/* The liability itself is not restated in the sheet — it is the GST total,
-   which greys out because it leaves the Grand Total. All that sits beside the
-   switch is the way back into the dialog that settles the posting ledger. */
-.bd-rcedit{
-  display:inline-flex;align-items:center;gap:5px;padding:2px 6px;border:none;background:none;
-  border-radius:var(--radius);color:var(--brand-deep);font-size:11px;font-weight:600;line-height:18px;
-}
-.bd-rcedit:hover{background:var(--bg-secondary);text-decoration:underline}
-.bd-rcedit.is-invalid,.bd-rcedit.is-invalid .ico{color:var(--danger)}
-
-/* the sheet is closed with a full rule rather than a section hairline */
-.bd-grand{
-  align-items:baseline;margin-top:var(--sp-4);padding-top:var(--sp-4);border-top:1px solid var(--stroke);
-  font-size:20px;line-height:26px;font-weight:600;
-}
-.bd-grand > :first-child{color:var(--text-muted)}
-.bd-grand > :nth-child(3){text-align:right;color:var(--brand-deep);font-variant-numeric:tabular-nums}
-.bd-note{font-size:11px;line-height:15px;color:var(--warning);padding-top:var(--sp-1)}
-.bd-empty{font-size:12px;color:var(--text-muted);padding:var(--sp-3) 0 0}
+/* The write-off names its ledger once one is chosen, and asks for one until
+   then — the only place in the sheet that decision is visible. */
+.bd-note{font-size:12px;line-height:16px;color:var(--warning)}
 
 /* ---------------------------------------------------------------- dialog */
 dialog{border:none;border-radius:10px;padding:0;max-width:min(680px,92vw);width:100%;box-shadow:0 20px 60px rgba(20,20,40,.28)}
@@ -1147,13 +1128,18 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 @container form (max-width:600px){
   .card{grid-template-columns:minmax(0,1fr);gap:20px}
   .picker-row{gap:8px}
-  .breakdown{
-    --bleed:6px;
-    padding:var(--sp-3) calc(var(--sp-3) + var(--sp-1) + var(--del)) var(--sp-3) calc(var(--sp-3) + var(--bleed));
-  }
-  .bd-row,.bd-line__row,.bd-grand,.bd-sec__head,.bd-line[data-adj]{grid-template-columns:minmax(0,1fr) 62px 116px;column-gap:16px}
-  .bd-del{right:calc((var(--sp-1) + var(--del)) * -1)}
-  .bd-grand{font-size:18px}
+}
+
+/* The sheet is capped at the component's own 433, so it is only ever squeezed
+   below that — its own breakpoint, not the card's. Below the cap the two fixed
+   ends give up what they can spare and the ledger name keeps the rest; the
+   gaps, the padding and the type are the component's at every width, because
+   those are what the frame specifies and a narrower pane does not change
+   them. */
+@container form (max-width:443px){
+  .bd-fld--ledger{width:92px}
+  .bd-fld--ledger:hover,.bd-fld--ledger:focus-within,.bd-fld--ledger.is-invalid{width:108px}
+  .bd-line__money{width:104px}
 }
 /* The card follows the form column, not the viewport — the splitter can make
    the form wide at 1440 and the stacked layout makes it wide at 1100, and in
@@ -1269,6 +1255,31 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   </symbol>
   <symbol id="i-pencil" viewBox="0 0 14 14" fill="none">
     <path d="M9.6 1.6a1.4 1.4 0 0 1 2 2L4.4 10.8 1.5 11.6l.8-2.9L9.6 1.6Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 14 14" fill="none">
+    <path d="M2 3.6h10M5.5 3.6V2.5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.1M3.3 3.6l.45 7.9a1 1 0 0 0 1 .95h4.5a1 1 0 0 0 1-.95l.45-7.9M5.9 6.2v3.9M8.1 6.2v3.9"
+          stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <!-- The breakdown sheet's own marks, drawn at the sizes the component uses:
+       a 16px chevron and plus carrying an 8x4 and a 9.33px mark, a 12px chevron
+       for the RCM pill and a 12px bin. Each is drawn at the stroke weight it
+       carries at that size rather than one glyph scaled into three boxes, which
+       is what would thin the 12px marks and thicken the 16px ones. -->
+  <symbol id="i-bd-chev" viewBox="0 0 16 16" fill="none">
+    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-bd-chev-up" viewBox="0 0 16 16" fill="none">
+    <path d="M12 10L8 6L4 10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-bd-chev-sm" viewBox="0 0 12 12" fill="none">
+    <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="0.9375" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-bd-plus" viewBox="0 0 16 16" fill="none">
+    <path d="M3.3333 8H12.6667M8 3.3333V12.6667" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-bd-trash" viewBox="0 0 12 12" fill="none">
+    <path d="M1.5 3H10.5M4 3V2C4 1.44772 4.44772 1 5 1H7C7.55228 1 8 1.44772 8 2V3M9.5 3V10C9.5 10.5523 9.05228 11 8.5 11H3.5C2.94772 11 2.5 10.5523 2.5 10V3M5 5.5V8.5M7 5.5V8.5"
+          stroke="currentColor" stroke-width="0.875" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>
   <symbol id="i-close" viewBox="0 0 24 24" fill="none">
     <path d="M18.5 6L6.5 18M6.5 6L18.5 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1543,18 +1554,20 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
       </button>
     </section>
 
-    <!-- Breakdown: sub total, the GST and TDS ledgers, adjustments, total -->
-    <section class="breakdown" id="breakdown"></section>
-
-    <!-- Narration closes the bill: it is a note about what has been entered
-         above, so it reads after the figures rather than interrupting them
-         on the way to the Grand Total. -->
+    <!-- Narration sits between the lines and the figures: it is a note about
+         what has been entered above, and the breakdown below it is the one
+         thing on the page that is read rather than filled in. Ending the
+         form here means the Grand Total is the last thing on the sheet, so
+         nothing follows the number the whole page is working towards. -->
     <section class="block">
       <h2 class="t-section">Narration</h2>
       <div class="narration">
         <textarea data-bind="narration" placeholder="Enter Narration"></textarea>
       </div>
     </section>
+
+    <!-- Breakdown: sub total, the GST and TDS ledgers, adjustments, total -->
+    <section class="breakdown" id="breakdown"></section>
 
   </section>
 </main>
@@ -1988,6 +2001,33 @@ const MASTERS = {
     {id:'194Q',     name:'194Q — Purchase of goods',           rate:0.1,single:0, annual:5000000,base:'goods', onExcess:true}
   ],
 
+  /* --- TCS sections ------------------------------------------------------
+     Collected by the seller rather than deducted by us, so nothing here is
+     suggested by the engine — a TCS line exists because the vendor's invoice
+     carries one and the user says so. No thresholds for the same reason:
+     whether the seller crossed theirs is the seller's computation, and what
+     we hold is the figure printed on the bill. */
+  tcsSections:[
+    {id:'206C1H', name:'206C(1H) — Sale of goods',              rate:0.1},
+    {id:'206C1',  name:'206C(1) — Scrap',                       rate:1},
+    {id:'206C1T', name:'206C(1) — Timber / forest produce',     rate:2.5},
+    {id:'206C1F', name:'206C(1F) — Motor vehicle above ₹10 lakh',rate:1},
+    {id:'206C1G', name:'206C(1G) — Overseas remittance / tour', rate:5}
+  ],
+
+  /* --- other statutory heads ---------------------------------------------
+     Everything withheld on a bill that is neither income-tax TDS nor TCS.
+     They share the shape — a named head at a stated rate — so they share the
+     section, and they are hand-added because none of them can be read off
+     the vendor master the way a TDS section can. */
+  otherHeads:[
+    {id:'eq-levy',   name:'Equalisation Levy — e-commerce supply', rate:2},
+    {id:'gst-tds-51',name:'GST TDS u/s 51',                        rate:2},
+    {id:'gst-tcs-52',name:'GST TCS u/s 52',                        rate:1},
+    {id:'labour-cess',name:'Labour Welfare Cess (BOCW)',           rate:1},
+    {id:'wct',       name:'Works Contract Tax',                    rate:2}
+  ],
+
   /* already in the books — used for the duplicate-invoice check */
   existingBills:[
     {vendor:'v-technova',invoiceNo:'TNS/25-26/0912',date:'2026-06-18',amount:412000},
@@ -2334,6 +2374,15 @@ function freshState(){
     extra:{},                        // whatever the optional groups are showing
     items:[blankItem()], ledgers:[blankLedger()], stashedItems:null,
     taxLines:[], dismissedLines:[], adjustments:[],
+    /* Which of the three withholdings this bill carries. They are exclusive:
+       a bill deducts TDS, or bears TCS, or carries some other statutory head
+       — not two at once. The lines of the modes not chosen stay in taxLines
+       and come back on switching, but only the chosen mode's lines post. */
+    deductionMode:'tds',
+    /* null means the section has not been touched, and decides for itself:
+       open if it holds lines, shut if it does not. Once a caret is clicked
+       the answer is a boolean and the section keeps it. */
+    secOpen:{gst:null, ded:null, adj:null},
     validated:false, document:null, allocated:false
   };
 }
@@ -2471,9 +2520,21 @@ function syncLines(listName, suggestions){
   }
 }
 
-/* GST and TDS are both tax lines — they live in one list, split only by type */
-const gstLines = ()=>state.taxLines.filter(t=>t.type!=='tds');
-const tdsLines = ()=>state.taxLines.filter(t=>t.type==='tds');
+/* GST and the withholdings are all tax lines — they live in one list, split
+   only by type. `dedLines` is the withholding the bill is actually carrying:
+   the other two modes keep their lines in the list but are not on this bill,
+   so they are neither drawn nor added up. */
+const gstLines = ()=>state.taxLines.filter(t=>t.type==='gst');
+const dedLines = (mode=state.deductionMode)=>state.taxLines.filter(t=>t.type===mode);
+
+/* the master a withholding line picks its head from, and what that mode is
+   called where the mode itself has to be named */
+const DEDUCTIONS = {
+  tds:   {label:'TDS',    master:'tdsSections', group:'TDS deduction'},
+  tcs:   {label:'TCS',    master:'tcsSections', group:'TCS collected'},
+  others:{label:'Others', master:'otherHeads',  group:'Other statutory heads'}
+};
+const dedMaster = (mode=state.deductionMode)=>MASTERS[DEDUCTIONS[mode].master];
 
 function compute(){
   syncLines('taxLines', [...suggestTaxLines(), ...suggestTdsLines()]);
@@ -2486,7 +2547,7 @@ function compute(){
 
   const gstTotal = r2(gstLines().reduce((s,t)=>s+num(t.amount),0));
   const gstIneligible = r2(gstLines().filter(itcBlocked).reduce((s,t)=>s+num(t.amount),0));
-  const tdsTotal = r2(tdsLines().reduce((s,t)=>s+num(t.amount),0));
+  const dedTotal = r2(dedLines().reduce((s,t)=>s+num(t.amount),0));
   const adjTotal = r2(state.adjustments.reduce((s,a)=>s+num(a.amount),0));
 
   const heads = {};
@@ -2497,10 +2558,13 @@ function compute(){
 
   // no automatic rounding — a round off is just an adjustment, so it is entered
   // as one rather than being derived behind the user's back
-  const grand = r2(subTotal + (state.reverseCharge?0:gstTotal) - tdsTotal + adjTotal);
+  /* all three withholdings come off the payable — TCS is stated on the bill
+     as an addition by the seller, but this sheet holds it the same way it
+     holds TDS, so it is subtracted alongside it */
+  const grand = r2(subTotal + (state.reverseCharge?0:gstTotal) - dedTotal + adjTotal);
 
   return {intra:isIntraState(),rows,ledgerRows,itemsTaxable,ledgerTaxable,subTotal,
-          gstTotal,gstIneligible,tdsTotal,adjTotal,heads,grand};
+          gstTotal,gstIneligible,dedTotal,adjTotal,heads,grand};
 }
 
 /* ============================================================================
@@ -3156,14 +3220,29 @@ function gstLedgerChoices(){
   out.push('Input Cess');
   return out;
 }
+/* A line can be re-pointed within its own family but not out of it: a GST
+   ledger offers GST ledgers, and a withholding line offers the heads of the
+   mode the section is in. Letting a TDS row become a GST row from this
+   dropdown would move it into a section that is not the one it is drawn in,
+   which reads as the line vanishing. */
+/* the field carries its own value as a tooltip — the sheet is capped in width
+   and the longest heads in the book ("206C(1F) — Motor vehicle above ₹10
+   lakh") elide in the closed picker */
 function taxLedgerSelect(row){
-  const value = row.type==='tds' ? 'tds:'+row.section : row.name;
+  const tip = ` title="${esc(row.name||'')}"`;
+  if(row.type!=='gst'){
+    const mode = row.type, d = DEDUCTIONS[mode];
+    return `<select class="bd-fld__select" data-f="ledger"${tip}>
+      <optgroup label="${esc(d.group)}">${dedMaster(mode).map(s=>
+        `<option value="${mode}:${esc(s.id)}"${s.id===row.section?' selected':''}>${esc(s.name)}</option>`
+      ).join('')}</optgroup>
+    </select>`;
+  }
   const gst = gstLedgerChoices();
-  if(row.type!=='tds' && row.name && !gst.includes(row.name)) gst.unshift(row.name);
-  const opt = (v,label)=>`<option value="${esc(v)}"${v===value?' selected':''}>${esc(label)}</option>`;
-  return `<select class="cell__select t-cell" data-f="ledger">
-    <optgroup label="GST">${gst.map(n=>opt(n,n)).join('')}</optgroup>
-    <optgroup label="TDS deduction">${MASTERS.tdsSections.map(s=>opt('tds:'+s.id, s.name)).join('')}</optgroup>
+  if(row.name && !gst.includes(row.name)) gst.unshift(row.name);
+  return `<select class="bd-fld__select" data-f="ledger"${tip}>
+    <optgroup label="GST">${gst.map(n=>
+      `<option value="${esc(n)}"${n===row.name?' selected':''}>${esc(n)}</option>`).join('')}</optgroup>
   </select>`;
 }
 
@@ -3371,110 +3450,231 @@ const ccFind = el=>{
   return {cat:c, row: rowEl ? c.rows.find(r=>r.id===rowEl.dataset.ccrow) : null};
 };
 
-/* a section subtotal, signed by what it does to the Grand Total */
+/* Whether a breakdown section is showing its lines. Until the user touches a
+   caret the section answers for itself — a section holding lines opens, an
+   empty one stays shut — so the sheet opens on what the engine actually found
+   and stays short where it found nothing. The moment a caret is clicked the
+   answer becomes the user's and stops being recomputed under them. */
+function secIsOpen(key){
+  const set = state.secOpen[key];
+  if(typeof set === 'boolean') return set;
+  if(key==='gst') return gstLines().length>0;
+  if(key==='ded') return dedLines().length>0;
+  return state.adjustments.length>0;
+}
+
+/* A section subtotal, signed by what it does to the Grand Total. Zero is
+   stated as ₹ 0.00 rather than an em-dash: a section with nothing in it has
+   still been computed, and the dash read as "not applicable" on rows where
+   the real answer is "nil". */
 function sectionAmt(n,deducts){
-  if(!n) return '—';
   return ((deducts ? n>0 : n<0) ? '− ' : '') + money(Math.abs(n));
 }
 
+/* The sheet, drawn to the component. Structure is the frame's: a row, a rule,
+   three sections each holding its own lines, a rule, and the answer — all one
+   flex column, so the gaps are the container's and no row carries a margin of
+   its own. */
 function renderBreakdown(calc){
+  const chev    = up => `<svg width="16" height="16" aria-hidden="true"><use href="#i-bd-chev${up?'-up':''}"/></svg>`;
+  const plus16  = `<svg width="16" height="16" aria-hidden="true"><use href="#i-bd-plus"/></svg>`;
+  const trash12 = `<svg width="12" height="12" aria-hidden="true"><use href="#i-bd-trash"/></svg>`;
+  const pencil12= `<svg width="12" height="12" aria-hidden="true"><use href="#i-pencil"/></svg>`;
+  const chevSm  = `<span class="bd-chev-sm" aria-hidden="true"><svg width="12" height="12"><use href="#i-bd-chev-sm"/></svg></span>`;
+  const fldChev = `<span class="bd-chev" aria-hidden="true"><svg width="16" height="16"><use href="#i-bd-chev"/></svg></span>`;
+  const rule    = `<div class="bd-rule"></div>`;
+
+  const fig = (id,text,cls='')=>`<span class="bd-fig${cls}" id="${id}">${text}</span>`;
   /* a subtotal the Grand Total does not take is stated but not emphasised —
      under reverse charge the GST is real, it just is not owed to the vendor */
-  const secAmt = (id,n,deducts,excluded)=>
-    `<span class="bd-sec__amt${n?'':' is-zero'}${excluded?' is-excluded':''}" id="${id}">${sectionAmt(n,deducts)}</span>`;
+  const secFig = (id,n,deducts,excluded)=>
+    fig(id, sectionAmt(n,deducts), (n?'':' is-zero')+(excluded?' is-excluded':''));
+
+  const addBtn = (act,label)=>`<button type="button" class="bd-tog bd-tog--add" data-act="${act}"
+              title="${esc(label)}" aria-label="${esc(label)}">${plus16}</button>`;
+
+  /* The 16px slot on a section's head row. A section holding lines gets the
+     chevron that folds it; an empty one has nothing to fold, so it gets the
+     plus that gives it its first line instead — a control whose only outcome
+     is that nothing happens is not a control. The sentence explaining why the
+     section is empty rides on that plus, where it answers the question at the
+     moment it is asked. */
+  const secSlot = (key,name,sec)=> sec.empty
+    ? `<button type="button" class="bd-tog bd-tog--add" data-act="${sec.add}"
+               title="${esc(sec.hint)}" aria-label="${esc(sec.label+' — '+sec.hint)}">${plus16}</button>`
+    : `<button type="button" class="bd-tog" data-sec="${key}"
+               aria-expanded="${secIsOpen(key)}" aria-controls="bd-body-${key}"
+               aria-label="Show or hide the ${esc(name)} lines">${chev(secIsOpen(key))}</button>`;
+
+  const secBody = (key,body)=>
+    `<div class="bd-sec__body" id="bd-body-${key}"${secIsOpen(key)?'':' hidden'}>${body}</div>`;
 
   /* one ledger line: pick the ledger, edit the amount — the rate is set by
-     the ledger/section chosen and is shown, not edited. GST lines carry a
-     second row underneath for the ITC call. Once that call has actually
-     blocked the credit, the ledger it posts to reads as part of the same
-     chip rather than a second one — it is one decision (the popover this
-     opens already asks both halves of it), so it gets one surface and one
-     pencil, not two pills stranded across an otherwise-empty row. */
-  const taxLine = row=>{
-    const tds = row.type==='tds';
-    const blocked = !tds && itcBlocked(row);
-    const tip = tds ? ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"` : '';
-    const meta = tds ? '' : `
+     the ledger/section chosen and is shown, not edited.
+
+     The ITC call only takes a row of its own once it has something to say.
+     Eligible is the answer on all but a handful of lines, and a sheet that
+     repeats it under every GST ledger is spending a row per line to state the
+     default — so eligible is carried by a bare pencil beside the field, which
+     is the affordance to change the call rather than a report of it. Blocked
+     is a finding, and findings are stated: it drops to the chip under the
+     line, with the ledger it posts to in the same chip. */
+  const taxLine = (row,i,all)=>{
+    const gst = row.type==='gst';
+    const blocked = gst && itcBlocked(row);
+    const tip = gst || !(row.note||row.detail) ? ''
+              : ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"`;
+    const itc = (!gst || blocked) ? '' : `
+            <button type="button" class="bd-itc" data-f="itc"
+                    title="${esc(itcChip(row))} — set input tax credit eligibility"
+                    aria-label="${esc(itcChip(row))} — set input tax credit eligibility">${pencil12}</button>`;
+    const meta = !blocked ? '' : `
       <div class="bd-line__meta">
-        <button type="button" class="chip${blocked?' chip--no':''}" data-f="itc"
-                title="${blocked?esc((state.itcLedger?'Posts to '+itcLedgerName()+'. ':'')+'Edit ITC eligibility and the ledger it posts to'):'Set input tax credit eligibility'}">
-          <span class="chip__label">${itcChip(row)}</span>${blocked ? `<span class="chip__posts"><span class="chip__sep">·</span> posts to ${
-            state.itcLedger?esc(itcLedgerName()):'ledger not chosen'}</span>` : ''} ${pencil}
+        <button type="button" class="chip chip--no" data-f="itc"
+                title="${esc((state.itcLedger?'Posts to '+itcLedgerName()+'. ':'')+'Edit ITC eligibility and the ledger it posts to')}">
+          <span class="chip__label">${itcChip(row)}</span><span class="chip__posts"><span class="chip__sep">·</span> posts to ${
+            state.itcLedger?esc(itcLedgerName()):'ledger not chosen'}</span>${pencil12}
         </button>
       </div>`;
+    const addLabel = gst ? 'Add GST ledger' : 'Add '+DEDUCTIONS[row.type].label+' line';
     return `<div class="bd-line" data-kind="taxLines" data-id="${row.id}">
       <div class="bd-line__row">
-        <label class="cell"${tip}>${taxLedgerSelect(row)}</label>
-        <span class="cell cell-num cell-pct t-cell"><span class="pct__val">${row.rate}</span><span class="pct">%</span></span>
-        <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
-        <button type="button" class="bd-del" data-act="del-line" aria-label="Remove ${esc(row.name)}">&times;</button>
-        ${meta}
+        <div class="bd-line__lead">
+          <label class="bd-fld bd-fld--ledger"${tip}>${taxLedgerSelect(row)}${fldChev}</label>${itc}
+        </div>
+        <span class="bd-line__rate">${row.rate}%</span>
+        <div class="bd-line__money">
+          <div class="bd-line__amt">
+            <label class="bd-fld bd-fld--num"><input class="bd-fld__input" data-f="amount"
+                   inputmode="decimal" value="${inr.format(num(row.amount))}"></label>
+            <button type="button" class="bd-del" data-act="del-line"
+                    title="${esc('Remove '+row.name)}" aria-label="${esc('Remove '+row.name)}">${trash12}</button>
+          </div>
+          ${i===all.length-1 ? addBtn(gst?'add-gst':'add-ded', addLabel) : '<span class="bd-slot"></span>'}
+        </div>
       </div>
+      ${meta}
     </div>`;
   };
 
-  const gst = gstLines(), tds = tdsLines();
+  const gst = gstLines(), ded = dedLines();
 
-  let html = `<div class="bd-row"><span>Sub Total</span><span></span><span id="bd-sub">${money(calc.subTotal)}</span></div>`;
+  /* Sub total and Grand Total are the sheet's two brackets — what the bill came
+     to before the ledgers, and what it comes to after them. Neither has a
+     section to fold, so both hold the slot open and leave it empty. */
+  let html = `
+    <div class="bd-row">
+      <span class="bd-lbl bd-lbl--sub">Sub total</span>
+      <div class="bd-row__amt">${fig('bd-sub',money(calc.subTotal))}<span class="bd-slot"></span></div>
+    </div>
+    ${rule}`;
 
   /* GST — reverse charge is a GST-only mechanism, so its switch sits on this
-     heading rather than above the whole breakdown. Saying it is applicable is
-     the whole statement: the GST total greys out because it leaves the Grand
-     Total, and the ledger it posts to is settled in the dialog, so all the
-     heading carries beside the switch is the way back into that dialog. */
+     row rather than above the whole sheet. Saying it is applicable is the whole
+     statement: the GST total greys out because it leaves the Grand Total, and
+     the ledger it posts to is settled in the dialog, so all the row carries
+     beside the switch is the way back into that dialog. */
   html += `<section class="bd-sec">
-      <div class="bd-sec__head">
-        <div>
-          <span class="bd-sec__ttl">GST</span>
-          <label class="bd-rc${state.reverseCharge?' is-on':''}">
-            <span class="bd-rc__label">Reverse charge</span>
-            <select data-bind="reverseCharge" aria-label="Reverse charge applicability">
-              <option value="no"${state.reverseCharge?'':' selected'}>Not applicable</option>
-              <option value="yes"${state.reverseCharge?' selected':''}>Applicable</option>
-            </select>
+      <div class="bd-row">
+        <div class="bd-row__lead">
+          <span class="bd-lbl">GST</span>
+          <label class="bd-rc">
+            <span class="bd-rc__label" title="Reverse charge mechanism">RCM:</span>
+            <span class="bd-rc__val">
+              <select data-bind="reverseCharge" aria-label="Reverse charge applicability">
+                <option value="no"${state.reverseCharge?'':' selected'}>Not applicable</option>
+                <option value="yes"${state.reverseCharge?' selected':''}>Applicable</option>
+              </select>${chevSm}
+            </span>
           </label>
           ${state.reverseCharge ? `<button type="button" class="bd-rcedit" data-act="rcm-pick"
             data-field="rcmLedger" title="${esc(rcmLedgerName())}"
-            >${pencil}${state.rcmLedger?'Edit ledger':'Select ledger'}</button>` : ''}
+            >${pencil12}${state.rcmLedger?'Edit ledger':'Select ledger'}</button>` : ''}
         </div>
-        ${secAmt('bd-gst-amt',calc.gstTotal,false,state.reverseCharge)}
+        <div class="bd-row__amt">
+          ${secFig('bd-gst-amt',calc.gstTotal,false,state.reverseCharge)}
+          ${secSlot('gst','GST',
+            {empty:!gst.length, add:'add-gst', label:'Add GST ledger',
+             hint: !gstApplies() ? 'This GST treatment does not attract GST on the purchase.'
+                 : isIntraState()===null ? 'Set Source and Destination of Supply to compute GST.'
+                 : 'Set a tax rate on a line item or ledger to compute GST.'})}
+        </div>
       </div>
-      ${gst.length ? gst.map(taxLine).join('')
-        : `<p class="bd-empty">${!gstApplies() ? 'This GST treatment does not attract GST on the purchase.'
-            : isIntraState()===null ? 'Set Source and Destination of Supply to compute GST.'
-            : 'Set a tax rate on a line item or ledger to compute GST.'}</p>`}
-      <button type="button" class="bd-add" data-act="add-gst">${plusIco}Add GST ledger</button>
-    </section>`;
+      ${gst.length ? secBody('gst', gst.map(taxLine).join('')) : ''}
+    </section>
+    ${rule}`;
 
-  /* TDS — the vendor's PAN and deductee type drive every rate below, but they
-     are read off the vendor card rather than restated here */
-  html += `<section class="bd-sec">
-      <div class="bd-sec__head">
-        <div><span class="bd-sec__ttl">TDS</span></div>
-        ${secAmt('bd-tds-amt',calc.tdsTotal,true)}
-      </div>
-      ${tds.length ? tds.map(taxLine).join('')
-        : `<p class="bd-empty">No TDS applicable — pick a vendor and an expense ledger with a nature of payment.</p>`}
-      <button type="button" class="bd-add" data-act="add-tds">${plusIco}Add TDS ledger</button>
-    </section>`;
+  /* The withholding section names itself by what the bill is carrying, so the
+     three modes ARE the row's label rather than a control sitting next to one:
+     a section title of its own would read "TDS · (•)TDS ( )TCS ( )Others". */
+  const dedRadios = Object.entries(DEDUCTIONS).map(([id,d])=>`
+            <label class="bd-mode${state.deductionMode===id?' is-on':''}">
+              <input type="radio" name="ded-mode" value="${id}"${state.deductionMode===id?' checked':''}>
+              <span class="bd-mode__dot"></span>${d.label}
+            </label>`).join('');
 
   html += `<section class="bd-sec">
-      <div class="bd-sec__head">
-        <div><span class="bd-sec__ttl">Adjustments</span></div>
-        ${secAmt('bd-adj-amt',calc.adjTotal)}
+      <div class="bd-row">
+        <div class="bd-row__lead">
+          <div class="bd-modes" role="radiogroup" aria-label="What this bill withholds">${dedRadios}</div>
+        </div>
+        <div class="bd-row__amt">
+          ${secFig('bd-ded-amt',calc.dedTotal,true)}
+          ${secSlot('ded',DEDUCTIONS[state.deductionMode].label,
+            {empty:!ded.length, add:'add-ded',
+             label:'Add '+DEDUCTIONS[state.deductionMode].label+' line',
+             hint: state.deductionMode==='tds'
+                 ? 'No TDS applicable — pick a vendor and an expense ledger with a nature of payment.'
+                 : state.deductionMode==='tcs'
+                 ? 'No TCS on this bill — add the section the vendor has collected under.'
+                 : 'Nothing else withheld — add a statutory head the vendor has deducted.'})}
+        </div>
       </div>
-      ${state.adjustments.map(a=>`
+      ${ded.length ? secBody('ded', ded.map(taxLine).join('')) : ''}
+    </section>
+    ${rule}`;
+
+  /* An adjustment is a ledger and a figure. It carries no rate — a round-off
+     or a freight charge is not a percentage of anything — so the rate slot on
+     these rows is held open and empty rather than filled with a number the
+     adjustment does not have. */
+  html += `<section class="bd-sec">
+      <div class="bd-row">
+        <div class="bd-row__lead"><span class="bd-lbl">Adjustments</span></div>
+        <div class="bd-row__amt">
+          ${secFig('bd-adj-amt',calc.adjTotal)}
+          ${secSlot('adj','Adjustments',
+            {empty:!state.adjustments.length, add:'add-adj', label:'Add adjustment',
+             hint:'Add a round-off, a freight charge or a discount settled outside the lines.'})}
+        </div>
+      </div>
+      ${state.adjustments.length ? secBody('adj', state.adjustments.map((a,i,all)=>`
         <div class="bd-line" data-adj="${a.id}">
-          <label class="cell"><select class="cell__select t-cell" data-af="ledger">${ledgerOptions(a.ledger)}</select></label>
-          <span></span>
-          <label class="cell cell-num"><input class="cell__input t-cell" data-af="amount" inputmode="decimal"
-                 value="${a.amount?inr.format(num(a.amount)):''}" placeholder="0.00"></label>
-          <button type="button" class="bd-del" data-af="del" aria-label="Remove adjustment">&times;</button>
-        </div>`).join('')}
-      <button type="button" class="bd-add" data-act="add-adj">${plusIco}Add adjustment</button>
-    </section>`;
+          <div class="bd-line__row">
+            <div class="bd-line__lead">
+              <label class="bd-fld bd-fld--ledger"><select class="bd-fld__select" data-af="ledger"
+                     aria-label="Adjustment ledger">${ledgerOptions(a.ledger)}</select>${fldChev}</label>
+            </div>
+            <span class="bd-line__rate"></span>
+            <div class="bd-line__money">
+              <div class="bd-line__amt">
+                <label class="bd-fld bd-fld--num"><input class="bd-fld__input" data-af="amount"
+                       inputmode="decimal" value="${a.amount?inr.format(num(a.amount)):''}" placeholder="0.00"></label>
+                <button type="button" class="bd-del" data-af="del"
+                        title="Remove adjustment" aria-label="Remove adjustment">${trash12}</button>
+              </div>
+              ${i===all.length-1 ? addBtn('add-adj','Add adjustment') : '<span class="bd-slot"></span>'}
+            </div>
+          </div>
+        </div>`).join('')) : ''}
+    </section>
+    ${rule}`;
 
-  html += `<div class="bd-grand"><span>Grand Total</span><span></span><span id="bd-grand">${money(calc.grand)}</span></div>`;
+  html += `
+    <div class="bd-row">
+      <span class="bd-lbl bd-lbl--grand">Grand Total</span>
+      <div class="bd-row__amt">${fig('bd-grand',money(calc.grand),' bd-fig--grand')}<span class="bd-slot"></span></div>
+    </div>`;
 
   /* the write-off names its ledger once one is chosen, and asks for one until
      then — the only place in the sheet that decision is visible */
@@ -3498,7 +3698,7 @@ function patchTotals(calc){
   put('bd-grand', money(calc.grand));
   put('bd-gst-amt', sectionAmt(calc.gstTotal),      !calc.gstTotal);
   $('#bd-gst-amt')?.classList.toggle('is-excluded', state.reverseCharge);
-  put('bd-tds-amt', sectionAmt(calc.tdsTotal,true), !calc.tdsTotal);
+  put('bd-ded-amt', sectionAmt(calc.dedTotal,true), !calc.dedTotal);
   put('bd-adj-amt', sectionAmt(calc.adjTotal),      !calc.adjTotal);
 }
 
@@ -3772,18 +3972,36 @@ document.addEventListener('input', e=>{
   if(kind==='taxLines') row.touched = true;
 });
 
+/* Switching what the bill withholds. The lines of the mode being left stay in
+   taxLines untouched — they are that mode's answer and are waiting there if
+   the user switches back — but they stop being drawn and stop counting, so
+   the Grand Total follows the switch immediately. The section opens on the
+   switch: answering the radio is a statement that this bill carries the thing,
+   and leaving it folded would hide the lines that answer says exist. */
+document.addEventListener('change', e=>{
+  if(e.target.name!=='ded-mode') return;
+  state.deductionMode = e.target.value;
+  /* open, not "let it decide" — TCS and Others start empty, and a section
+     that folded itself shut the moment you said the bill carries one would
+     put the row you are about to add out of reach */
+  state.secOpen.ded = true;
+  render();
+});
+
 document.addEventListener('change', e=>{
   const f = e.target.dataset.f;
   if(!f || e.target.tagName!=='SELECT') return;
   const ctx = rowOf(e.target); if(!ctx?.row) return;
   const kind = ctx.tr.dataset.kind, row = ctx.row;
 
-  // the tax table's ledger picker spans GST ledgers and TDS sections
+  /* the tax picker's value carries the family it came from — "tds:194C" for a
+     withholding head, a bare ledger name for GST */
   if(kind==='taxLines' && f==='ledger'){
     row.touched = true;
-    if(e.target.value.startsWith('tds:')){
-      const sec = byId(MASTERS.tdsSections, e.target.value.slice(4));
-      row.type='tds'; row.section=sec.id; row.name=sec.name; row.rate=sec.rate;
+    const [mode,id] = e.target.value.split(':');
+    if(DEDUCTIONS[mode]){
+      const sec = byId(dedMaster(mode), id);
+      row.type=mode; row.section=sec.id; row.name=sec.name; row.rate=sec.rate;
       row.amount = r2(num(row.base)*sec.rate/100);
       row.note = ''; row.detail = '';
     }else{
@@ -3857,6 +4075,7 @@ document.addEventListener('click', e=>{
   }
   if(btn.dataset.act==='add-adj'){
     state.adjustments.push({id:uid(),ledger:'',amount:0});
+    state.secOpen.adj = true;                 // the row you just asked for has to be visible
     render(); return;
   }
   if(btn.dataset.act==='rcm-pick'){ openRcmDialog(); return; }
@@ -3866,13 +4085,23 @@ document.addEventListener('click', e=>{
   if(btn.dataset.act==='add-gst'){
     state.taxLines.push({id:uid(),key:uid(),type:'gst',auto:false,touched:true,
                          name:'Input Cess',rate:0,base:0,amount:0,itc:'eligible'});
+    state.secOpen.gst = true;
     render(); return;
   }
-  if(btn.dataset.act==='add-tds'){
-    const used = new Set(tdsLines().map(t=>t.section));
-    const sec  = MASTERS.tdsSections.find(s=>!used.has(s.id)) || MASTERS.tdsSections[0];
-    state.taxLines.push({id:uid(),key:uid(),type:'tds',auto:false,touched:true,
+  if(btn.dataset.act==='add-ded'){
+    const mode = state.deductionMode;
+    const used = new Set(dedLines().map(t=>t.section));
+    const sec  = dedMaster().find(s=>!used.has(s.id)) || dedMaster()[0];
+    state.taxLines.push({id:uid(),key:uid(),type:mode,auto:false,touched:true,
                          section:sec.id,name:sec.name,rate:sec.rate,base:0,amount:0,note:'',detail:''});
+    state.secOpen.ded = true;                 // you cannot add into a shut section
+    render(); return;
+  }
+  /* the caret and the section name are one control, so the click can land on
+     either — and it stops being derived the moment it is answered by hand */
+  if(btn.dataset.sec){
+    const key = btn.dataset.sec;
+    state.secOpen[key] = !secIsOpen(key);
     render(); return;
   }
   if(btn.dataset.act==='del-line'){
@@ -4429,8 +4658,11 @@ function journalEntries(calc){
     lines.push({account:ledgerNameOf(a.ledger)||'Adjustment',dr:amt>0?amt:0,cr:amt<0?-amt:0});
   });
 
-  tdsLines().forEach(t=>num(t.amount) &&
-    lines.push({account:`TDS Payable — ${t.section||t.name}`,dr:0,cr:num(t.amount)}));
+  /* the withholding credits a payable named for the mode it was withheld
+     under — TDS, TCS and the other heads settle with different departments */
+  dedLines().forEach(t=>num(t.amount) &&
+    lines.push({account:`${DEDUCTIONS[t.type].label} Payable — ${t.section||t.name}`,
+                dr:0,cr:num(t.amount)}));
 
   lines.push({account:byId(MASTERS.vendors,state.vendor).name,dr:0,cr:calc.grand,party:true});
 
@@ -4471,7 +4703,8 @@ $('#btn-allocate').addEventListener('click',()=>{
       <dt>Supply</dt><dd>${esc(byId(MASTERS.states,state.sourceState).plain)} → ${esc(byId(MASTERS.states,state.destState).plain)} · ${calc.intra?'CGST + SGST':'IGST'}</dd>
       <dt>GST treatment</dt><dd>${esc(byId(MASTERS.gstTreatments,state.gstTreatment).name)}${state.reverseCharge?' · reverse charge':''}</dd>
       ${state.reverseCharge&&calc.gstTotal?`<dt>Reverse charge</dt><dd>${money(calc.gstTotal)} to ${esc(rcmLedgerName())}</dd>`:''}
-      ${calc.tdsTotal?`<dt>TDS deducted</dt><dd>${money(calc.tdsTotal)} (${tdsLines().filter(t=>t.amount>0).map(t=>t.section).join(', ')})</dd>`:''}
+      ${calc.dedTotal?`<dt>${DEDUCTIONS[state.deductionMode].label} withheld</dt><dd>${money(calc.dedTotal)} (${
+        dedLines().filter(t=>t.amount>0).map(t=>t.section).join(', ')})</dd>`:''}
       ${calc.gstIneligible?`<dt>ITC not eligible</dt><dd>${money(calc.gstIneligible)}</dd>`:''}
       ${minted.length?`<dt>Masters created with this bill</dt><dd>${minted.map(x=>
         `${x.route==='ledger'?'Ledger':'Item'} · ${esc(x.name)}${x.hsn?` (${x.route==='ledger'?'SAC':'HSN'} ${esc(x.hsn)}, ${x.gst}%${
