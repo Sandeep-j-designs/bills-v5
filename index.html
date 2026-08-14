@@ -599,20 +599,28 @@ input[readonly]{cursor:default}
    Three exclusive answers, all three worth reading at rest, so radios rather
    than a select — and they stand where a section name would, because which
    one the bill bears IS this section's name. A 14px ring on a 1.4px stroke
-   with a 7px centre, 4px from ring to word and 14px from one answer to the
+   with a 7px centre, 6px from ring to word and 14px from one answer to the
    next. Only TDS is computed: the vendor's PAN and deductee type drive every
    rate under it. TCS and the other heads are hand-added — they are printed on
    the vendor's invoice and nothing in our masters can predict them. */
+/* The answers are set exactly as "GST" is — 14/20, regular, the sheet's own
+   ink — because they are the same kind of thing and sit on the same line. The
+   component draws them a step down at 12 and greys the two not chosen, which
+   put this section's name two sizes and one tone below the name opposite it:
+   the whole withholding section read as something GST contained rather than
+   its peer, and the two unchosen answers read as disabled rather than
+   available.
+
+   Which one the bill bears is said by the ring alone. That is what a radio is
+   for, and it says it without the three words disagreeing about their own
+   weight — a set of options where the chosen one is also the darkest and the
+   bluest is a control that has been marked three times over. The ring's gap
+   opens to 6 with the type; 4px was measured against a 12px word. */
 .bd-modes{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .bd-mode{
-  position:relative;display:inline-flex;align-items:center;gap:4px;cursor:pointer;
-  font-size:12px;line-height:16px;font-weight:500;letter-spacing:-.12px;
-  color:var(--text-muted);transition:color .12s ease;
+  position:relative;display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  font-size:14px;line-height:20px;font-weight:400;color:var(--text);
 }
-.bd-mode.is-on{color:var(--brand-deep)}
-/* only the unchosen darken under the pointer: letting hover pull the chosen
-   one off the brand ink would read as the section un-choosing itself */
-.bd-mode:not(.is-on):hover{color:var(--text)}
 .bd-mode input{position:absolute;width:1px;height:1px;opacity:0}
 /* A drawn ring with a drawn centre, not a thick border faking one, so the
    mark does not thicken as it is chosen. 7px is half the ring's inner width,
@@ -643,16 +651,31 @@ input[readonly]{cursor:default}
 
 /* A line is three things set against the row — the ledger, the rate it
    carries, what it came to — with the bin that removes it and, on the last
-   line of a section, the plus that adds another. Both ends are fixed and the
-   middle is spaced between them: the ledger starts on the section name's own
-   left edge, the plus lands on the chevron's vertical, and the rate falls
-   where the room left over puts it. */
+   line of a section, the plus that adds another.
+
+   Every one of them is a fixed width, and that is the whole point. The
+   component spaces the row between its two ends, which means the rate is
+   placed by whatever is left over — so it landed on a different vertical in
+   every section, moved 12px wherever a GST line carried its ITC pencil, and
+   moved again by the 8px the ledger box grows as you reach for it. Three
+   different reasons for one column to wander. Fixed tracks and one reserved
+   slot per thing settle all three at once: the row's geometry stops depending
+   on what is in it. */
 .bd-line{display:flex;flex-direction:column;gap:6px}
 .bd-line__row{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   min-height:28px;
 }
-.bd-line__lead{flex:none;display:flex;align-items:center;gap:8px;min-width:0}
+.bd-line__lead{flex:none;display:flex;align-items:center;gap:8px;width:158px}
+/* The slot the ledger box grows into. The box itself is the component's 108,
+   and 124 once it is drawn — but it expands inside this, so the pencil beside
+   it and everything past it stay where they are. */
+.bd-line__fld{flex:none;width:124px;display:flex;min-width:0}
+/* Held open on every line, whether or not that line has an ITC call to make.
+   A GST line has one, a TDS line has none and a blocked one states itself
+   below — if the slot collapsed on those, the three sections would each put
+   their rate on a different vertical, which is the thing this row is for. */
+.bd-itc-slot{flex:none;width:26px;display:flex;align-items:center}
 .bd-line__money{flex:none;width:121px;display:flex;align-items:center;justify-content:flex-end;gap:12px}
 /* The amount and its bin do not shrink. The money group is the component's
    fixed 121, and the box that appears around a figure is wider than the figure
@@ -660,9 +683,14 @@ input[readonly]{cursor:default}
    squeezing the digits it was drawn to make readable. */
 .bd-line__amt{flex:none;display:flex;align-items:center;gap:8px}
 /* The rate is set by the ledger the line posts to — shown, not typed — so it
-   is the one thing in the row with no field around it. */
+   is the one thing in the row with no field around it. Fixed box, set right
+   inside it, tabular: the widest rate in the book is 0.25% and the narrowest
+   9%, and centring each on its own width staggered the column. Right-set, the
+   sign lands on one vertical and the figures grow leftward off it, so
+   9% / 2% / 0.1% read down as a column rather than a zigzag. */
 .bd-line__rate{
-  flex:none;padding:6px 0;white-space:nowrap;font-variant-numeric:tabular-nums;
+  flex:none;width:36px;padding:6px 0;text-align:right;
+  white-space:nowrap;font-variant-numeric:tabular-nums;
   font-size:12px;line-height:16px;letter-spacing:-.12px;color:var(--text-muted);
 }
 
@@ -741,19 +769,35 @@ input[readonly]{cursor:default}
 .bd-del:hover{color:var(--danger)}
 .bd-del:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px;border-radius:3px}
 
-/* Eligible is the answer nearly every GST line gives, so it is not written
-   out — it is a pencil beside the ledger, and the tooltip is where the current
-   call is read. The component draws a settled sheet and has no slot for it, so
-   it follows the field rather than taking a column: the ledger boxes still
-   start on one vertical, which is the column that has to hold. */
+/* Eligible is the answer nearly every GST line gives, so it is not spelled
+   out — but it was not stated at all either. A bare pencil is an invitation to
+   change something without saying what that something currently is, and on the
+   one call in this sheet where the default is worth trusting, the sheet said
+   nothing. So the call is marked and the pencil is what edits it: the mark
+   reports, the pencil acts, and the tooltip carries the words. Blocked keeps
+   its chip below — a finding is stated in full, not marked.
+
+   The mark is the letter, not a tick. A tick means "yes" to whatever question
+   you happened to be asking, and beside a ledger name there are several — is
+   it saved, is it matched, is it right. E is the initial of the only answer
+   this control gives, and reads as an abbreviation the moment the tooltip is
+   seen once. It is in the success ink at full strength while the pencil stays
+   quiet until the row is reached: at rest the row is a statement of what the
+   ledger does, not a row of pending edits. */
 .bd-itc{
-  flex:none;width:16px;height:16px;padding:0;border:none;background:none;border-radius:4px;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text-muted);opacity:.5;transition:opacity .12s ease,color .12s ease;
+  flex:none;display:inline-flex;align-items:center;gap:3px;height:16px;
+  padding:0;border:none;background:none;border-radius:4px;
 }
-.bd-line:hover .bd-itc{opacity:.8}
-.bd-itc:hover{opacity:1;color:var(--brand-deep)}
-.bd-itc:focus-visible{opacity:1;outline:2px solid var(--brand-soft);outline-offset:1px}
+.bd-itc__mark{
+  display:flex;align-items:center;justify-content:center;flex:none;
+  width:12px;height:12px;color:var(--success);
+  font-size:11px;line-height:12px;font-weight:700;letter-spacing:0;
+}
+.bd-itc__pen{display:flex;color:var(--text-muted);opacity:.5;transition:opacity .12s ease,color .12s ease}
+.bd-line:hover .bd-itc__pen{opacity:.85}
+.bd-itc:hover .bd-itc__pen{opacity:1;color:var(--brand-deep)}
+.bd-itc:focus-visible{outline:2px solid var(--brand-soft);outline-offset:1px}
+.bd-itc:focus-visible .bd-itc__pen{opacity:1}
 
 /* A blocked ITC call is a finding, and findings are stated — so it takes a
    line of its own under the ledger rather than a fourth thing competing for
@@ -781,6 +825,36 @@ input[readonly]{cursor:default}
 /* The write-off names its ledger once one is chosen, and asks for one until
    then — the only place in the sheet that decision is visible. */
 .bd-note{font-size:12px;line-height:16px;color:var(--warning)}
+
+/* --- the ledger tooltip ------------------------------------------------
+   A ledger box is 108px and most names in this book are longer than that, so
+   the field states a name it cannot show. The title attribute used to carry
+   it, and was wrong twice over: on a select it becomes the accessible name, so
+   the value was announced as the label; and the native tooltip waits about a
+   second and is cancelled outright when the element under the pointer resizes
+   — which is exactly what these fields do as you reach for them, so it often
+   never appeared at all.
+
+   So the sheet draws its own, and only where there is something to reveal: a
+   name that already fits is not a name worth repeating. Dark, because it sits
+   over the sheet rather than in it, and out of the flow entirely so showing it
+   cannot move the row it belongs to. */
+/* Shown and hidden outright rather than faded. The 300ms it waits before
+   appearing is what keeps it from flickering across a row, and that is the
+   only easing this needs — a fade on top of it is one more thing that has to
+   finish correctly before the name can be read. */
+.bd-tip{
+  position:fixed;z-index:60;pointer-events:none;display:none;
+  max-width:min(320px,90vw);padding:5px 8px;border-radius:5px;
+  background:#2c2c33;color:#fff;
+  font-family:var(--font);font-size:12px;line-height:16px;font-weight:400;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 2px 8px rgba(20,22,40,.24);
+}
+.bd-tip.is-on{display:block}
+/* the same text set in the field's own font, off screen, so "does this fit"
+   is measured rather than guessed */
+.bd-tip__measure{position:absolute;left:-9999px;top:0;white-space:nowrap;visibility:hidden}
 
 /* ---------------------------------------------------------------- dialog */
 dialog{border:none;border-radius:10px;padding:0;max-width:min(680px,92vw);width:100%;box-shadow:0 20px 60px rgba(20,20,40,.28)}
@@ -1137,6 +1211,8 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
    those are what the frame specifies and a narrower pane does not change
    them. */
 @container form (max-width:443px){
+  .bd-line__lead{width:142px}
+  .bd-line__fld{width:108px}
   .bd-fld--ledger{width:92px}
   .bd-fld--ledger:hover,.bd-fld--ledger:focus-within,.bd-fld--ledger.is-invalid{width:108px}
   .bd-line__money{width:104px}
@@ -3225,11 +3301,13 @@ function gstLedgerChoices(){
    mode the section is in. Letting a TDS row become a GST row from this
    dropdown would move it into a section that is not the one it is drawn in,
    which reads as the line vanishing. */
-/* the field carries its own value as a tooltip — the sheet is capped in width
-   and the longest heads in the book ("206C(1F) — Motor vehicle above ₹10
-   lakh") elide in the closed picker */
+/* The full value is revealed by the sheet's own tooltip (see bdTip), not by a
+   title attribute — a title on a select becomes that select's accessible name,
+   so carrying the value there had screen readers announcing the chosen ledger
+   as the field's label and then announcing it again as its value. The name of
+   this field is what it is for; the value is the select's own business. */
 function taxLedgerSelect(row){
-  const tip = ` title="${esc(row.name||'')}"`;
+  const tip = ` aria-label="${row.type==='gst'?'GST ledger':'Withholding head'}"`;
   if(row.type!=='gst'){
     const mode = row.type, d = DEDUCTIONS[mode];
     return `<select class="bd-fld__select" data-f="ledger"${tip}>
@@ -3514,20 +3592,21 @@ function renderBreakdown(calc){
 
      The ITC call only takes a row of its own once it has something to say.
      Eligible is the answer on all but a handful of lines, and a sheet that
-     repeats it under every GST ledger is spending a row per line to state the
-     default — so eligible is carried by a bare pencil beside the field, which
-     is the affordance to change the call rather than a report of it. Blocked
-     is a finding, and findings are stated: it drops to the chip under the
-     line, with the ledger it posts to in the same chip. */
+     repeats it in words under every GST ledger is spending a row per line to
+     state the default — so eligible is a tick beside the field with the pencil
+     that changes it, which states the call without giving it a row. Blocked is
+     a finding, and findings are stated: it drops to the chip under the line,
+     with the ledger it posts to in the same chip. */
   const taxLine = (row,i,all)=>{
     const gst = row.type==='gst';
     const blocked = gst && itcBlocked(row);
     const tip = gst || !(row.note||row.detail) ? ''
               : ` title="${esc([row.note,row.detail].filter(Boolean).join(' · '))}"`;
+    const itcLbl = itcChip(row)+' — set input tax credit eligibility';
     const itc = (!gst || blocked) ? '' : `
             <button type="button" class="bd-itc" data-f="itc"
-                    title="${esc(itcChip(row))} — set input tax credit eligibility"
-                    aria-label="${esc(itcChip(row))} — set input tax credit eligibility">${pencil12}</button>`;
+                    title="${esc(itcLbl)}" aria-label="${esc(itcLbl)}"
+              ><span class="bd-itc__mark" aria-hidden="true">E</span><span class="bd-itc__pen">${pencil12}</span></button>`;
     const meta = !blocked ? '' : `
       <div class="bd-line__meta">
         <button type="button" class="chip chip--no" data-f="itc"
@@ -3540,7 +3619,8 @@ function renderBreakdown(calc){
     return `<div class="bd-line" data-kind="taxLines" data-id="${row.id}">
       <div class="bd-line__row">
         <div class="bd-line__lead">
-          <label class="bd-fld bd-fld--ledger"${tip}>${taxLedgerSelect(row)}${fldChev}</label>${itc}
+          <div class="bd-line__fld"><label class="bd-fld bd-fld--ledger"${tip}>${taxLedgerSelect(row)}${fldChev}</label></div>
+          <span class="bd-itc-slot">${itc}</span>
         </div>
         <span class="bd-line__rate">${row.rate}%</span>
         <div class="bd-line__money">
@@ -3652,8 +3732,9 @@ function renderBreakdown(calc){
         <div class="bd-line" data-adj="${a.id}">
           <div class="bd-line__row">
             <div class="bd-line__lead">
-              <label class="bd-fld bd-fld--ledger"><select class="bd-fld__select" data-af="ledger"
-                     aria-label="Adjustment ledger">${ledgerOptions(a.ledger)}</select>${fldChev}</label>
+              <div class="bd-line__fld"><label class="bd-fld bd-fld--ledger"><select class="bd-fld__select" data-af="ledger"
+                     aria-label="Adjustment ledger">${ledgerOptions(a.ledger)}</select>${fldChev}</label></div>
+              <span class="bd-itc-slot"></span>
             </div>
             <span class="bd-line__rate"></span>
             <div class="bd-line__money">
@@ -4063,6 +4144,67 @@ document.addEventListener('change', e=>{
   if(!adj) return;
   adj.ledger = e.target.value;
 });
+
+/* --- the ledger tooltip ---------------------------------------------------
+   Reveals what a ledger field is too narrow to print. It reads the value off
+   the select rather than off state, so it is right for both kinds of line
+   without either of them having to hand it anything, and it stays quiet when
+   the name already fits — a tooltip that repeats what is on screen teaches you
+   to ignore the ones that do not. */
+const bdTip = (()=>{
+  let tip, meas, timer;
+  /* Does the chosen name fit the box it is in? Set the same string in the same
+     font off screen and compare. The select's own scrollWidth cannot answer
+     this: the closed control is painted by the engine, not laid out from its
+     option text, so it reports the box back at you whatever is in it. */
+  const overflows = (sel, text)=>{
+    if(!meas){ meas = document.createElement('span'); meas.className = 'bd-tip__measure'; document.body.appendChild(meas); }
+    const cs = getComputedStyle(sel);
+    meas.style.fontFamily    = cs.fontFamily;
+    meas.style.fontSize      = cs.fontSize;
+    meas.style.fontWeight    = cs.fontWeight;
+    meas.style.letterSpacing = cs.letterSpacing;
+    meas.textContent = text;
+    return meas.offsetWidth > sel.clientWidth;
+  };
+  const hide = ()=>{ clearTimeout(timer); tip?.classList.remove('is-on'); };
+  const show = fld=>{
+    const sel = fld.querySelector('.bd-fld__select'); if(!sel) return;
+    const text = (sel.selectedOptions[0]?.textContent || '').trim();
+    if(!text || !overflows(sel, text)) return;
+    if(!tip){ tip = document.createElement('div'); tip.className = 'bd-tip'; tip.setAttribute('role','tooltip'); document.body.appendChild(tip); }
+    tip.textContent = text;
+    const r = fld.getBoundingClientRect();
+    tip.style.left = Math.round(r.left) + 'px';
+    tip.style.top  = Math.round(r.bottom + 6) + 'px';
+    tip.classList.add('is-on');
+    // it is fixed to the viewport, so it is the viewport it has to stay inside
+    const t = tip.getBoundingClientRect();
+    if(t.right > innerWidth - 8) tip.style.left = Math.round(Math.max(8, innerWidth - 8 - t.width)) + 'px';
+  };
+  return {show, hide};
+})();
+/* Pointer and keyboard both reveal it: a field reached by tab is a field whose
+   name you cannot read either. */
+document.addEventListener('mouseover', e=>{
+  const fld = e.target.closest?.('#breakdown .bd-fld--ledger');
+  if(!fld) return;
+  bdTip.hide();
+  clearTimeout(bdTip._t);
+  bdTip._t = setTimeout(()=>bdTip.show(fld), 300);
+});
+document.addEventListener('mouseout', e=>{
+  if(e.target.closest?.('#breakdown .bd-fld--ledger')){ clearTimeout(bdTip._t); bdTip.hide(); }
+});
+document.addEventListener('focusin',  e=>{
+  const fld = e.target.closest?.('#breakdown .bd-fld--ledger');
+  if(fld) bdTip.show(fld);
+});
+document.addEventListener('focusout', e=>{ if(e.target.closest?.('#breakdown .bd-fld--ledger')) bdTip.hide(); });
+/* it is positioned against the viewport, so anything that moves the field
+   under it has to take it down */
+addEventListener('scroll', ()=>bdTip.hide(), true);
+addEventListener('resize', ()=>bdTip.hide());
 
 /* --- clicks -------------------------------------------------------------- */
 document.addEventListener('click', e=>{
