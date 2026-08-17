@@ -313,14 +313,13 @@ input[readonly]{cursor:default}
 .col-menu  {width:43px}
 .col-qty   {width:115px}
 .col-num   {width:167px}
-.col-tax   {width:167px}
 /* The item name is the line's identifier, and it was the one column too narrow
    to hold it: real names ("Cable Management Tray, Powder Coated 1200mm") ran
    109px past the field and ellipsed, which turns the identifier into a guess.
    Widened to fit the names actually in the book, with the row of meta beneath
-   it — goods/service, HSN, match mark — getting the slack as air rather than
-   sitting at 221px of its 241. The table already scrolls horizontally, so the
-   cost is scroll distance, not a squeezed neighbour. */
+   it — goods/service and HSN — getting the slack as air rather than sitting at
+   221px of its 241. The table already scrolls horizontally, so the cost is
+   scroll distance, not a squeezed neighbour. */
 .col-item  {width:340px}
 .col-godown{width:220px}
 .col-med   {width:223px}
@@ -344,10 +343,10 @@ input[readonly]{cursor:default}
 .cell-num,.cell-num .cell__input{text-align:right}
 .tcell.is-invalid .cell{border-color:var(--danger)}
 
-/* goods/service toggle, HSN and the match mark share one line under the item
-   picker — three fixed-minimum pieces on one row, sized so all three still fit
-   at the narrowest the column has ever been (242px of content), which is why
-   the padding and gap here are budgeted rather than chosen to taste. */
+/* goods/service toggle and HSN share one line under the item picker — two
+   fixed-minimum pieces on one row, sized so both still fit at the narrowest
+   the column has ever been (242px of content), which is why the padding and
+   gap here are budgeted rather than chosen to taste. */
 .itemmeta{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
 .kindtoggle{
   flex:none;padding:4px 8px;border:none;border-radius:var(--radius);
@@ -361,42 +360,6 @@ input[readonly]{cursor:default}
 }
 .hsn__input:hover{border-bottom-color:var(--brand-soft)}
 .hsn__input:focus{border-bottom-color:var(--brand-deep)}
-
-/* The master-match mark. A line the matcher is sure of says nothing at all —
-   its fields are simply filled, as they always were. The mark only appears
-   where there is a call left to make, so it is one word on two or three rows
-   of a bill rather than a badge on every one. */
-.mark{
-  flex:none;display:inline-flex;align-items:center;gap:4px;padding:0;border:none;
-  background:none;font-size:11px;line-height:16px;font-weight:600;
-  color:var(--brand-deep);white-space:nowrap;
-}
-.mark:hover{text-decoration:underline}
-.mark--confirm{color:var(--warning)}
-.mark--off{color:var(--text-muted);font-weight:400}
-.mark--off:hover{color:var(--brand-deep)}
-.mark .ico{flex:none}
-/* The ledger table has no meta track. Rather than let a mark make one row
-   taller than its neighbours, the track is reserved across the whole table for
-   as long as any row carries one. */
-.markline{display:flex;align-items:center;min-width:0;height:16px}
-.table--marks .tcell{grid-template-rows:34px 16px;min-height:83px}
-.table--marks .trow--head .tcell{min-height:42px}
-
-/* A master that does not exist yet. The field is filled — you can read what
-   will be created — but dashed, because it is a proposal and not yet a record.
-   No colour change: this is a statement about permanence, not about danger. */
-.cell.is-proposed{border-style:dashed}
-/* wayfinding: which rows still have a call to make, without a banner saying so */
-.trow.is-unmatched .tcell:first-child{box-shadow:inset 2px 0 0 var(--brand-soft)}
-
-/* ITC chip under a tax ledger */
-.chip{
-  display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
-  padding:4px 10px;border-radius:var(--radius);border:none;
-  background:#f1f2f6;color:var(--text);font-size:11px;font-weight:600;line-height:16px;
-}
-.chip--no{background:#faf1ef;color:#95493f}
 
 /* split field — value + unit/type affordance */
 .split{display:flex;align-items:center;height:34px;width:100%}
@@ -420,8 +383,8 @@ input[readonly]{cursor:default}
 
 /* The ITC call is three answers, not a switch — "ineligible" is two different
    findings and they post differently, so the row asks which one. It commits on
-   Save rather than on selection, because the ineligible answers pull a second
-   decision (the expense ledger) along behind them. */
+   Save rather than on selection, and an ineligible answer hands straight over
+   to the ledger dialog, because the write-off needs somewhere to land. */
 .menu--itc{min-width:260px;padding:6px}
 .itcopt{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:5px;cursor:pointer;font-size:12px;line-height:18px;color:var(--text)}
 .itcopt:hover{background:var(--bg-secondary)}
@@ -432,44 +395,10 @@ input[readonly]{cursor:default}
 }
 .itcopt input:checked + .itcopt__dot{border-color:var(--brand-deep);border-width:4px}
 .itcopt input:focus-visible + .itcopt__dot{box-shadow:0 0 0 2px var(--brand-soft)}
-/* the ledger the ineligible answers imply, stated where the answer is given */
-.itcled{display:flex;align-items:center;gap:8px;padding:8px 10px 4px;margin-top:2px;border-top:1px solid var(--stroke);font-size:11px;color:var(--text-muted)}
-.itcled button{flex:1;min-width:0;padding:0;color:var(--brand-deep);font-weight:600;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.itcled button:hover{background:none;text-decoration:underline}
 .menu__foot{display:flex;justify-content:flex-end;gap:6px;padding:6px 4px 2px;margin-top:2px;border-top:1px solid var(--stroke)}
 .menu__foot button{padding:6px 12px;font-weight:600}
 .menu__foot .is-save{background:var(--brand);color:var(--on-brand)}
 .menu__foot .is-save:hover{background:var(--brand-deep)}
-
-/* Which master a line belongs to, asked in the same popover the ITC call uses.
-   The predicted HSN and rate are stated here but not edited here — the row's
-   own HSN and Tax cells already do that, and two places to change one number
-   is one too many. */
-.menu--match{min-width:288px;max-width:288px;padding:6px}
-/* an option here runs to several lines, so the dot belongs against the first
-   one rather than halfway down the block */
-.menu--match .itcopt{align-items:flex-start}
-.menu--match .itcopt__dot{margin-top:2px}
-/* .itcopt hides its radio by shrinking any input it contains — the name field
-   is an input too, so it has to opt back out */
-.itcopt input[data-mm="name"]{
-  position:static;width:100%;height:auto;opacity:1;margin:3px 0 1px;
-  padding:4px 8px;border:1px solid var(--brand-soft);border-radius:var(--radius);
-  background:var(--surface);color:var(--text);font-size:11px;line-height:16px;outline:none;
-}
-.itcopt input[data-mm="name"]:focus{border-color:var(--brand-deep)}
-.mm__head{padding:6px 10px 8px;border-bottom:1px solid var(--stroke);margin-bottom:2px}
-.mm__ttl{display:block;font-size:12px;font-weight:600;line-height:17px;color:var(--text);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mm__sub{display:block;margin-top:2px;font-size:11px;line-height:16px;color:var(--text-muted)}
-.itcopt__body{flex:1;min-width:0}
-.itcopt__main{display:flex;align-items:baseline;gap:6px}
-.itcopt__name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.itcopt__score{flex:none;font-size:11px;font-weight:600;color:var(--text-muted)}
-/* the prediction, and where it came from — the reason is the point, not the % */
-.mm__pred{display:block;margin-top:2px;font-size:11px;line-height:16px;color:var(--text)}
-.mm__why{display:block;margin-top:1px;font-size:11px;line-height:15px;color:var(--text-muted)}
-.mm__none{padding:6px 10px;font-size:11px;line-height:16px;color:var(--text-muted)}
 
 .bulkbar{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--radius);background:var(--bg-secondary);border:1px solid var(--brand-soft);font-size:12px}
 
@@ -479,11 +408,25 @@ input[readonly]{cursor:default}
 .pill--warn{background:#fff3d9;color:var(--warning)}
 
 /* ------------------------------------------------------------- narration */
+/* The note and the figures on one line. The breakdown holds the component's
+   433 and the narration takes what is left, which is why the note is the one
+   that gives: it is optional text, and the sheet beside it is not. They align
+   at the top so the narration reads against Sub total rather than floating in
+   the middle of a panel it has nothing to do with. */
+/* It wraps rather than switching at a measured width: the sheet holds its 433
+   and the note asks for 180, so the two sit on one line wherever 637 of form
+   is going — and the pane is resizable, so a fixed breakpoint would only be
+   right at the widths nobody happened to drag to. Below that the note takes
+   the full line and the sheet keeps its right edge. */
+.closing{display:flex;flex-wrap:wrap;align-items:flex-start;gap:24px}
+.closing .narration{flex:1 1 180px}
+.closing .breakdown{flex:0 1 433px}
+
 /* The box is as tall as what is written in it. A narration is usually one
    line and occasionally five, so a fixed height is either mostly empty or
    too small; it grows with the text and stops before it takes over the form.
    No drag handle — there is nothing left for it to do. */
-.narration{display:flex;flex-direction:column;gap:16px}
+.narration{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:8px}
 .narration textarea{
   field-sizing:content;min-height:56px;max-height:280px;
   padding:10px 15px;resize:none;border:1px solid var(--brand-soft);border-radius:var(--radius);
@@ -801,26 +744,27 @@ input[readonly]{cursor:default}
 
 /* A blocked ITC call is a finding, and findings are stated — so it takes a
    line of its own under the ledger rather than a fourth thing competing for
-   room in the row, with the ledger it posts to in the same chip: one decision,
-   one surface, one pencil. It is red because the credit is actually being
-   given up. One line always: the ledger name is what gives when the two
-   clauses cannot both fit, because the eligibility call is the decision. */
-.bd-line__meta{display:flex;min-width:0}
-.bd-line__meta .chip{
-  flex:0 1 auto;min-width:0;height:24px;padding:0 8px;gap:4px;
+   room in the row.
+
+   Two decisions, asked in two different places — the call in a popover, the
+   ledger in a modal — so they are two buttons and not one. Each carries its
+   own pencil, because each is separately editable. They are outlined rather
+   than filled: this is a row of things still to answer, not a status. */
+.bd-line__meta{display:flex;align-items:center;gap:10px;min-width:0}
+.itcbtn{
+  flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;gap:6px;
+  height:28px;padding:0 10px;border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--brand-soft);color:var(--brand-deep);
   font-size:12px;line-height:16px;letter-spacing:-.12px;font-weight:600;
-  background:#faf1ef;color:#95493f;border:1px solid transparent;border-radius:var(--radius);
-  transition:border-color .12s ease;
+  transition:border-color .12s ease,background-color .12s ease;
 }
-.bd-line__meta .chip:hover{border-color:#e2c6bf}
-.bd-line__meta .chip:focus-visible{outline:2px solid var(--brand-soft);outline-offset:2px}
-.bd-line__meta .chip svg{display:block;flex:none}
-.chip__label{flex:none;white-space:nowrap}
-.chip__sep{margin:0 1px;opacity:.5}
-.chip__posts{
-  flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-weight:400;opacity:.85;
-}
+.itcbtn:hover{border-color:var(--brand-deep);background:var(--bg-secondary)}
+.itcbtn:focus-visible{outline:2px solid var(--brand-soft);outline-offset:1px}
+.itcbtn svg{display:block;flex:none}
+/* the eligibility call is the decision, so it never ellipses — the ledger name
+   is what gives when the two cannot both fit */
+.itcbtn--call{flex:none}
+.itcbtn__label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* The write-off names its ledger once one is chosen, and asks for one until
    then — the only place in the sheet that decision is visible. */
@@ -1630,20 +1574,20 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
       </button>
     </section>
 
-    <!-- Narration sits between the lines and the figures: it is a note about
-         what has been entered above, and the breakdown below it is the one
-         thing on the page that is read rather than filled in. Ending the
-         form here means the Grand Total is the last thing on the sheet, so
-         nothing follows the number the whole page is working towards. -->
-    <section class="block">
-      <h2 class="t-section">Narration</h2>
-      <div class="narration">
+    <!-- The note and the figures close the form together. Narration is optional
+         and the breakdown is the one thing on the page that is read rather than
+         filled in, so neither earns a full-width band of its own; side by side
+         they end the sheet on the Grand Total, with nothing following the number
+         the whole page is working towards. -->
+    <div class="closing">
+      <section class="narration">
+        <h2 class="t-label">Narration (Optional)</h2>
         <textarea data-bind="narration" placeholder="Enter Narration"></textarea>
-      </div>
-    </section>
+      </section>
 
-    <!-- Breakdown: sub total, the GST and TDS ledgers, adjustments, total -->
-    <section class="breakdown" id="breakdown"></section>
+      <!-- Breakdown: sub total, the GST and TDS ledgers, adjustments, total -->
+      <section class="breakdown" id="breakdown"></section>
+    </div>
 
   </section>
 </main>
@@ -2116,146 +2060,17 @@ const MASTERS = {
     {vendor:'v-dhanraj', invoiceNo:'DMA/26-27/0330',date:'2026-07-20',amount:2140000}
   ],
 
-  /* --- historical mappings ------------------------------------------------
-     How lines on past bills were actually posted. This is the memory the
-     matcher reaches for first: a description this vendor has sent before is
-     not a guess, it is a precedent, and `n` is how much of one. A row scoped
-     to '*' is a house convention rather than a vendor habit, and loses to a
-     vendor-scoped row every time. Accepting a suggestion writes a row here,
-     which is why the same bill matches cleanly the second time it is run. */
-  mappings:[
-    {vendor:'v-technova',text:'i3 desktop 8gb 256gb ssd',        target:'item:it-i3',      n:14,last:'2026-07-02'},
-    {vendor:'v-technova',text:'i5 desktop 16gb 512gb ssd',       target:'item:it-i5',      n:9, last:'2026-06-18'},
-    {vendor:'v-technova',text:'4k monitor 27 inch',              target:'item:it-mon27',   n:4, last:'2026-05-21'},
-    {vendor:'v-technova',text:'usb c docking station',           target:'item:it-dock',    n:6, last:'2026-06-18'},
-    {vendor:'v-technova',text:'installation commissioning seats',target:'ledger:led-install',n:8,last:'2026-07-02'},
-    {vendor:'v-technova',text:'onsite amc desktops year',        target:'ledger:led-amc',  n:7, last:'2026-06-18'},
-    {vendor:'v-sunrise', text:'a4 copier paper 75 gsm',          target:'item:it-a4',      n:22,last:'2026-06-30'},
-    {vendor:'v-sunrise', text:'box file foolscap',               target:'item:it-file',    n:13,last:'2026-06-30'},
-    {vendor:'v-sunrise', text:'gel pen 0.7 mm pack',             target:'item:it-pen',     n:10,last:'2026-05-28'},
-    {vendor:'v-globe',   text:'freight cartage inward lorry',    target:'ledger:led-freight',n:31,last:'2026-07-15'},
-    {vendor:'v-globe',   text:'door delivery charges',           target:'ledger:led-freight',n:12,last:'2026-07-15'},
-    {vendor:'v-meridian',text:'housekeeping monthly deployment', target:'ledger:led-housekeep',n:18,last:'2026-07-01'},
-    {vendor:'v-meridian',text:'security guard deployment',       target:'ledger:led-security',n:9,last:'2026-06-01'},
-    {vendor:'v-infinite',text:'cloud subscription monthly',      target:'ledger:led-software',n:24,last:'2026-07-01'},
-    {vendor:'v-samhita', text:'office premises rent monthly',    target:'ledger:led-rentbld',n:15,last:'2026-07-01'},
-    {vendor:'v-vertex',  text:'legal retainer advisory',         target:'ledger:led-legal',n:12,last:'2026-06-24'},
-    {vendor:'v-quantum', text:'analytics consulting engagement', target:'ledger:led-prof', n:7, last:'2026-06-11'},
-    {vendor:'v-anand',   text:'copier paper reams',              target:'item:it-a4',      n:19,last:'2026-07-09'},
-    {vendor:'v-cygnus',  text:'laser toner cartridge 88a',       target:'item:it-toner',   n:8, last:'2026-06-20'},
-    {vendor:'v-orient',  text:'storage cabinet 4 drawer',        target:'item:it-cab',     n:5, last:'2026-05-30'},
-    {vendor:'v-arka',    text:'solar panel 540 wp',              target:'item:it-solar',   n:16,last:'2026-07-04'},
-    {vendor:'*',         text:'courier postage charges',         target:'ledger:led-courier',n:41,last:'2026-07-22'},
-    {vendor:'*',         text:'packing forwarding charges',      target:'ledger:led-packing',n:27,last:'2026-07-18'},
-    {vendor:'*',         text:'annual maintenance contract',     target:'ledger:led-amc',  n:23,last:'2026-07-10'},
-    {vendor:'*',         text:'insurance premium policy',        target:'ledger:led-insurance',n:14,last:'2026-06-30'}
-  ],
-
   lastVoucherSeq:{purchase:184,'purchase-imp':12,'purchase-sez':4,'purchase-rcm':9,'purchase-ret':6,'debit-note':31}
 };
-
-/* --- HSN / SAC knowledge base ---------------------------------------------
-   What a new master gets classified as when nothing in the books resembles it.
-   Each row is a heading, the words that point at it, and the rate that heading
-   normally carries. `tds` is only set for service codes — an item master has no
-   nature of payment, an expense ledger does, and that is what feeds the TDS
-   engine the moment a new ledger is accepted.
-
-   These are the common headings, not the schedule. A prototype that pretended
-   to know all 21 sections would be lying at a scale nobody could check. */
-const HSN_KB = [
-  {kw:['tray','rack','bracket','enclosure','channel','angle','strip','steel','iron','fabricat'],
-   hsn:'7326', desc:'Articles of iron or steel',            gst:18, kind:'goods',  group:'Goods — Networking', unit:'Nos'},
-  {kw:['cable','wire','patch cord','cord','conduit','harness'],
-   hsn:'8544', desc:'Insulated wire and cable',             gst:18, kind:'goods',  group:'Goods — Networking', unit:'Nos'},
-  {kw:['switch','router','access point','wifi','wi-fi','network','modem'],
-   hsn:'8517', desc:'Telephony and networking apparatus',   gst:18, kind:'goods',  group:'Goods — Networking', unit:'Nos'},
-  {kw:['desktop','laptop','computer','workstation','server','notebook','cpu','ssd','keyboard','mouse','dock'],
-   hsn:'8471', desc:'Automatic data processing machines',   gst:18, kind:'goods',  group:'Goods — IT hardware',unit:'Nos'},
-  {kw:['monitor','display','screen','projector'],
-   hsn:'8528', desc:'Monitors and projectors',              gst:18, kind:'goods',  group:'Goods — IT hardware',unit:'Nos'},
-  {kw:['printer','toner','cartridge','scanner','copier machine'],
-   hsn:'8443', desc:'Printing machinery and parts',         gst:18, kind:'goods',  group:'Goods — IT hardware',unit:'Nos'},
-  {kw:['camera','cctv','surveillance','recorder'],
-   hsn:'8525', desc:'Cameras and transmission apparatus',   gst:18, kind:'goods',  group:'Goods — Networking', unit:'Nos'},
-  {kw:['ups','inverter','stabiliser','stabilizer','transformer','power supply'],
-   hsn:'8504', desc:'Static converters and transformers',   gst:18, kind:'goods',  group:'Goods — Power',      unit:'Nos'},
-  {kw:['solar','photovoltaic','panel wp'],
-   hsn:'8541', desc:'Photovoltaic cells and panels',        gst:12, kind:'goods',  group:'Goods — Power',      unit:'Nos'},
-  {kw:['battery','cell backup'],
-   hsn:'8507', desc:'Electric accumulators',                gst:28, kind:'goods',  group:'Goods — Power',      unit:'Nos'},
-  {kw:['chair','sofa','stool','seating'],
-   hsn:'9401', desc:'Seats and parts thereof',              gst:18, kind:'goods',  group:'Goods — Furniture',  unit:'Nos'},
-  {kw:['desk','table','cabinet','cupboard','shelf','workstation furniture','pedestal'],
-   hsn:'9403', desc:'Other furniture and parts',            gst:18, kind:'goods',  group:'Goods — Furniture',  unit:'Nos'},
-  {kw:['air conditioner','split ac','ac unit','hvac'],
-   hsn:'8415', desc:'Air conditioning machines',            gst:28, kind:'goods',  group:'Goods — Facilities', unit:'Nos'},
-  {kw:['refrigerat','water dispenser','cooler','purifier'],
-   hsn:'8418', desc:'Refrigerators and cooling equipment',  gst:18, kind:'goods',  group:'Goods — Facilities', unit:'Nos'},
-  {kw:['paper','ream','copier paper'],
-   hsn:'4802', desc:'Uncoated paper for writing or printing',gst:12,kind:'goods',  group:'Goods — Stationery', unit:'Ream'},
-  {kw:['file','register','notebook','envelope','letterhead','stationery'],
-   hsn:'4820', desc:'Registers, files and stationery of paper',gst:18,kind:'goods',group:'Goods — Stationery', unit:'Nos'},
-  {kw:['pen','pencil','marker','highlighter'],
-   hsn:'9608', desc:'Pens, pencils and markers',            gst:12, kind:'goods',  group:'Goods — Stationery', unit:'Pack'},
-  {kw:['tea','coffee','premix','beverage'],
-   hsn:'2101', desc:'Extracts of coffee and tea',           gst:18, kind:'goods',  group:'Goods — Pantry',     unit:'Kg'},
-  {kw:['sanitiser','sanitizer','disinfect','pesticide'],
-   hsn:'3808', desc:'Disinfectants and similar products',   gst:18, kind:'goods',  group:'Goods — Pantry',     unit:'Nos'},
-  {kw:['mask','glove','apron','uniform','textile'],
-   hsn:'6307', desc:'Other made-up textile articles',       gst:5,  kind:'goods',  group:'Goods — Pantry',     unit:'Box'},
-
-  /* services — these carry a nature of payment, so they can seed a ledger */
-  {kw:['e-waste','ewaste','disposal','recycling','scrap handling','waste'],
-   hsn:'999432',desc:'Non-hazardous waste treatment and disposal',gst:18,kind:'service',group:'Contracted work',tds:'194C',ledger:'E-Waste Disposal & Recycling'},
-  {kw:['installation','commissioning','erection','fitting'],
-   hsn:'998739',desc:'Installation services, other',        gst:18, kind:'service',group:'Contracted work',tds:'194C',ledger:'Installation & Commissioning'},
-  {kw:['freight','cartage','transport','logistics','lorry','delivery charges'],
-   hsn:'996511',desc:'Road transport of goods',             gst:18, kind:'service',group:'Contracted work',tds:'194C',ledger:'Freight & Cartage'},
-  {kw:['courier','postage','speed post'],
-   hsn:'996812',desc:'Courier services',                    gst:18, kind:'service',group:'Contracted work',tds:'194C',ledger:'Courier & Postage'},
-  {kw:['housekeeping','cleaning','janitor','facility manage'],
-   hsn:'998533',desc:'General cleaning services',           gst:18, kind:'service',group:'Contracted work',tds:'194C',ledger:'Housekeeping & Cleaning'},
-  {kw:['security','guard','watchman'],
-   hsn:'998525',desc:'Security and guard services',         gst:18, kind:'service',group:'Contracted work',tds:'194C',ledger:'Security Services'},
-  {kw:['advertis','branding','promotion','media buying'],
-   hsn:'998361',desc:'Advertising services',                gst:18, kind:'service',group:'Contracted work',tds:'194C',ledger:'Advertising & Promotion'},
-  {kw:['maintenance','amc','repair','servicing','support contract'],
-   hsn:'998713',desc:'Maintenance and repair of computers', gst:18, kind:'service',group:'Professional',   tds:'194J-tech',ledger:'Repairs & Maintenance'},
-  {kw:['software','subscription','licence','license','saas','cloud'],
-   hsn:'998434',desc:'Software and cloud services',         gst:18, kind:'service',group:'Professional',   tds:'194J-tech',ledger:'Software & Cloud Subscription'},
-  {kw:['consult','advisory','professional fee','retainer'],
-   hsn:'998311',desc:'Management consulting services',      gst:18, kind:'service',group:'Professional',   tds:'194J-prof',ledger:'Consultancy Charges'},
-  {kw:['legal','advocate','litigation','compliance filing'],
-   hsn:'998213',desc:'Legal services',                      gst:18, kind:'service',group:'Professional',   tds:'194J-prof',ledger:'Legal Charges'},
-  {kw:['audit','assurance','certification'],
-   hsn:'998221',desc:'Accounting and auditing services',    gst:18, kind:'service',group:'Professional',   tds:'194J-prof',ledger:'Audit & Assurance Fees'},
-  {kw:['training','workshop','coaching','seminar'],
-   hsn:'999293',desc:'Commercial training and coaching',    gst:18, kind:'service',group:'Professional',   tds:'194J-prof',ledger:'Training & Development'},
-  {kw:['rent of premises','office rent','lease of building','godown rent'],
-   hsn:'997212',desc:'Rental of non-residential property',  gst:18, kind:'service',group:'Rent & finance', tds:'194I-bld',ledger:'Rent — Premises'},
-  {kw:['equipment rent','machinery hire','plant hire','vehicle hire'],
-   hsn:'997314',desc:'Leasing of machinery and equipment',  gst:18, kind:'service',group:'Rent & finance', tds:'194I-pm',ledger:'Equipment Hire'},
-  {kw:['commission','brokerage'],
-   hsn:'998599',desc:'Other support services',              gst:18, kind:'service',group:'Rent & finance', tds:'194H',ledger:'Commission & Brokerage'},
-  {kw:['packing','forwarding','palletis','palletiz'],
-   hsn:'998540',desc:'Packaging services',                  gst:18, kind:'service',group:'No TDS',         tds:'',ledger:'Packing & Forwarding'},
-  {kw:['travel','conveyance','airfare','hotel stay'],
-   hsn:'996411',desc:'Local transport of passengers',       gst:5,  kind:'service',group:'No TDS',         tds:'',ledger:'Travel & Conveyance'},
-  {kw:['insurance','premium policy'],
-   hsn:'997134',desc:'General insurance services',          gst:18, kind:'service',group:'No TDS',         tds:'',ledger:'Insurance Premium'},
-  {kw:['calibration','testing','inspection'],
-   hsn:'998346',desc:'Technical testing and analysis',      gst:18, kind:'service',group:'Professional',   tds:'194J-tech',ledger:'Testing & Calibration'}
-];
 
 /* The document the demo extraction "reads". Goods cross the 194Q threshold and
    the service lines attract 194C and 194J, so TDS is exercised end to end.
 
-   These lines carry only what a supplier invoice actually prints: a description
-   in the vendor's words, sometimes an HSN, the quantities and the rate charged.
-   No item id, no ledger, no godown, no tax master — those are ours to decide,
-   and §4a decides them. Two lines are deliberately not in the masters at all,
-   so the creation path is exercised on every run. */
+   Each line carries what the supplier printed — a description in the vendor's
+   words, sometimes an HSN, the quantities and the rate charged — and where the
+   line belongs in our books: `route` says which table it lands in, `item` or
+   `ledger` names the master it posts to. Two lines name no master at all: the
+   field arrives empty and the user picks one. Nothing here is inferred. */
 const SAMPLE = {
   fileName:'Technova-Systems-TNS-25-26-1043.pdf',
   branch:'br-ka', vendor:'v-technova', voucherType:'purchase',
@@ -2265,20 +2080,15 @@ const SAMPLE = {
   narration:'Desktop refresh for Engineering — PO/2026/0442. Includes installation, 1-year onsite AMC and disposal of the replaced units.',
   costCentreClass:'ccc-dept',
   lines:[
-    // exact — this vendor has billed it in these words 14 times
-    {text:'Purchase of i3 Desktop, 8GB/256GB SSD',          hsn:'8471',  qty:12,rate:34500,disc:2,discType:'pct',gst:18,cc:'cc-eng'},
-    // exact — no precedent, but the master's name is unmistakable
-    {text:'24" LED Monitor - IPS',                          hsn:'8528',  qty:12,rate:8200, gst:18,cc:'cc-eng'},
-    // close — the vendor's own words for a master we do hold
-    {text:'Cordless desktop combo - keyboard and mouse',    hsn:'',      qty:12,rate:1150, gst:18,cc:'cc-eng'},
-    // none — nothing in the item masters resembles this
-    {text:'Cable management tray, powder coated 1200mm',    hsn:'',      qty:24,rate:1850, gst:18,cc:'cc-it'},
-    // exact — matches an expense ledger, so it belongs in the ledgers table
-    {text:'Installation & commissioning — 12 seats',        hsn:'998739',amount:45000,gst:18,cc:'cc-ops'},
-    // exact — on precedent, and the AMC shorthand has to be expanded first
-    {text:'Onsite AMC — 12 desktops, 1 year',               hsn:'998713',amount:96000,gst:18,cc:'cc-eng'},
-    // none — a service with no ledger to land in; predicts SAC 999432 and 194C
-    {text:'E-waste disposal & recycling of replaced units', hsn:'',      amount:18500,gst:18,cc:'cc-ops'}
+    {text:'Purchase of i3 Desktop, 8GB/256GB SSD',          hsn:'8471',  qty:12,rate:34500,disc:2,discType:'pct',gst:18,cc:'cc-eng',route:'item',item:'it-i3'},
+    {text:'24" LED Monitor - IPS',                          hsn:'8528',  qty:12,rate:8200, gst:18,cc:'cc-eng',route:'item',item:'it-mon'},
+    {text:'Cordless desktop combo - keyboard and mouse',    hsn:'',      qty:12,rate:1150, gst:18,cc:'cc-eng',route:'item',item:'it-kbm'},
+    // no item master named on the bill — the row arrives with the Item cell empty
+    {text:'Cable management tray, powder coated 1200mm',    hsn:'',      qty:24,rate:1850, gst:18,cc:'cc-it', route:'item',item:''},
+    {text:'Installation & commissioning — 12 seats',        hsn:'998739',amount:45000,gst:18,cc:'cc-ops',route:'ledger',ledger:'led-install'},
+    {text:'Onsite AMC — 12 desktops, 1 year',               hsn:'998713',amount:96000,gst:18,cc:'cc-eng',route:'ledger',ledger:'led-amc'},
+    // likewise: a service with no ledger named, so the Ledger cell arrives empty
+    {text:'E-waste disposal & recycling of replaced units', hsn:'',      amount:18500,gst:18,cc:'cc-ops',route:'ledger',ledger:''}
   ]
 };
 
@@ -2429,12 +2239,10 @@ const fcLive = (cfg=fieldConfig)=>FIELD_GROUPS
 /* ============================================================================
    3. STATE — every value here is user-editable; nothing is derived-only
    ==========================================================================*/
-/* `match` is what §4a made of the line — null on a row typed by hand, because
-   a row the user wrote has nothing to second-guess */
 const blankItem = ()=>({id:uid(),sel:false,description:'',item:'',kind:'goods',hsn:'',godown:'',
                         costCentre:'',ccSplit:null,qty:0,rate:0,discount:0,discountType:'pct',tax:'',
-                        amountOverride:null,match:null});
-const blankLedger = ()=>({id:uid(),sel:false,description:'',ledger:'',costCentre:'',ccSplit:null,tax:'',amount:0,match:null});
+                        amountOverride:null});
+const blankLedger = ()=>({id:uid(),sel:false,description:'',ledger:'',costCentre:'',ccSplit:null,tax:'',amount:0});
 
 let state;
 
@@ -2643,324 +2451,12 @@ function compute(){
           gstTotal,gstIneligible,dedTotal,adjTotal,heads,grand};
 }
 
-/* ============================================================================
-   4a. MASTER MATCHING — what a line on the document is, in our books
-   --------------------------------------------------------------------------
-   A supplier writes their own descriptions. Nothing on the page says which of
-   our item or ledger masters a line belongs to, so it has to be worked out,
-   and it can be worked out three ways with three different standards of proof:
-
-     history   this vendor has billed these words before and we know how it
-               was posted — a precedent, not a guess, and it wins outright
-     name      the words look like a master we already hold, scored on how
-               much they overlap
-     neither   nothing in the books resembles it, so the master does not exist
-               yet and has to be proposed — which means predicting the HSN or
-               SAC and the rate that go with it
-
-   Every one of those answers is applied. A prediction that leaves the field
-   empty is not a prediction — it is a blank the user now has to fill without
-   being told what to fill it with, which is worse than no feature at all. So
-   the third case does not sit there asking: it mints the master it proposed,
-   marked provisional, and points the line at it. The field reads back what
-   will be created, the GST and TDS engines see it immediately, and the master
-   only becomes a real record when the bill posts.
-
-   Two thresholds say how much of a claim is being made. Above `exact` the row
-   says nothing, because a filled field is the whole message. Between `close`
-   and `exact` it asks to be confirmed. Below, it says what it invented.
-
-   All of it runs locally over the masters in this file. No model is called and
-   no document leaves the page — the scoring is arithmetic you can read.
-   ==========================================================================*/
-const MATCH = {exact:0.82, close:0.55, hist:0.75};
-
-/* Words that describe the transaction rather than the thing bought. They are
-   dropped before scoring so "Purchase of A4 paper" and "A4 paper" are the
-   same line — but kept for HSN keyword lookup, where "delivery charges" is a
-   phrase and losing "charges" would lose the phrase. */
-const STOP = new Set(('purchase purchased of for the a an and with to towards being as per '+
-  'no qty pcs pc nos unit units incl including plus our your ref against bill invoice '+
-  'charge charges supply supplied dt dated total amount rs inr').split(' '));
-
-/* Trade shorthand, expanded before anything is compared. Kept short on
-   purpose: every entry here is a claim about what a vendor meant. */
-const PHRASE = [
-  [/\bamc\b/g,        ' annual maintenance contract '],
-  [/\bkbd?\b/g,       ' keyboard '],
-  [/\bmtrs?\b/g,      ' metre '],
-  [/\bmaint\b/g,      ' maintenance '],
-  [/\bmnthly\b/g,     ' monthly '],
-  [/\bsvc\b/g,        ' service '],
-  [/\bhsg\b/g,        ' housekeeping ']
-];
-
-/* Padded with spaces at both ends so a keyword lookup can ask for ' tray '
-   and not match 'trays' or 'gantry'. */
-function normalise(s){
-  let t = String(s||'').toLowerCase()
-    .replace(/\ba\s*\/\s*c\b/g,' air conditioner ')
-    .replace(/[^a-z0-9]+/g,' ');
-  t = ' '+t.trim()+' ';
-  PHRASE.forEach(([re,to])=>{ t = t.replace(re,to); });
-  return t.replace(/\s+/g,' ');
-}
-const wordsOf = s => normalise(s).trim().split(' ').filter(w=>w && !STOP.has(w));
-function trigramsOf(s){
-  const t = normalise(s).replace(/ /g,'');
-  const out = [];
-  for(let i=0;i<t.length-2;i++) out.push(t.slice(i,i+3));
-  return out;
-}
-/* Sørensen–Dice over two bags, taken as sets */
-function dice(a,b){
-  const A = new Set(a), B = new Set(b);
-  if(!A.size || !B.size) return 0;
-  let hit = 0;
-  A.forEach(x=>{ if(B.has(x)) hit++; });
-  return 2*hit/(A.size+B.size);
-}
-/* Words carry the meaning; character runs catch the plurals, the joined-up
-   spellings and the typos that word matching alone would miss. */
-function similarity(a,b){
-  return 0.6*dice(wordsOf(a),wordsOf(b)) + 0.4*dice(trigramsOf(a),trigramsOf(b));
-}
-const sharedNumbers = (a,b)=>{
-  const nums = s=>new Set((normalise(s).match(/\b\d+\b/g)||[]));
-  const A = nums(a), B = nums(b);
-  if(!A.size || !B.size) return false;
-  return [...A].some(x=>B.has(x));
-};
-
-/* --- HSN / SAC classification -------------------------------------------- */
-function classify(text, hintKind){
-  const n = normalise(text);
-  let best = null;
-  HSN_KB.forEach(row=>{
-    const hits = []; let pos = -1;
-    row.kw.forEach(k=>{
-      const key = normalise(k).trim();
-      const at = n.indexOf(' '+key+' ');
-      if(at<0) return;
-      hits.push(k);
-      pos = Math.max(pos, at);
-    });
-    if(!hits.length) return;
-    const score = hits.length + (hintKind && row.kind===hintKind ? 0.5 : 0);
-    /* On a tie, the keyword that appears later wins: English puts the head
-       noun last, so a "cable management tray" is a tray, not a cable. */
-    if(!best || score>best.score || (score===best.score && pos>best.pos))
-      best = {row, hits, score, pos};
-  });
-  return best;
-}
-
-/* --- naming a master we are about to create ------------------------------ */
-const SMALL = new Set(['of','and','for','with','to','the','in','on','per','a','an','or']);
-function masterName(text){
-  const s = String(text||'').trim()
-    .replace(/^(purchase|supply|provision|being)\s+of\s+/i,'')
-    .replace(/\s*[—–-]\s*\d[\d,.]*\s*(nos|pcs|units?|seats?|sets?)?\s*$/i,'')
-    .replace(/\s{2,}/g,' ');
-  return s.split(' ').map((w,i)=>{
-    const low = w.toLowerCase();
-    if(i && SMALL.has(low)) return low;
-    // each part of a hyphenated word too, so "e-waste" becomes "E-Waste"
-    return w.replace(/(^|-)([a-z])/g,(_,sep,c)=>sep+c.toUpperCase());
-  }).join(' ');
-}
+/* The tax master for a rate the document printed. */
 const taxIdForRate = rate => byId(MASTERS.taxes, 'tax-'+String(rate).replace('.',''))
   ? 'tax-'+String(rate).replace('.','')
   : (MASTERS.taxes.find(t=>t.rate===num(rate))?.id || '');
-const rateOfTaxId = id => byId(MASTERS.taxes,id)?.rate ?? 0;
 
-/* --- the matcher ---------------------------------------------------------- */
-function matchLine(line, vendorId){
-  const text = String(line.text||'');
-  const printedHsn = String(line.hsn||'');
-  const serviceHsn = /^99/.test(printedHsn);
-  const kb = classify(text, serviceHsn?'service':null);
-  const hintKind = serviceHsn ? 'service' : (kb?.row.kind || 'goods');
-  const vendorName = byId(MASTERS.vendors,vendorId)?.name || 'this vendor';
-
-  /* 1 — precedent. A vendor-scoped mapping beats a house convention, and the
-     number of times it has been posted that way is the confidence. */
-  const hist = MASTERS.mappings
-    .filter(m=>m.vendor===vendorId || m.vendor==='*')
-    .map(m=>({m, s:similarity(text,m.text), scoped:m.vendor===vendorId}))
-    .filter(h=>h.s>=MATCH.hist)
-    .sort((a,b)=>(b.scoped-a.scoped)||(b.s-a.s)||(b.m.n-a.m.n));
-
-  /* 2 — resemblance to a master we already hold. Items and expense ledgers are
-     scored in one pass, because which table the line belongs in is an output
-     of the match, not something the document told us. */
-  const cands = [];
-  /* `why` lists only what was added on top of the wording — the wording's own
-     score is the figure already shown against the option, and saying it twice
-     in two slightly different forms reads as two different claims. */
-  const push = (route,m,masterHsn)=>{
-    let s = similarity(text, m.name);
-    const why = [];
-    if(printedHsn && masterHsn && printedHsn.slice(0,4)===String(masterHsn).slice(0,4)){
-      s += 0.10; why.push(`HSN ${printedHsn} agrees`);
-    }
-    if(sharedNumbers(text, m.name)){ s += 0.06; why.push('same specification'); }
-    if(hintKind && ((route==='item')===(hintKind==='goods'))) s += 0.04;
-    cands.push({route, id:m.id, name:m.name, score:Math.min(0.99,s), why});
-  };
-  MASTERS.items.forEach(m=>push('item',m,m.hsn));
-  MASTERS.expenseLedgers.forEach(m=>push('ledger',m,m.sac));
-  cands.sort((a,b)=>b.score-a.score);
-
-  const alts = cands.filter(c=>c.score>=0.22).slice(0,3);
-
-  /* --- the answer ------------------------------------------------------- */
-  if(hist.length){
-    const h = hist[0];
-    const [route,id] = h.m.target.split(':');
-    const master = route==='item' ? byId(MASTERS.items,id) : byId(MASTERS.expenseLedgers,id);
-    if(master){
-      const score = Math.min(0.99, (h.scoped?0.90:0.84) + Math.min(h.m.n,20)/200);
-      return {
-        verdict:'exact', source:'history', route, kind: route==='item'?(master.kind||'goods'):'service',
-        best:{route, id, name:master.name, score},
-        alts: alts.filter(a=>a.id!==id).slice(0,2),
-        reasons:[ h.scoped
-          ? `posted this way ${h.m.n} time${h.m.n===1?'':'s'} for ${vendorName}`
-          : `house convention — posted this way ${h.m.n} time${h.m.n===1?'':'s'}`,
-          `description ${Math.round(h.s*100)}% to “${h.m.text}”` ],
-        create:null, state:'auto'
-      };
-    }
-  }
-
-  /* The master that ought to exist, if none of the above is the answer. Built
-     for a close match too, not only for a miss — a 60% match is exactly the
-     case where the user may want to say "no, this is a new product", and the
-     alternative has to be there when they do. */
-  const propose = route=>{
-    const kin = kb?.row.hsn || printedHsn || '';
-    /* fall back to the nearest master's classification before admitting we
-       have nothing to go on */
-    const near = cands.find(c=>c.route===route && c.score>=0.22);
-    const nearM = near && (route==='item'?byId(MASTERS.items,near.id):byId(MASTERS.expenseLedgers,near.id));
-    const hsn = kin || (route==='item'?nearM?.hsn:nearM?.sac) || '';
-    /* the rate charged on the document settles the rate on the master; the
-       heading's usual rate is only the fallback, and a disagreement is said
-       out loud rather than resolved silently */
-    const invoiceRate = line.gst===undefined ? null : num(line.gst);
-    const gst = invoiceRate!==null ? invoiceRate : (kb?.row.gst ?? 18);
-
-    const why = [];
-    if(kb) why.push(`${route==='ledger'?'SAC':'HSN'} ${kb.row.hsn} — ${kb.row.desc}, from ${kb.hits.slice(0,2).map(k=>`“${k}”`).join(', ')}`);
-    else if(hsn) why.push(`HSN ${hsn} taken from ${nearM?`“${nearM.name}”`:'the invoice'}`);
-    else why.push('no heading could be inferred — set it on the row');
-    why.push(`no precedent for ${vendorName}`);
-    if(invoiceRate!==null && kb && invoiceRate!==kb.row.gst)
-      why.push(`the invoice charges ${invoiceRate}%, this heading normally carries ${kb.row.gst}%`);
-
-    return route==='item'
-      ? {route:'item', name:masterName(text), group:kb?.row.group||'Goods — IT hardware',
-         unit:kb?.row.unit||'Nos', hsn, gst, hsnDesc:kb?.row.desc||'', reasons:why,
-         rate:num(line.rate)||0, kind:'goods',
-         godown: nearM?.godown || MASTERS.items.find(i=>i.group===(kb?.row.group))?.godown || 'gd-main'}
-      /* A ledger is named for the kind of expense, not for the occasion of it:
-         "E-Waste Disposal & Recycling", not "…of the units replaced in July".
-         The heading knows that name; the invoice line does not, so it is only
-         the fallback. An item master is the opposite — the vendor's wording is
-         the product, so it stays. */
-      : {route:'ledger', name:kb?.row.ledger || masterName(text),
-         group:kb?.row.group||'Contracted work',
-         hsn, gst, hsnDesc:kb?.row.desc||'', tds:kb?.row.tds||'', reasons:why};
-  };
-
-  const best = cands[0];
-  if(best && best.score>=MATCH.close){
-    const master = best.route==='item' ? byId(MASTERS.items,best.id) : byId(MASTERS.expenseLedgers,best.id);
-    const settled = best.score>=MATCH.exact;
-    return {
-      verdict: settled ? 'exact' : 'close',
-      source:'name', route:best.route,
-      kind: best.route==='item' ? (master.kind||'goods') : 'service',
-      best, alts: alts.filter(a=>a.id!==best.id),
-      reasons:[ best.why.join(' · '),
-                hist.length?'':`no precedent for ${vendorName}` ].filter(Boolean),
-      create: settled ? null : propose(best.route),
-      state: settled ? 'auto' : 'pending'
-    };
-  }
-
-  /* 3 — nothing resembles it, so the master does not exist yet. */
-  const route = (kb?.row.kind==='service' || serviceHsn) ? 'ledger' : 'item';
-  const create = propose(route);
-  return {verdict:'none', source:'new', route, kind: route==='item'?'goods':'service',
-          best:null, alts, reasons:create.reasons, create, state:'pending'};
-}
-
-/* --- minting what was proposed -------------------------------------------
-   `provisional` means the master exists for this bill and nowhere else. It is
-   in the lists, the pickers and the tax engines, but it is not yet a record:
-   allocating the bill makes it one, discarding takes it away with the bill,
-   and a line re-pointed somewhere else drops it on the next render. */
-let newSeq = 0;
-const BASE = {items:0, expenseLedgers:0, mappings:0};   // filled at boot
-
-function createItemMaster(c, provisional){
-  const m = {id:'it-new'+(++newSeq), name:c.name, group:c.group, kind:'goods',
-             hsn:c.hsn, unit:c.unit, rate:num(c.rate), tax:taxIdForRate(c.gst),
-             godown:c.godown, isNew:true, provisional:!!provisional};
-  MASTERS.items.push(m);
-  refreshItemsList();
-  return m;
-}
-function createLedgerMaster(c, provisional){
-  const m = {id:'led-new'+(++newSeq), name:c.name, group:c.group,
-             tax:taxIdForRate(c.gst), tds:c.tds||'', sac:c.hsn,
-             isNew:true, provisional:!!provisional};
-  MASTERS.expenseLedgers.push(m);
-  return m;
-}
-const isProvisional = id => !!(byId(MASTERS.items,id)||byId(MASTERS.expenseLedgers,id))?.provisional;
-
-/* Masters nobody points at any more — the line was re-pointed at a real one,
-   deleted, or its description typed over. They go quietly. */
-function sweepProvisional(){
-  if(!state) return;
-  /* stashedItems counts: Accounting Mode folds the item lines away and gives
-     them back on the way out, and a master swept while they were folded would
-     not be there when they returned */
-  const used = new Set([...state.items.map(r=>r.item),
-                        ...state.ledgers.map(r=>r.ledger),
-                        ...(state.stashedItems||[]).map(r=>r.item)]);
-  const drop = list=>{
-    for(let i=list.length-1;i>=0;i--)
-      if(list[i].provisional && !used.has(list[i].id)) list.splice(i,1);
-  };
-  const before = MASTERS.items.length;
-  drop(MASTERS.items);
-  drop(MASTERS.expenseLedgers);
-  if(MASTERS.items.length!==before) refreshItemsList();
-}
-/* what this bill will bring into being when it posts */
-const provisionalMasters = ()=>[...MASTERS.items, ...MASTERS.expenseLedgers].filter(m=>m.provisional);
-/* The learning loop, such as it is: a decision the user made becomes the
-   precedent the next bill is matched against. Run the sample twice and the
-   second pass matches on history what the first pass had to invent. */
-function rememberMapping(text, route, id, vendorId){
-  const norm = wordsOf(text).join(' ');
-  if(!norm || !vendorId) return;
-  const target = route+':'+id;
-  const found = MASTERS.mappings.find(m=>m.vendor===vendorId && m.target===target);
-  if(found){
-    if(found.learned===undefined) found.learned = found.n;   // so reset can undo it
-    found.n++;
-    found.text = norm;
-    return;
-  }
-  MASTERS.mappings.push({vendor:vendorId, text:norm, target, n:1, last:state.billDate||today(), fresh:true});
-}
-
-/* the item picker's suggestion list — rebuilt whenever the masters change */
+/* the item picker's suggestion list */
 function refreshItemsList(){
   let dl = $('#items-list');
   if(!dl){
@@ -2980,46 +2476,11 @@ const dots   = `<span class="ico ico--brand"><svg width="4" height="16"><use hre
 const pencil = `<span class="ico ico-11 ico--brand"><svg width="12" height="12"><use href="#i-pencil"/></svg></span>`;
 const plusIco  = `<span class="ico ico-12"><svg width="12" height="12"><use href="#i-plus"/></svg></span>`;
 const infoIco  = `<span class="ico ico-13"><svg width="13" height="13"><use href="#i-info"/></svg></span>`;
-/* takes the colour of whatever it sits in, so one glyph serves all four marks */
-const sparkIco = `<span class="ico"><svg width="11" height="11"><use href="#i-sparkle"/></svg></span>`;
 
-/* --- the match mark ------------------------------------------------------
-   The only thing this feature draws at rest. Every row's fields are filled;
-   the mark says what kind of claim the filling was. A match the engine is
-   sure of prints nothing, because the filled field is the whole message. */
-function markOf(row){
-  const m = row.match; if(!m) return null;
-  if(m.state==='auto' || m.state==='confirmed') return null;
-  if(m.state==='unmapped') return {cls:'mark--off', label:'Unmapped', short:'Unmapped', icon:false};
-  if(m.state==='created')  return {cls:'mark--off', label:'Created', icon:true};
-  if(m.state==='proposed') return {cls:'', short:'New',
-    label:(m.route==='ledger'?'New ledger':'New item'), icon:true};
-  return {cls:'mark--confirm', label:'Confirm', icon:true};
-}
-/* The item cell shares its meta line with the goods/service toggle and the HSN
-   field, so the mark uses its short form there; the ledger table gives it a
-   line of its own and can afford the longer one. */
-function markHtml(row, short){
-  const k = markOf(row); if(!k) return '';
-  const label = short && k.short ? k.short : k.label;
-  return `<button type="button" class="mark ${k.cls}" data-act="match"
-    aria-label="Master for this line — ${esc(k.label)}">${k.icon?sparkIco:''}${esc(label)}</button>`;
-}
-/* rows whose master was a judgement rather than a lookup — the ones the left
-   edge points at, and the ones the mark is drawn on */
-const isPending = row => row.match?.state==='pending' || row.match?.state==='proposed';
-/* Lines with nothing behind them. Asked of the row, not of the match: a close
-   match still waiting to be confirmed has a master and posts to it. */
-const masterlessLines = ()=>[...state.items.filter(r=>r.match && !r.item),
-                             ...state.ledgers.filter(r=>r.match && !r.ledger)];
-/* masters this bill will bring into being — for the posting summary */
-function createdMasters(){
-  const meta = new Map([...state.items, ...state.ledgers]
-    .filter(r=>r.match?.made).map(r=>[r.match.made.id, r.match.made]));
-  return provisionalMasters().map(m=>meta.get(m.id) || {
-    route: byId(MASTERS.items,m.id)?'item':'ledger',
-    id:m.id, name:m.name, hsn:m.hsn||m.sac||'', gst:rateOfTaxId(m.tax), tds:m.tds||''});
-}
+/* Lines the extraction could not name a master for — they post on the
+   description alone until someone picks one. */
+const masterlessLines = ()=>[...state.items.filter(r=>!r.item && r.description.trim()),
+                             ...state.ledgers.filter(r=>!r.ledger && r.description.trim())];
 function checkbox(checked,mixed){
   const st = mixed?'mixed':(checked?'true':'false');
   return `<button type="button" class="checkbox" role="checkbox" aria-checked="${st}">
@@ -3172,7 +2633,6 @@ function renderItems(){
     <div class="tcell col-qty">Quantity</div>
     <div class="tcell col-num tcell--end">Unit Rate</div>
     <div class="tcell col-num tcell--end">Discount</div>
-    <div class="tcell col-tax">Tax</div>
     <div class="tcell col-num tcell--end"><span class="req">*</span>&nbsp;Amount</div>
     <div class="tcell col-menu tcell--last"></div>
   </div>`;
@@ -3182,13 +2642,13 @@ function renderItems(){
     const master = byId(MASTERS.items,row.item);
     const invalid = state.validated && l.taxable<=0;
     const overridden = row.amountOverride!==null && row.amountOverride!==undefined;
-    return `<div class="trow${row.sel?' is-selected':''}${isPending(row)?' is-unmatched':''}" data-kind="items" data-id="${row.id}">
+    return `<div class="trow${row.sel?' is-selected':''}" data-kind="items" data-id="${row.id}">
       <div class="tcell col-check tcell--check">${checkbox(row.sel)}</div>
       <div class="tcell col-desc tcell--grow">
         <label class="cell"><input class="cell__input t-cell" data-f="description" value="${esc(row.description)}" placeholder="Enter Description"></label>
       </div>
       <div class="tcell col-item">
-        <label class="cell${master?.provisional?' is-proposed':''}"><input class="cell__input t-cell" data-f="item" list="items-list" value="${esc(master?master.name:row.item)}" placeholder="Type or Select Item">
+        <label class="cell"><input class="cell__input t-cell" data-f="item" list="items-list" value="${esc(master?master.name:row.item)}" placeholder="Type or Select Item">
           <button type="button" class="cellcaret" data-act="pickitem" aria-label="Show item suggestions">${caret}</button></label>
         <div class="itemmeta">
           <button type="button" class="kindtoggle" data-f="kind" data-kind="${row.kind}"
@@ -3197,7 +2657,6 @@ function renderItems(){
             <input class="hsn__input" data-f="hsn" value="${esc(row.hsn)}" placeholder="—" aria-label="HSN or SAC code" readonly>
             <button type="button" class="pencil" data-act="unlock" aria-label="Edit HSN or SAC code">${pencil}</button>
           </span>
-          ${markHtml(row, true)}
         </div>
       </div>
       <div class="tcell col-med">
@@ -3222,9 +2681,6 @@ function renderItems(){
         <button type="button" class="split__addon split__addon--btn" data-f="discountType" title="Switch between % and flat amount">
           ${row.discountType==='pct'?`<span class="ico ico-14 ico--muted"><svg width="14" height="14"><use href="#i-percent"/></svg></span>`:'₹'}${caret}</button></div>
       </div>
-      <div class="tcell col-tax">
-        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select></label>
-      </div>
       <div class="tcell col-num${invalid?' is-invalid':''}">
         <label class="cell cell-num"><input class="cell__input t-cell" data-f="amountOverride" inputmode="decimal" value="${inr.format(l.taxable)}"></label>
         ${overridden?`<button type="button" class="link" data-f="clearOverride">Reset to ${inr.format(l.computed)}</button>`:''}
@@ -3247,30 +2703,24 @@ function renderLedgers(){
     <div class="tcell col-med tcell--grow">Description</div>
     <div class="tcell col-med">Ledger Name</div>
     <div class="tcell col-med">Cost Centre</div>
-    <div class="tcell col-tax">Tax</div>
     <div class="tcell col-num tcell--end">Amount</div>
     <div class="tcell col-menu tcell--last"></div>
   </div>`;
 
-  const anyMark = state.ledgers.some(r=>markOf(r));
   const rows = state.ledgers.map(row=>
-    `<div class="trow${row.sel?' is-selected':''}${isPending(row)?' is-unmatched':''}" data-kind="ledgers" data-id="${row.id}">
+    `<div class="trow${row.sel?' is-selected':''}" data-kind="ledgers" data-id="${row.id}">
       <div class="tcell col-check tcell--check">${checkbox(row.sel)}</div>
       <div class="tcell col-med tcell--grow">
         <label class="cell"><input class="cell__input t-cell" data-f="description" value="${esc(row.description)}" placeholder="Enter Description"></label>
       </div>
       <div class="tcell col-med">
-        <label class="cell${isProvisional(row.ledger)?' is-proposed':''}">${ledgerSelect(row)}</label>
-        ${anyMark?`<span class="markline">${markHtml(row)}</span>`:''}
+        <label class="cell">${ledgerSelect(row)}</label>
       </div>
       <div class="tcell col-med">
         <label class="cell${ccLocked()?' is-disabled':''}">${ccSelect({
           cls:'cell__select t-cell', attrs:'data-f="costCentre"', disabled:ccLocked(),
           placeholder:ccPlaceholder(), value:ccLocked()?'':row.costCentre,
           split:ccLocked()?null:row.ccSplit})}</label>
-      </div>
-      <div class="tcell col-tax">
-        <label class="cell"><select class="cell__select t-cell" data-f="tax">${options(MASTERS.taxes,'Select Tax',row.tax)}</select></label>
       </div>
       <div class="tcell col-num">
         <label class="cell cell-num"><input class="cell__input t-cell" data-f="amount" inputmode="decimal" value="${row.amount||0}"></label>
@@ -3281,7 +2731,6 @@ function renderLedgers(){
     </div>`).join('');
 
   $('#ledgers-table').innerHTML = head + (rows || `<div class="trow trow--empty">No ledger lines — use “Add Ledger”.</div>`);
-  $('#ledgers-table').classList.toggle('table--marks', anyMark);
   const n = state.ledgers.filter(r=>r.sel).length;
   $('#ledgers-bulk').hidden = n===0;
   $('#ledgers-bulk-text').textContent = `${n} ledger line${n===1?'':'s'} selected`;
@@ -3607,12 +3056,20 @@ function renderBreakdown(calc){
             <button type="button" class="bd-itc" data-f="itc"
                     title="${esc(itcLbl)}" aria-label="${esc(itcLbl)}"
               ><span class="bd-itc__mark" aria-hidden="true">E</span><span class="bd-itc__pen">${pencil12}</span></button>`;
+    /* Unchosen, the ledger button asks; chosen, it names what it will post to
+       — the same button either way, because it is the same decision. */
+    const ledLbl = state.itcLedger ? itcLedgerName() : 'Choose Ledger';
+    const ledTip = state.itcLedger ? 'Posts to '+ledLbl+'. Change the ledger'
+                                   : 'Choose the ledger this GST is expensed to';
     const meta = !blocked ? '' : `
       <div class="bd-line__meta">
-        <button type="button" class="chip chip--no" data-f="itc"
-                title="${esc((state.itcLedger?'Posts to '+itcLedgerName()+'. ':'')+'Edit ITC eligibility and the ledger it posts to')}">
-          <span class="chip__label">${itcChip(row)}</span><span class="chip__posts"><span class="chip__sep">·</span> posts to ${
-            state.itcLedger?esc(itcLedgerName()):'ledger not chosen'}</span>${pencil12}
+        <button type="button" class="itcbtn itcbtn--call" data-f="itc"
+                title="Edit ITC eligibility" aria-label="${esc(itcChip(row))} — edit ITC eligibility">
+          <span class="itcbtn__label">${itcChip(row)}</span>${pencil12}
+        </button>
+        <button type="button" class="itcbtn" data-f="itcledger"
+                title="${esc(ledTip)}" aria-label="${esc(ledTip)}">
+          <span class="itcbtn__label">${esc(ledLbl)}</span>${pencil12}
         </button>
       </div>`;
     const addLabel = gst ? 'Add GST ledger' : 'Add '+DEDUCTIONS[row.type].label+' line';
@@ -3859,7 +3316,6 @@ document.addEventListener('scroll', e=>{
 }, true);
 
 function render(){
-  sweepProvisional();            // a master nothing points at any more is not a master
   syncItcLedger();               // an ineligible line needs an expense ledger to land in
   const calc = compute();
   renderHeader();
@@ -4023,7 +3479,6 @@ document.addEventListener('input', e=>{
       if(!row.description) row.description = match.name;
       row.rate = match.rate; row.tax = match.tax; row.kind = match.kind; row.hsn = match.hsn;
       if(!row.godown) row.godown = match.godown;
-      settleMatch(row, match.id);        // picked by hand — nothing left to suggest
       render(); return;
     }
     row.item = e.target.value; return;                  // free text — no re-render
@@ -4109,22 +3564,9 @@ document.addEventListener('change', e=>{
     if(exp && !row.tax) row.tax = exp.tax;
     if(!row.description) row.description = ledgerNameOf(e.target.value);
     row.fromItems = false;                                     // re-pointed by hand
-    settleMatch(row, e.target.value);
   }
   render();
 });
-
-/* A master chosen by hand answers the question the mark was asking, and the
-   answer is worth remembering for the same reason an accepted suggestion is. */
-function settleMatch(row, id){
-  const m = row.match;
-  if(!m || m.state!=='pending' || !id) return;
-  const master = m.route==='ledger' ? byId(MASTERS.expenseLedgers,id) : byId(MASTERS.items,id);
-  if(!master) return;
-  rememberMapping(row.description, m.route, id, state.vendor);
-  m.state = 'confirmed';
-  m.best  = {route:m.route, id, name:master.name, score:1};
-}
 
 /* --- adjustments --------------------------------------------------------- */
 document.addEventListener('input', e=>{
@@ -4268,6 +3710,9 @@ document.addEventListener('click', e=>{
     render(); return;
   }
   if(btn.dataset.f==='itc' && ctx?.row){ openItcMenu(btn, ctx); return; }
+  /* the other half of the chip — the write-off already exists, so this is the
+     ledger question on its own and not the eligibility one again */
+  if(btn.dataset.f==='itcledger'){ openItcDialog(); return; }
   if(btn.dataset.f==='clearOverride' && ctx?.row){
     ctx.row.amountOverride = null;
     render(); return;
@@ -4284,7 +3729,6 @@ document.addEventListener('click', e=>{
     inp.focus(); inp.showPicker?.();
     return;
   }
-  if(btn.dataset.act==='match' && ctx?.row){ openMatchMenu(btn, ctx); return; }
   if(btn.dataset.act==='menu' && ctx?.row){ openRowMenu(btn, ctx); return; }
 
   if(btn.classList.contains('checkbox')){
@@ -4322,10 +3766,6 @@ function openItcMenu(anchor, ctx){
           <input type="radio" name="itc-choice" value="${o.id}"${o.id===choice?' checked':''}>
           <span class="itcopt__dot"></span>${esc(o.label)}
         </label>`).join('') +
-      (choice==='eligible' ? '' : `<div class="itcled">
-          <span>Posts to</span>
-          <button type="button" data-a="ledger">${state.itcLedger?esc(itcLedgerName()):'Choose a ledger'}</button>
-        </div>`) +
       `<div class="menu__foot">
          <button type="button" data-a="cancel">Cancel</button>
          <button type="button" data-a="save" class="is-save">Save</button>
@@ -4340,7 +3780,7 @@ function openItcMenu(anchor, ctx){
   menu.addEventListener('change', ev=>{
     if(ev.target.name!=='itc-choice') return;
     choice = ev.target.value;
-    paint();                                  // the ledger line appears with the answer
+    paint();
   });
   menu.addEventListener('click', ev=>{
     const a = ev.target.closest('button')?.dataset.a;
@@ -4350,179 +3790,15 @@ function openItcMenu(anchor, ctx){
        must keep following the items even after the credit is written off */
     ctx.row.itc = choice;
     closeMenu();
-    render();                                 // syncs the ledger, and asks for one if needed
-    if(a==='ledger') openItcDialog();         // asked for outright, so open it either way
-  });
-  setTimeout(()=>document.addEventListener('click',onAway,{once:true}));
-  function onAway(ev){ if(menu.isConnected && !menu.contains(ev.target)) closeMenu(); }
-}
-
-/* --- which master this line belongs to -----------------------------------
-   The same popover shape as the ITC call, for the same reason: it is a choice
-   with consequences, so it commits on Save rather than on a stray click.
-
-   The predicted HSN and rate are stated here but not edited here. The row
-   already has an HSN field and a Tax field that do exactly that, and one
-   number editable in two places is one place too many. The name is the
-   exception — a master about to be created has nowhere else to be named. */
-function openMatchMenu(anchor, ctx){
-  closeMenu();
-  const row = ctx.row, m = row.match;
-  if(!m) return;
-  const isLedger = m.route==='ledger';
-  const proposed = m.state==='proposed' || m.state==='created';
-  const opts = [];
-  /* the proposal is the row's current answer, so it leads; a match that was
-     found in the masters leads instead */
-  if(m.best && !proposed) opts.push({v:'use:'+m.best.id, name:m.best.name, score:m.best.score});
-  (m.alts||[]).forEach(a=>{ if(a.route===m.route) opts.push({v:'use:'+a.id, name:a.name, score:a.score}); });
-
-  let choice = m.state==='unmapped' ? 'none'
-             : (proposed ? 'create' : (m.best ? 'use:'+m.best.id : 'create'));
-  let name = proposed ? (m.made?.name || m.create.name) : (m.create ? m.create.name : '');
-
-  const menu = document.createElement('div');
-  menu.className = 'menu menu--match';
-
-  const head = proposed
-    ? `Not in your ${isLedger?'ledgers':'item masters'} — created when this bill posts`
-    : (m.source==='history' ? 'Matched on your posting history' : 'Matched on the description');
-
-  const predict = ()=>{
-    const c = m.create; if(!c) return '';
-    const tds = c.tds ? ' · '+(byId(MASTERS.tdsSections,c.tds)?.name.split(' — ')[0]||c.tds) : '';
-    return `<input data-mm="name" value="${esc(name)}" aria-label="Name for the new master">
-      <span class="mm__pred">${c.hsn?`${isLedger?'SAC':'HSN'} ${esc(c.hsn)}`:'No HSN'} · GST ${c.gst}%${esc(tds)}</span>
-      <span class="mm__pred">${esc(c.group)}${isLedger?'':' · '+esc(c.unit)}</span>`;
-  };
-
-  const paint = ()=>{
-    menu.innerHTML =
-      `<div class="mm__head">
-         <span class="mm__ttl">${esc(row.description||'This line')}</span>
-         <span class="mm__sub">${esc(head)}</span>
-       </div>` +
-      opts.map(o=>`<label class="itcopt">
-          <input type="radio" name="mm-choice" value="${esc(o.v)}"${o.v===choice?' checked':''}>
-          <span class="itcopt__dot"></span>
-          <span class="itcopt__body"><span class="itcopt__main">
-            <span class="itcopt__name">${esc(o.name)}</span>
-            <span class="itcopt__score">${Math.round(o.score*100)}%</span></span>
-            ${o.v===choice&&m.reasons?.length?`<span class="mm__why">${esc(m.reasons.join(' · '))}</span>`:''}
-          </span>
-        </label>`).join('') +
-      (m.create?`<label class="itcopt">
-          <input type="radio" name="mm-choice" value="create"${choice==='create'?' checked':''}>
-          <span class="itcopt__dot"></span>
-          <span class="itcopt__body"><span class="itcopt__main">
-            <span class="itcopt__name">${proposed?'New':'Create as new'} ${isLedger?'ledger':'item'}</span></span>
-            ${choice==='create'?predict()+`<span class="mm__why">${esc((m.create.reasons||m.reasons).join(' · '))}</span>`:''}
-          </span>
-        </label>`:'') +
-      `<label class="itcopt">
-          <input type="radio" name="mm-choice" value="none"${choice==='none'?' checked':''}>
-          <span class="itcopt__dot"></span>
-          <span class="itcopt__body"><span class="itcopt__main">
-            <span class="itcopt__name">Keep unmapped</span></span>
-            ${choice==='none'?'<span class="mm__why">posts on the description alone</span>':''}
-          </span>
-        </label>` +
-      (opts.length||m.create?'':'<div class="mm__none">Nothing close enough to suggest.</div>') +
-      `<div class="menu__foot">
-         <button type="button" data-a="cancel">Cancel</button>
-         <button type="button" data-a="save" class="is-save">${
-           choice==='create' ? (proposed?'Save':'Create &amp; apply')
-           : choice==='none' ? 'Apply' : 'Confirm'}</button>
-       </div>`;
-  };
-  paint();
-  document.body.append(menu);
-  const r = anchor.getBoundingClientRect();
-  menu.style.top  = (window.scrollY + r.bottom + 6)+'px';
-  menu.style.left = (window.scrollX + Math.min(r.left, document.documentElement.clientWidth - menu.offsetWidth - 12))+'px';
-
-  menu.addEventListener('input', ev=>{
-    if(ev.target.dataset.mm==='name') name = ev.target.value;   // no repaint: keeps the caret
-  });
-  menu.addEventListener('change', ev=>{
-    if(ev.target.name!=='mm-choice') return;
-    choice = ev.target.value;
-    paint();
-  });
-  menu.addEventListener('click', ev=>{
-    const a = ev.target.closest('button')?.dataset.a;
-    if(!a) return;
-    if(a==='cancel'){ closeMenu(); return; }
-    applyMatchChoice(row, choice, name.trim());
-    closeMenu();
+    /* An ineligible answer is only half a decision — the ledger it posts to is
+       the other half, so it is asked for on the spot rather than left as a link
+       in the popover. render() arbitrates: if the RCM question is also open,
+       this one waits its turn instead of stacking a second modal. */
+    if(choice!=='eligible') itcPending = true;
     render();
   });
   setTimeout(()=>document.addEventListener('click',onAway,{once:true}));
   function onAway(ev){ if(menu.isConnected && !menu.contains(ev.target)) closeMenu(); }
-}
-
-/* Committing the answer. Creating a master writes it to the masters in this
-   file, points the row at it, and — the part that matters — remembers the
-   decision, so the same words on the next bill are a precedent rather than a
-   question asked twice. */
-function applyMatchChoice(row, choice, typedName){
-  const m = row.match; if(!m) return;
-  const isLedger = m.route==='ledger';
-  const held = isLedger ? row.ledger : row.item;         // may be a provisional master
-
-  if(choice==='none'){
-    if(isLedger) row.ledger = ''; else row.item = '';
-    m.state = 'unmapped';
-    m.best  = null;
-    toast('Line kept without a master','');
-    return;                                              // sweepProvisional clears the mint
-  }
-
-  let master = null, minted = false;
-  if(choice==='create'){
-    /* already minted at extraction — this is a rename, not a second creation */
-    if(isProvisional(held)){
-      master = isLedger ? byId(MASTERS.expenseLedgers,held) : byId(MASTERS.items,held);
-      const to = typedName || master.name;
-      if(to!==master.name){
-        master.name = to;
-        if(!isLedger) refreshItemsList();
-        toast(`Renamed to “${to}”`,'ok');
-      }
-      m.made = {...m.made, name:master.name};
-      m.best = {route:m.route, id:master.id, name:master.name, score:1};
-      m.state = 'proposed';
-      return;
-    }
-    const c = {...m.create, name: typedName || m.create.name};
-    master = isLedger ? createLedgerMaster(c,true) : createItemMaster(c,true);
-    m.made = {route:m.route, id:master.id, name:master.name,
-              hsn:c.hsn, gst:c.gst, tds:c.tds||''};
-    minted = true;
-  }else{
-    const id = choice.slice(4);
-    master = isLedger ? byId(MASTERS.expenseLedgers,id) : byId(MASTERS.items,id);
-    if(!master) return;
-  }
-
-  if(isLedger){
-    row.ledger = master.id;
-    if(master.tax) row.tax = master.tax;
-  }else{
-    row.item = master.id;
-    row.kind = master.kind || 'goods';
-    row.hsn  = master.hsn || row.hsn;
-    if(master.tax) row.tax = master.tax;
-    if(!row.rate) row.rate = num(master.rate);
-    if(row.kind!=='service' && !row.godown) row.godown = master.godown||'';
-  }
-  rememberMapping(row.description, m.route, master.id, state.vendor);
-  m.state = minted ? 'proposed' : 'confirmed';
-  m.best  = {route:m.route, id:master.id, name:master.name, score:1};
-
-  toast(minted
-    ? `${isLedger?'Ledger':'Item'} “${master.name}” will be created${m.made.hsn?` · ${isLedger?'SAC':'HSN'} ${m.made.hsn} · ${m.made.gst}%`:''}`
-    : `Mapped to ${master.name}`,'ok');
 }
 
 function openRowMenu(anchor, ctx){
@@ -4571,7 +3847,7 @@ $('#btn-add-ledger').addEventListener('click',()=>{ state.ledgers.push(blankLedg
    ==========================================================================*/
 const STEPS = [
   ['Uploading document',420],['Reading pages (OCR)',780],['Extracting invoice fields',720],
-  ['Matching vendor, items & ledgers',680],['Computing GST and TDS',520]
+  ['Reading vendor, items & ledgers',680],['Computing GST and TDS',520]
 ];
 
 function showPaneState(which){
@@ -4618,47 +3894,32 @@ function applyExtraction(file){
   state.destState         = b.state;
   syncRcmLedger();                              // keep the RCM ledger with the treatment
 
-  /* The document is read; now it has to be understood. Every line goes through
-     §4a, and which table it lands in is the matcher's answer, not the sample's. */
+  /* Each line lands in the table the document puts it in, against the master
+     the document names. A line that names none arrives with the cell empty. */
   state.mode    = 'item';
   state.items   = [];
   state.ledgers = [];
   SAMPLE.lines.forEach(line=>{
-    const m = matchLine(line, SAMPLE.vendor);
-    let master = m.best && (m.route==='item'
-      ? byId(MASTERS.items,m.best.id) : byId(MASTERS.expenseLedgers,m.best.id));
-
-    /* Nothing matched, so the master it proposed is minted now rather than
-       left as an empty field with a hint beside it. */
-    if(!master && m.create){
-      master = m.route==='ledger' ? createLedgerMaster(m.create,true)
-                                  : createItemMaster(m.create,true);
-      m.made  = {route:m.route, id:master.id, name:master.name,
-                 hsn:m.create.hsn, gst:m.create.gst, tds:m.create.tds||''};
-      m.best  = {route:m.route, id:master.id, name:master.name, score:1};
-      m.state = 'proposed';
-    }
-
-    if(m.route==='item'){
+    if(line.route==='item'){
+      const master = byId(MASTERS.items, line.item);
       state.items.push({...blankItem(),
         description: line.text,
         item: master?master.id:'',
-        kind: m.kind==='service'?'service':'goods',
+        kind: master?.kind || 'goods',
         hsn:  master?.hsn || line.hsn || '',
-        godown: m.kind==='service' ? '' : (master?.godown || ''),
+        godown: master?.kind==='service' ? '' : (master?.godown || ''),
         costCentre: line.cc||'',
         qty: num(line.qty), rate: num(line.rate),
         discount: num(line.disc), discountType: line.discType||'pct',
-        tax: taxIdForRate(line.gst),
-        match: m});
+        tax: taxIdForRate(line.gst)});
     }else{
+      const master = byId(MASTERS.expenseLedgers, line.ledger);
       state.ledgers.push({...blankLedger(),
         description: line.text,
         ledger: master?master.id:'',
         costCentre: line.cc||'',
         tax: taxIdForRate(line.gst),
-        amount: num(line.amount) || r2(num(line.qty)*num(line.rate)),
-        match: m});
+        amount: num(line.amount) || r2(num(line.qty)*num(line.rate))});
     }
   });
   if(!state.items.length)   state.items   = [blankItem()];
@@ -4687,19 +3948,17 @@ function applyExtraction(file){
   $$('.control,.cell').forEach(el=>el.classList.add('is-extracted'));
   setTimeout(()=>$$('.is-extracted').forEach(el=>el.classList.remove('is-extracted')),2600);
 
-  /* The count is the whole announcement. No banner, no dialog: every line is
-     filled in, and the ones that took a judgement to fill are marked. */
-  const made = createdMasters().length;
-  const ask  = [...state.items,...state.ledgers].filter(r=>r.match?.state==='pending').length;
-  const bits = [];
-  if(made) bits.push(`${made} new master${made===1?'':'s'} proposed`);
-  if(ask)  bits.push(`${ask} match${ask===1?'':'es'} to confirm`);
-  toast('Bill data extracted' + (bits.length?' — '+bits.join(', '):' — review and allocate'),'ok');
+  /* The count is the whole announcement. No banner, no dialog: the lines the
+     document named a master for are filled, and the rest are waiting. */
+  const open = masterlessLines().length;
+  toast('Bill data extracted — ' + (open
+    ? `${open} line${open===1?'':'s'} still need${open===1?'s':''} a master`
+    : 'review and allocate'), 'ok');
 }
 
 /* The document, printed from the document's own data — the vendor's wording and
-   the HSN codes they chose to print, not the ones we went on to predict. If the
-   facsimile showed our classification back to us it would stop being evidence. */
+   the HSN codes they chose to print. It is the evidence, not a view of what we
+   made of it. */
 function facsimile(calc){
   const v = byId(MASTERS.vendors,SAMPLE.vendor);
   const b = byId(MASTERS.branches,SAMPLE.branch);
@@ -4713,7 +3972,7 @@ function facsimile(calc){
       <td class="num">${inr.format(r2(gross-disc))}</td></tr>`;
   }).join('');
   // a supplier invoice carries GST only — TDS is the buyer's deduction and is
-  // never printed on it, so the system has to predict it from the masters
+  // never printed on it, so it is worked out here from the masters
   const taxes = gstLines().map(t=>
     `<tr><td>${esc(t.name.replace('Input ',''))}</td><td class="num">${inr.format(num(t.amount))}</td></tr>`).join('');
 
@@ -4824,9 +4083,6 @@ $('#btn-allocate').addEventListener('click',()=>{
     return;
   }
   const calc = compute();
-  /* the moment the bill becomes a record, so do the masters it proposed */
-  const minted = createdMasters();
-  provisionalMasters().forEach(m=>{ delete m.provisional; });
   const voucherNo = nextVoucherNo();
   state.voucherNo = voucherNo;
   $('#voucher-no').value = voucherNo;
@@ -4848,9 +4104,6 @@ $('#btn-allocate').addEventListener('click',()=>{
       ${calc.dedTotal?`<dt>${DEDUCTIONS[state.deductionMode].label} withheld</dt><dd>${money(calc.dedTotal)} (${
         dedLines().filter(t=>t.amount>0).map(t=>t.section).join(', ')})</dd>`:''}
       ${calc.gstIneligible?`<dt>ITC not eligible</dt><dd>${money(calc.gstIneligible)}</dd>`:''}
-      ${minted.length?`<dt>Masters created with this bill</dt><dd>${minted.map(x=>
-        `${x.route==='ledger'?'Ledger':'Item'} · ${esc(x.name)}${x.hsn?` (${x.route==='ledger'?'SAC':'HSN'} ${esc(x.hsn)}, ${x.gst}%${
-          x.tds?', '+esc(x.tds):''})`:''}`).join('<br>')}</dd>`:''}
       ${masterlessLines().length?`<dt>Unmapped lines</dt><dd>${masterlessLines().length} line${
         masterlessLines().length===1?'':'s'} posted on the description alone</dd>`:''}
     </dl>
@@ -5255,24 +4508,12 @@ $('#af-save').addEventListener('click',()=>{
 $('#btn-discard').addEventListener('click',()=>{ if(confirm('Discard this bill? All entered data will be lost.')) reset(); });
 
 function reset(){
-  /* Masters minted during the session go with the bill that minted them. A
-     prototype that quietly kept them would be a different prototype on the
-     second run, and the person being shown it would have no way to tell. */
-  const wiped = (MASTERS.items.length - BASE.items) +
-                (MASTERS.expenseLedgers.length - BASE.expenseLedgers);
-  MASTERS.items.length          = BASE.items;
-  MASTERS.expenseLedgers.length = BASE.expenseLedgers;
-  MASTERS.mappings.length       = BASE.mappings;
-  MASTERS.mappings.forEach(m=>{ if(m.learned!==undefined){ m.n = m.learned; delete m.learned; } });
-  refreshItemsList();
-
   state = freshState();
   $('#voucher-ref').textContent = '';
   $('#preview-body').innerHTML = '';
   showPaneState('empty');
   render();
   window.scrollTo({top:0,behavior:'smooth'});
-  if(wiped) toast(`${wiped} master${wiped===1?'':'s'} created for that bill discarded with it`);
 }
 
 /* ============================================================================
@@ -5327,12 +4568,6 @@ function boot(){
   $('[data-bind="destState"]').innerHTML        = options(MASTERS.states,'Select Destination of Supply','');
 
   refreshItemsList();
-
-  /* where the masters stood before anyone used the page — reset() comes back
-     to exactly here, so a demo never starts half-trained */
-  BASE.items = MASTERS.items.length;
-  BASE.expenseLedgers = MASTERS.expenseLedgers.length;
-  BASE.mappings = MASTERS.mappings.length;
 
   state = freshState();
   render();
