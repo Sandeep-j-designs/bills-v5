@@ -25,6 +25,8 @@
   --text:#1e1e1e;
   --text-muted:#707070;
   --danger:#c11212;     /* 6.2:1 on white — AA for 11-12px error text and danger buttons */
+  --danger-wash:#fdf8f8;    /* the faintest ground that still reads as red rather than grey */
+  --danger-hairline:#f3e0e2; /* rules on that ground — biased to it, exactly as --hairline is to the indigo one */
   --success:#0f6e41;    /* 6.3:1 on white, 5.6:1 on the pill tint — AA for normal text */
   --warning:#8a5300;    /* 6.3:1 on white, 5.6:1 on the warn pill tint — AA everywhere */
 
@@ -59,7 +61,10 @@ input,select,textarea{font:inherit}
 /* ------------------------------------------------------------- typography */
 .t-title  {font-size:24px;line-height:30px;letter-spacing:-.15px;font-weight:500}
 .t-section{font-size:16px;line-height:22px;letter-spacing:-.18px;font-weight:600;color:var(--text-muted)}
-.t-label  {font-size:12px;line-height:16px;letter-spacing:-.12px;font-weight:600;color:var(--text-muted)}
+/* min-height matches the switch, so a label slot is one height whether it holds
+   text or a toggle — otherwise the cost-centre select sits a switch-height lower
+   than the input beside it, since its label row is taller than a line of text */
+.t-label  {font-size:12px;line-height:16px;min-height:20px;letter-spacing:-.12px;font-weight:600;color:var(--text-muted)}
 .t-value  {font-size:14px;line-height:20px;letter-spacing:-.16px;font-weight:400;color:var(--text-muted)}
 .t-cell   {font-size:12px;line-height:20px;font-weight:400;color:var(--text-muted)}
 .req{color:var(--danger)}
@@ -192,9 +197,42 @@ input,select,textarea{font:inherit}
 /* ---------------------------------------------------------------- banner */
 .banner{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--radius);background:var(--bg-secondary);border:1px solid var(--brand-soft);font-size:12px;line-height:18px}
 .banner--warn{background:#fff8e8;border-color:#f0d69a}
+/* -------------------------------------------------- unresolved-field summary
+   A washed red ground and one hairline — no icon, no bullets, no saturated
+   panel. The screen is already red wherever a field is wrong; the summary only
+   has to say how many and which, and the tint is enough to place it. */
+.errsum{background:var(--danger-wash);border:1px solid var(--danger-hairline);
+  border-radius:var(--radius);padding:14px 16px}
+/* the lede is the label and the names are the content, so the weight runs the
+   other way round — grey sentence, black targets */
+.errsum__lede{font-size:12px;line-height:17px;color:var(--text-muted);
+  padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--danger-hairline)}
+.errsum__lede strong{color:var(--danger);font-weight:700;font-variant-numeric:tabular-nums}
 .banner__body{flex:1}
 .banner__title{font-weight:700;color:var(--text);margin-bottom:2px}
 .banner p{color:var(--text-muted)}
+
+/* One line, whatever the count. The sections are the destinations; the numbers
+   say how much is waiting at each. Wraps rather than scrolls, but four groups
+   is the ceiling — there is nowhere else in the form for a field to be. */
+.errlist{display:flex;flex-wrap:wrap;align-items:center;gap:2px 11px}
+.errgrp{display:inline-flex;align-items:center;gap:6px;padding:2px 0;
+  font:inherit;font-size:12px;font-weight:600;line-height:18px;color:var(--text);
+  background:none;border:0;cursor:pointer;border-radius:3px}
+.errgrp:hover{text-decoration:underline;text-decoration-color:var(--danger);
+  text-underline-offset:3px}
+.errgrp:focus-visible{outline:2px solid var(--danger);outline-offset:2px}
+/* the count rides in a tinted well so it reads as a quantity attached to the
+   name rather than a number that has wandered into the sentence */
+.errgrp__n{display:inline-block;min-width:17px;padding:0 4px;border-radius:99px;
+  background:#f7dcde;color:var(--danger);font-size:10px;font-weight:700;
+  line-height:15px;text-align:center;font-variant-numeric:tabular-nums}
+.errgrp__sep{color:#dcbcc0;font-size:12px;line-height:18px;user-select:none}
+
+/* the field a jump landed on, held just long enough to be found */
+@keyframes field-found{from{background:#fdeef0}to{background:transparent}}
+.is-found{animation:field-found 1.4s ease-out}
+@media (prefers-reduced-motion:reduce){.is-found{animation:none}}
 
 /* ------------------------------------------------------------- segmented */
 .segmented{display:inline-flex;align-self:flex-start;border-radius:var(--radius)}
@@ -220,8 +258,12 @@ input,select,textarea{font:inherit}
 .card{padding:20px;border-radius:var(--radius);background:var(--bg-primary);
       display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 30px}
 .card__full{grid-column:1/-1}
-.card__group{display:flex;flex-direction:column;gap:16px}
-.field{display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-width:0}
+.card__group{display:flex;flex-direction:column;gap:8px}   /* same label-to-control gap as .field */
+/* Top-packed, not space-between. Grid items stretch to the tallest cell in the
+   row, so distributing the free space pushed the control of whichever field had
+   no error message down to meet the bottom of the one that did — the two labels
+   stayed level while their inputs drifted apart. Extra height belongs below. */
+.field{display:flex;flex-direction:column;justify-content:flex-start;gap:8px;min-width:0}
 .field__error{font-size:11px;line-height:14px;color:var(--danger);display:none}
 .field.is-invalid .field__error{display:block}
 .field.is-invalid .control{border-color:var(--danger)}
@@ -999,6 +1041,11 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   background:var(--surface);
 }
 .addl[hidden]{display:none}
+/* the same red edge every invalid control on the sheet gets, so an unfinished
+   pair inside the dialog reads as the same kind of problem from outside it */
+.addl.is-invalid{border-color:var(--danger);background:var(--danger-wash)}
+.addl.is-invalid .addl__sub{color:var(--danger)}
+.addl__body{min-width:0}
 .addl__ttl{font-size:14px;line-height:20px;font-weight:700;color:var(--text-muted)}
 .addl__sub{margin-top:2px;font-size:12px;line-height:17px;color:var(--text-muted)}
 .addl__btn{
@@ -1088,8 +1135,21 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   display:flex;align-items:center;justify-content:flex-end;gap:10px;
   padding:16px 28px 20px;border-top:1px solid var(--stroke);
 }
-.afd__warn{margin-right:auto;max-width:52ch;font-size:11px;line-height:16px;font-weight:600;color:var(--danger)}
+/* a band across the top of the dialog, not a note beside the Save button */
+.afd__warn{padding:11px 28px;background:var(--danger-wash);
+  border-bottom:1px solid var(--danger-hairline);
+  font-size:12px;line-height:17px;font-weight:600;color:var(--danger)}
 .afd__warn[hidden]{display:none}
+/* a section still owing something is marked on the rail, so the one tab worth
+   opening is visible without opening any of them */
+.afd__nav button{position:relative}
+.afd__nav button:has(.afd__dot){padding-right:28px}
+.afd__dot{position:absolute;top:50%;right:12px;transform:translateY(-50%);
+  width:7px;height:7px;border-radius:50%;background:var(--danger)}
+/* Reset already claims the free space in this footer, so it yields to the
+   warning when there is one and takes it back when there is not. */
+.fcd__warn{max-width:44ch;margin-left:20px}
+.fcd__foot:has(#fc-warn:not([hidden])) .fcd__reset{margin-right:0}
 
 /* the nav is a column these dialogs can no longer spare — the groups fall
    back to running one after another down the panel */
@@ -1317,7 +1377,9 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   </div>
   <div class="topbar__actions">
     <button type="button" class="btn btn--outline" id="btn-discard">Discard</button>
-    <button type="button" class="btn btn--solid" id="btn-allocate" disabled>Allocate Bill</button>
+    <!-- Stays live on an incomplete bill. A disabled button withholds the reason
+         it is disabled; letting the click land is what raises the summary. -->
+    <button type="button" class="btn btn--solid" id="btn-allocate">Allocate Bill</button>
   </div>
 </header>
 
@@ -1373,6 +1435,11 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
   <!-- Bill form -->
   <section class="form">
 
+    <div class="errsum form__narrow" id="err-banner" role="alert" hidden>
+      <p class="errsum__lede" id="err-title"></p>
+      <div class="errlist" id="err-list"></div>
+    </div>
+
     <div class="banner banner--warn form__narrow" id="dupe-banner" hidden>
       <span class="ico ico-13" style="color:var(--warning)"><svg width="15.27" height="15.27"><use href="#i-info"/></svg></span>
       <div class="banner__body">
@@ -1394,6 +1461,11 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
 
     <!-- Voucher & vendor -->
     <section class="card form__narrow">
+      <!-- This block was the only one without a heading. The summary names it,
+           so it has to exist on the screen too — a group that names nothing you
+           can scroll to is worse than no grouping at all. -->
+      <h2 class="t-section card__full" id="sec-bill">Bill Details</h2>
+
       <div class="field" data-field="branch">
         <p class="t-label"><span class="req">*</span> GST Registration (My Branch)</p>
         <label class="control">
@@ -1468,7 +1540,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         </label>
       </div>
 
-      <h2 class="t-section card__full">Vendor Details</h2>
+      <h2 class="t-section card__full" id="sec-vendor">Vendor Details</h2>
 
       <div class="field" data-field="vendor">
         <p class="t-label"><span class="req">*</span> Vendor Name</p>
@@ -1528,7 +1600,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
     <!-- What Field Configuration has turned on, stated in one line. The
          fields themselves are entered in the Additional Fields dialog. -->
     <section class="addl form__narrow" id="addl" hidden>
-      <div>
+      <div class="addl__body">
         <h2 class="addl__ttl">Additional Details</h2>
         <p class="addl__sub" id="addl-sub"></p>
       </div>
@@ -1561,7 +1633,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
     </section>
 
     <!-- Ledgers -->
-    <section class="block">
+    <section class="block" id="block-ledgers">
       <h2 class="t-section">Ledgers</h2>
       <div class="bulkbar" id="ledgers-bulk" hidden>
         <span id="ledgers-bulk-text"></span>
@@ -1732,6 +1804,7 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
     </div>
     <div class="fcd__foot">
       <button type="button" class="fcd__reset" id="fc-reset">Reset to Default</button>
+      <p class="afd__warn fcd__warn" id="fc-warn" hidden></p>
       <button type="button" class="btn btn--outline" id="fc-cancel">Cancel</button>
       <button type="button" class="btn btn--solid" id="fc-save" disabled>Save</button>
     </div>
@@ -1750,12 +1823,14 @@ dialog::backdrop{background:rgba(20,22,40,.45)}
         <span class="ico ico-24"><svg width="24" height="24"><use href="#i-close"/></svg></span>
       </button>
     </div>
+    <!-- above the panel, not under the Save button: what is wrong should be
+         readable before the fields are, not discovered on the way out -->
+    <p class="afd__warn" id="af-warn" hidden></p>
     <div class="afd__body">
       <div class="afd__nav" id="af-nav" role="tablist" aria-orientation="vertical" aria-label="Field groups"></div>
       <div class="afd__panel" id="af-panel" role="tabpanel" tabindex="0"></div>
     </div>
     <div class="afd__foot">
-      <p class="afd__warn" id="af-warn" hidden></p>
       <button type="button" class="btn btn--outline" id="af-cancel">Cancel</button>
       <button type="button" class="btn btn--solid" id="af-save">Save</button>
     </div>
@@ -2079,6 +2154,20 @@ const SAMPLE = {
   purchaseLedger:'led-purchase-local',
   narration:'Desktop refresh for Engineering — PO/2026/0442. Includes installation, 1-year onsite AMC and disposal of the replaced units.',
   costCentreClass:'ccc-dept',
+  /* What the bill carries past the voucher header. The order reference is on
+     the document — it is in the narration above — and the document carries no
+     order date, which is exactly the case the conditional rules exist for.
+     Order and Receipt Details are switched off by default, so these two arrive
+     held rather than filled, and the sheet has to say so. */
+  extra:{
+    consigneeName:    'br-ka',
+    consigneeAddress: 'Ground Floor, 27th Main, HSR Layout Sector 2, Bengaluru',
+    consigneeState:   'KA',
+    consigneePincode: '560102',
+    placeOfSupply:    'KA',
+    orderNo:          'PO/2026/0442',
+    receiptNoteNo:    'GRN/2026/1187'
+  },
   lines:[
     {text:'Purchase of i3 Desktop, 8GB/256GB SSD',          hsn:'8471',  qty:12,rate:34500,disc:2,discType:'pct',gst:18,cc:'cc-eng',route:'item',item:'it-i3'},
     {text:'24" LED Monitor - IPS',                          hsn:'8528',  qty:12,rate:8200, gst:18,cc:'cc-eng',route:'item',item:'it-mon'},
@@ -2256,6 +2345,10 @@ function freshState(){
     purchaseLedger:'', reverseCharge:false, rcmLedger:'', rcmLedgerVendor:'',
     itcLedger:'', itcLedgerVendor:'', narration:'',
     extra:{},                        // whatever the optional groups are showing
+    /* Where each extra value came from. A field the document supplied and a
+       field the user typed are the same value with different standing: only
+       the first can be withdrawn on the grounds that nobody asked for it. */
+    extraFrom:{},
     items:[blankItem()], ledgers:[blankLedger()], stashedItems:null,
     taxLines:[], dismissedLines:[], adjustments:[],
     /* Which of the three withholdings this bill carries. They are exclusive:
@@ -3248,14 +3341,28 @@ function extraFilled(){
   const live = new Set(fcLive().flatMap(g=>g.fields.map(f=>f.id)));
   return [...live].filter(id=>String(state.extra[id]??'').trim()!=='').length;
 }
+const listOf = names => names.length<2 ? (names[0]||'')
+  : names.slice(0,-1).join(', ') + ' or ' + names[names.length-1];
+
 function renderAddl(){
   const groups = fcLive().length, filled = extraFilled();
+  const bad = extraProblems();
   $('#addl').hidden = groups===0;
-  if(!groups) return;
-  $('#addl-sub').textContent =
-    `${groups} section${groups===1?'':'s'} available` +
-    (filled ? ` · ${filled} field${filled===1?'':'s'} filled` : '');
-  $('#addl-btn-text').textContent = filled ? 'Edit Details' : 'Add Details';
+  if($('#addl').hidden) return;
+
+  /* The count, and nothing else. Which fields and why is the dialog's business
+     — it can show them against the controls they belong to, where a sentence
+     out here can only describe them. Like every other error on the sheet, this
+     one waits for an allocate: an unfinished bill is not a wrong one yet. */
+  const show = state.validated && bad.length>0;
+  $('#addl').classList.toggle('is-invalid', show);
+  $('#addl-sub').textContent = show
+    ? `${bad.length} mandatory field${bad.length===1?'':'s'} missing`
+    : `${groups} section${groups===1?'':'s'} available` +
+      (filled ? ` · ${filled} field${filled===1?'':'s'} filled` : '');
+
+  $('#addl-btn-text').textContent =
+    show ? 'Resolve Details' : filled ? 'Edit Details' : 'Add Details';
 }
 
 function renderHeader(){
@@ -3324,8 +3431,7 @@ function render(){
   renderBreakdown(calc);
   checkDuplicate();
   markClipped();
-  $('#btn-allocate').disabled = validate(false).length>0;
-  if(state.validated) validate(true);
+  renderErrBanner(validate(state.validated));   /* paint only once allocating has been tried */
   /* one at a time — whichever is still pending is asked when the other closes */
   if(rcmPending){ rcmPending = false; openRcmDialog(); }
   else if(itcPending) openItcDialog();
@@ -3335,27 +3441,36 @@ function render(){
 /* ============================================================================
    6. VALIDATION
    ==========================================================================*/
+/* Two strings per rule, and they are not the same string. `name` is the label
+   as it reads on the form — it goes in the summary, where a dozen of them run
+   together as one sentence. `msg` is the instruction, and it only ever appears
+   under the control it belongs to, where there is room to say what to do. */
 function validate(paint){
   const errs = [];
-  const need = (key,cond,msg)=>{ if(!cond) errs.push({key,msg}); };
+  const need = (key,cond,name,msg)=>{ if(!cond) errs.push({key,name,msg}); };
 
-  need('branch', !!state.branch, 'Select the branch');
-  need('voucherType', !!state.voucherType, 'Select a voucher type');
-  need('voucherDate', !!state.voucherDate, 'Pick a voucher date');
-  need('billDate', !!state.billDate, 'Pick the bill date');
-  need('dueDate', !!state.dueDate && (!state.billDate || state.dueDate>=state.billDate), 'Due date cannot be before the bill date');
-  need('supplierInvoiceNo', state.supplierInvoiceNo.trim().length>0, 'Enter the supplier invoice number');
-  need('vendor', !!state.vendor, 'Select the vendor');
-  need('gstTreatment', !!state.gstTreatment, 'Select the GST treatment');
-  need('gstin', state.gstTreatment!=='registered' || state.gstin.trim().length===15, 'A registered vendor needs a 15-character GSTIN');
-  need('sourceState', !!state.sourceState, 'Select the source of supply');
-  need('destState', !!state.destState, 'Select the destination of supply');
-  if(state.mode==='item') need('purchaseLedger', !!state.purchaseLedger, 'Select the purchase ledger');
-  need('rcmLedger', !state.reverseCharge || !!state.rcmLedger, 'Choose the ledger the reverse charge posts to');
-  need('itcLedger', !gstLines().some(itcBlocked) || !!state.itcLedger, 'Choose the ledger ineligible GST is expensed to');
+  need('branch', !!state.branch, 'GST Registration', 'Select the branch');
+  need('voucherType', !!state.voucherType, 'Voucher Type', 'Select a voucher type');
+  need('voucherDate', !!state.voucherDate, 'Voucher Date', 'Pick a voucher date');
+  need('billDate', !!state.billDate, 'Bill Date', 'Pick the bill date');
+  need('dueDate', !!state.dueDate && (!state.billDate || state.dueDate>=state.billDate), 'Due Date', 'Due date cannot be before the bill date');
+  need('supplierInvoiceNo', state.supplierInvoiceNo.trim().length>0, 'Supplier Invoice No.', 'Enter the supplier invoice number');
+  need('vendor', !!state.vendor, 'Vendor Name', 'Select the vendor');
+  need('gstTreatment', !!state.gstTreatment, 'GST Treatment', 'Select the GST treatment');
+  need('gstin', state.gstTreatment!=='registered' || state.gstin.trim().length===15, 'GSTIN', 'A registered vendor needs a 15-character GSTIN');
+  need('sourceState', !!state.sourceState, 'Source of Supply', 'Select the source of supply');
+  need('destState', !!state.destState, 'Destination of Supply', 'Select the destination of supply');
+  if(state.mode==='item') need('purchaseLedger', !!state.purchaseLedger, 'Purchase Ledger', 'Select the purchase ledger');
+  need('rcmLedger', !state.reverseCharge || !!state.rcmLedger, 'Reverse Charge Ledger', 'Choose the ledger the reverse charge posts to');
+  need('itcLedger', !gstLines().some(itcBlocked) || !!state.itcLedger, 'Ineligible ITC Ledger', 'Choose the ledger ineligible GST is expensed to');
 
   const calc = compute();
-  if(calc.subTotal<=0) errs.push({key:'__rows',msg:'Add at least one line with a value'});
+  if(calc.subTotal<=0) errs.push({key:'__rows',name:state.mode==='item'?'Item Details':'Ledgers',msg:'Add at least one line with a value'});
+
+  /* one entry per unfinished conditional pair, so the count on the sheet is the
+     real number of fields outstanding rather than "additional details: 1" */
+  extraProblems().forEach(p=>errs.push({key:'__extra', name:p.field.name,
+    msg:`${p.field.name} is required once ${p.trigger.name} is filled`}));
 
   if(paint){
     const keys = new Set(errs.map(e=>e.key));
@@ -3363,6 +3478,93 @@ function validate(paint){
   }
   return errs;
 }
+
+/* Which part of the form each rule belongs to. Ten names in a flat list hide the
+   shape of the problem — four unrelated gaps and "the whole vendor is missing"
+   look identical. Grouped, the cause reads at a glance, and the card stops
+   growing with the count. `__rows` follows the mode, since the same failure is
+   an Item Details problem in one and a Ledgers problem in the other. */
+const FIELD_GROUP = {
+  branch:'Bill Details', voucherType:'Bill Details', voucherDate:'Bill Details',
+  billDate:'Bill Details', dueDate:'Bill Details', supplierInvoiceNo:'Bill Details',
+  vendor:'Vendor Details', gstTreatment:'Vendor Details', gstin:'Vendor Details',
+  sourceState:'Vendor Details', destState:'Vendor Details',
+  purchaseLedger:'Item Details', rcmLedger:'Taxes', itcLedger:'Taxes',
+  __extra:'Additional Details'
+};
+const GROUP_ANCHOR = {
+  'Bill Details':'#sec-bill', 'Vendor Details':'#sec-vendor',
+  'Additional Details':'#addl',
+  'Item Details':'#block-items', 'Ledgers':'#block-ledgers', 'Taxes':'#breakdown'
+};
+const groupOf = e => e.key==='__rows'
+  ? (state.mode==='item' ? 'Item Details' : 'Ledgers')
+  : FIELD_GROUP[e.key];
+/* the order the sections appear on the sheet. Sorting by this rather than by the
+   order the rules happen to fire keeps the row reading down the page — the
+   purchase ledger is checked early but sits below Additional Details. */
+const GROUP_ORDER = ['Bill Details','Vendor Details','Additional Details',
+                     'Item Details','Ledgers','Taxes'];
+
+/* The summary above the form. It only draws once allocating has been tried —
+   before that the form is unfilled rather than wrong, and naming eleven blank
+   fields on arrival would be noise. After that it stays live, dropping each
+   name as its field is settled and hiding itself when the last one goes. */
+function renderErrBanner(errs){
+  const banner = $('#err-banner');
+  const show = state.validated && errs.length>0;
+  banner.hidden = !show;
+  if(!show) return;
+  /* the count is the part that changes as you work — it turns the summary from a
+     standing complaint into a number you are driving down */
+  $('#err-title').innerHTML = errs.length===1
+    ? '<strong>1</strong> mandatory field still to map before this bill can be allocated'
+    : `<strong>${errs.length}</strong> mandatory fields still to map before this bill can be allocated`;
+  const groups = [];
+  errs.forEach(e=>{
+    const g = groupOf(e);
+    const hit = groups.find(x=>x.name===g);
+    if(hit) hit.n++; else groups.push({name:g, n:1});
+  });
+  groups.sort((a,b)=>GROUP_ORDER.indexOf(a.name)-GROUP_ORDER.indexOf(b.name));
+  $('#err-list').innerHTML = groups.map(g=>
+    `<button type="button" class="errgrp" data-jump-group="${esc(g.name)}">${esc(g.name)}
+       <span class="errgrp__n">${g.n}</span></button>`
+  ).join('<span class="errgrp__sep" aria-hidden="true">·</span>');
+}
+
+/* A group in the summary is the way back to its part of the form. It carries you
+   to the section and hands focus to the first field there that is actually wrong,
+   so the summary answers "where" and the field itself answers "what". */
+function jumpToGroup(group){
+  $(GROUP_ANCHOR[group])?.scrollIntoView({behavior:'smooth',block:'center'});
+
+  /* The containers do not line up with the groups — Bill Details and Vendor
+     Details are two headings inside one card — so asking the enclosing section
+     for its first invalid control hands back the wrong field. The target comes
+     from the field map instead, in document order. */
+  const field = $$('[data-field].is-invalid')
+    .find(el => FIELD_GROUP[el.dataset.field]===group);
+
+  $$('.is-found').forEach(el=>el.classList.remove('is-found'));
+  /* a row-count or additional-details failure has no field of its own, so the
+     block or the strip is what lights up */
+  const anchor = $(GROUP_ANCHOR[group]);
+  const mark = field || anchor?.closest('.block') || anchor;
+  if(mark){ void mark.offsetWidth; mark.classList.add('is-found'); }
+
+  if(field){ field.querySelector('select,input,textarea')?.focus({preventScroll:true}); return; }
+  /* the strip is the sheet's stand-in for the dialog, so its button takes focus
+     — it opens on Enter, but landing here does not open anything by itself */
+  if(group==='Additional Details'){ $('#btn-add-details').focus({preventScroll:true}); return; }
+  /* the two tax ledgers are settled in dialogs, so there is nothing to focus */
+  if(group==='Taxes') openItcDialog();
+}
+
+document.addEventListener('click', e=>{
+  const jump = e.target.closest('.errgrp');
+  if(jump) jumpToGroup(jump.dataset.jumpGroup);
+});
 
 function checkDuplicate(){
   const inv = state.supplierInvoiceNo.trim().toLowerCase();
@@ -3382,7 +3584,9 @@ document.addEventListener('input', e=>{
   state[bind] = el.value;
   if(['supplierInvoiceNo','narration','billingAddress','gstin','voucherNo'].includes(bind)){
     checkDuplicate();
-    $('#btn-allocate').disabled = validate(false).length>0;
+    /* the summary tracks the keystrokes — toggling classes and rewriting the
+       banner leaves the focused control alone, unlike a full render */
+    renderErrBanner(validate(state.validated));
     return;                                             // avoid re-render mid-typing
   }
   render();
@@ -3501,7 +3705,7 @@ document.addEventListener('input', e=>{
     }
     const calc = compute();
     if(e.target.closest('#breakdown')) patchTotals(calc); else renderBreakdown(calc);
-    $('#btn-allocate').disabled = validate(false).length>0;
+    renderErrBanner(validate(state.validated));
     return;
   }
   row[f] = e.target.value;
@@ -3894,6 +4098,23 @@ function applyExtraction(file){
   state.destState         = b.state;
   syncRcmLedger();                              // keep the RCM ledger with the treatment
 
+  /* The optional groups are read the same as everything else, and a group the
+     document has data for is switched on to receive it. The default config is
+     a default, not a decision — making the user turn a section on before it
+     will admit what the bill already said is a step that answers nothing. */
+  state.extra = {}; state.extraFrom = {};
+  Object.entries(SAMPLE.extra).forEach(([id,val])=>{
+    const g = FIELD_GROUPS.find(x=>x.fields.some(f=>f.id===id));
+    if(!g) return;
+    fieldConfig[g.id].on = true;
+    fieldConfig[g.id].fields[id] = true;
+    /* and whatever this value makes mandatory, or the requirement would arrive
+       switched off and the bill would post a reference with nothing behind it */
+    g.fields.filter(f=>f.req===id).forEach(f=>{ fieldConfig[g.id].fields[f.id] = true; });
+    state.extra[id] = val;
+    state.extraFrom[id] = 'bill';
+  });
+
   /* Each line lands in the table the document puts it in, against the master
      the document names. A line that names none arrives with the cell empty. */
   state.mode    = 'item';
@@ -3988,6 +4209,14 @@ function facsimile(calc){
            <div class="inv__k" style="margin-top:6px">Invoice date</div><strong>${fmtDate(SAMPLE.billDate)}</strong>
            <div class="inv__k" style="margin-top:6px">Place of supply</div><strong>${esc(byId(MASTERS.states,v.state).plain)}</strong></div>
     </div>
+    <!-- The references the form reads into Additional Details. They have to be
+         printed here or the sheet would claim to have read something the
+         document never showed — and no order date is printed, because the
+         vendor did not put one on the bill. That absence is the whole case. -->
+    <div class="inv__parties">
+      <div><div class="inv__k">Your order no.</div><strong>${esc(SAMPLE.extra.orderNo)}</strong></div>
+      <div><div class="inv__k">Goods receipt note</div><strong>${esc(SAMPLE.extra.receiptNoteNo)}</strong></div>
+    </div>
     <table>
       <thead><tr><th>Description</th><th>HSN/SAC</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Disc.</th><th class="num">Taxable</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -4078,8 +4307,13 @@ $('#btn-allocate').addEventListener('click',()=>{
   state.validated = true;
   const errs = validate(true);
   if(errs.length){
-    toast(errs[0].msg || 'Fill the highlighted fields before allocating','err');
-    $('.is-invalid')?.scrollIntoView({behavior:'smooth',block:'center'});
+    /* the banner replaces the toast it used to raise — it says the same thing,
+       names every field rather than the first, and stays until they are fixed */
+    renderErrBanner(errs);
+    renderAddl();          // the strip waits on state.validated too, and this is the flip
+    const banner = $('#err-banner');
+    banner.scrollIntoView({behavior:'smooth',block:'center'});
+    banner.querySelector('.errlist__item')?.focus({preventScroll:true});
     return;
   }
   const calc = compute();
@@ -4257,12 +4491,31 @@ function renderFcDialog(){
 /* the counts and the Save button are the only things a single switch changes
    outside its own row, so flipping one patches rather than redraws — a redraw
    would take the focus off the switch that was just pressed */
+/* Switching a conditional field off while the field that requires it still holds
+   a value would retire the rule instead of satisfying it — the bill would post
+   with a document number and no date against it, and nothing would ever say so.
+   Turning BOTH off is fine: the trigger's value goes with it, so the pair leaves
+   the bill whole rather than half. */
+function fcConflicts(){
+  const live = (gid,fid)=>fcDraft[gid].on && fcDraft[gid].fields[fid];
+  return FIELD_GROUPS.flatMap(g=>g.fields.filter(f=>f.req &&
+      String(state.extra[f.req]??'').trim()!=='' &&
+      live(g.id,f.req) && !live(g.id,f.id))
+    .map(f=>({field:f, trigger:fieldById(f.req)})));
+}
+
 function fcSyncFoot(){
   FIELD_GROUPS.forEach(g=>{
     const el = $(`#fc-nav [data-fc-tab="${g.id}"] .fcd__n`);
     if(el) el.textContent = fcCount(g);
   });
-  $('#fc-save').disabled = fcSame(fcDraft, fieldConfig);
+  const clash = fcConflicts();
+  const warn = $('#fc-warn');
+  warn.hidden = !clash.length;
+  if(clash.length) warn.textContent = clash.length===1
+    ? `${clash[0].field.name} is required while ${clash[0].trigger.name} has a value. Clear that value first, or leave this field on.`
+    : `${clash.length} fields are required by values already entered. Clear those values first, or leave the fields on.`;
+  $('#fc-save').disabled = fcSame(fcDraft, fieldConfig) || clash.length>0;
 }
 
 $('#btn-field-config').addEventListener('click', openFieldConfig);
@@ -4300,7 +4553,10 @@ $('#fc-save').addEventListener('click',()=>{
      Keeping the value would post something nobody can see, and bring it back
      unannounced the next time the group is switched on. */
   const live = new Set(fcLive().flatMap(g=>g.fields.map(f=>f.id)));
-  Object.keys(state.extra).forEach(k=>{ if(!live.has(k)) delete state.extra[k]; });
+  Object.keys(state.extra).forEach(k=>{
+    if(live.has(k)) return;
+    delete state.extra[k]; delete state.extraFrom[k];
+  });
   render();                    // the close event renders too, but it is queued —
   $('#fc-dialog').close();     // this is the edit, so the sheet changes with it
 
@@ -4378,9 +4634,11 @@ function renderAfDialog(){
      move somewhere — but only once the switch is saved, or the panel would
      vanish under the hand that switched it */
   const nav = live.some(g=>g.id===afTab) ? live : [...live, FIELD_GROUPS.find(g=>g.id===afTab)];
+  const owing = new Set(afProblems().map(p=>p.group.id));
   $('#af-nav').innerHTML = nav.map(g=>
     `<button type="button" role="tab" data-af-tab="${g.id}" aria-selected="${g.id===afTab}">
-       ${esc(g.name)}</button>`).join('');
+       ${esc(g.name)}${owing.has(g.id)
+         ? `<span class="afd__dot" role="img" aria-label="has missing fields"></span>` : ''}</button>`).join('');
   renderAfPanel();
 }
 
@@ -4405,15 +4663,18 @@ function renderAfPanel(){
   afCheck();
 }
 
-/* `req` fields are mandatory only in the company of the field that names
-   them. Checked here rather than in validate(): these fields are not on the
-   sheet, so there is nowhere out there to paint the error. */
-function afProblems(){
-  return fcLive(afDraft.cfg).flatMap(g=>g.fields.filter(f=>f.req &&
-      String(afDraft.values[f.req]??'').trim()!=='' &&
-      String(afDraft.values[f.id]??'').trim()==='')
+/* `req` fields are mandatory only in the company of the field that names them.
+   One rule, two callers: the dialog runs it over its draft to decide whether
+   Save is allowed, and the sheet runs it over committed state so an unfinished
+   pair can be named outside without opening anything. */
+function reqProblems(values, cfg){
+  return fcLive(cfg).flatMap(g=>g.fields.filter(f=>f.req &&
+      String(values[f.req]??'').trim()!=='' &&
+      String(values[f.id]??'').trim()==='')
     .map(f=>({group:g, field:f, trigger:fieldById(f.req)})));
 }
+const afProblems    = ()=>reqProblems(afDraft.values, afDraft.cfg);
+const extraProblems = ()=>reqProblems(state.extra, fieldConfig);
 function afCheck(){
   const bad = afProblems();
   const here = new Set(bad.filter(p=>p.group.id===afTab).map(p=>p.field.id));
@@ -4425,12 +4686,22 @@ function afCheck(){
   });
   const warn = $('#af-warn');
   warn.hidden = !bad.length;
-  if(bad.length){
-    const off = bad.filter(p=>p.group.id!==afTab);
-    warn.textContent = off.length && off.length===bad.length
-      ? `${bad.length} field${bad.length===1?'':'s'} still needed under ${[...new Set(off.map(p=>p.group.name))].join(', ')}.`
-      : `${bad.length} field${bad.length===1?'':'s'} still needed before this can be saved.`;
-  }
+  /* the same sentence the sheet uses. Which sections they are in is the rail's
+     job now, so the band does not have to list them */
+  if(bad.length) warn.textContent =
+    `${bad.length} mandatory field${bad.length===1?'':'s'} missing`;
+
+  /* the rail marks itself as fields are settled, without a full re-render that
+     would take the caret out of whatever is being typed into */
+  const owing = new Set(bad.map(p=>p.group.id));
+  $$('#af-nav [data-af-tab]').forEach(tab=>{
+    const on = owing.has(tab.dataset.afTab);
+    const dot = tab.querySelector('.afd__dot');
+    if(on && !dot) tab.insertAdjacentHTML('beforeend',
+      '<span class="afd__dot" role="img" aria-label="has missing fields"></span>');
+    if(!on && dot) dot.remove();
+  });
+
   $('#af-save').disabled = bad.length>0;
 }
 
@@ -4492,12 +4763,20 @@ $('#af-dialog').addEventListener('close',()=>{ afDraft = null; render(); });
 $('#af-save').addEventListener('click',()=>{
   if(afProblems().length) return;
   fieldConfig = fcClone(afDraft.cfg);
+  /* a value the user has changed is theirs now, whatever the document said —
+     the standing has to move with the edit or the sheet keeps crediting the
+     bill for an answer the user typed over */
+  Object.keys(afDraft.values).forEach(k=>{
+    if(state.extraFrom[k]==='bill' && afDraft.values[k]!==state.extra[k]) delete state.extraFrom[k];
+  });
   state.extra = {...afDraft.values};
   // a group or field switched off here drops its value, exactly as it does in
   // Field Configuration — nothing invisible rides along on the posting
   const live = new Set(fcLive().flatMap(g=>g.fields.map(f=>f.id)));
   Object.keys(state.extra).forEach(k=>{
-    if(!live.has(k) || String(state.extra[k]).trim()==='') delete state.extra[k];
+    if(!live.has(k) || String(state.extra[k]).trim()===''){
+      delete state.extra[k]; delete state.extraFrom[k];
+    }
   });
   render();
   $('#af-dialog').close();
